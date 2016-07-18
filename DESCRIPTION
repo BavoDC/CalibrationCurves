@@ -1,4 +1,4 @@
-Package: val.prob.ci.2
+Package: CalibrationCurves
 Type: Package
 Title: Calibration performance
 Version: 0.1.1

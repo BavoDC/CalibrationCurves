@@ -1,62 +1,11 @@
-
-#------------------------#
-#                        #
-#    val.prob.ci.2       #  Adjusted version of Harrell's val.prob
-#                        #
-#------------------------#
-
-# January 2016
-
-# WHEN USING THIS FUNCTION, PLEASE CITE:
-# Van Calster B, Nieboer D, Vergouwe Y, De Cock B, Pencina MJ, Steyerberg
-# EW. A calibration hierarchy for risk models was defined: from utopia to
-# empirical data. Journal of Clinical Epidemiology, in press (2016).
-
-# Some years ago, Yvonne Vergouwe and Ewout Steyerberg adapted val.prob
-# into val.prob.ci:
-# - Scaled Brier score by relating to max for average calibrated Null
-#   model
-# - Risk distribution according to outcome
-# - 0 and 1 to indicate outcome label; set with d1lab="..", d0lab=".."
-# - Labels: y axis: "Observed Frequency"; Triangle: "Grouped
-#   observations"
-# - Confidence intervals around triangles
-# - A cut-off can be plotted; set x coordinate
-
-# In December 2015, Bavo De Cock, Daan Nieboer, and Ben Van Calster adapted
-# this to val.prob.ci.2:
-# - Flexible calibration curves can be obtained using loess (default) or
-#   restricted cubic splines, with pointwise 95% confidence intervals
-# - Loess: CI can be obtained in closed form or using bootstrapping
-#   (CL.BT=T will do bootstrapping with 2000 bootstrap samples, however
-#   this will take a while)
-# - RCS: 3 to 5 knots can be used
-#     -> the knot locations will be estimated using default quantiles of
-#        x (by rcspline.eval, see help rcspline.plot and rcspline.eval)
-#     -> if estimation problems occur at the specified number of knots
-#        (nr.knots, default is 5), the analysis is repeated with
-#         nr.knots-1 until the problem has disappeared
-# - You can now adjust the plot through use of normal plot commands
-#   (cex.axis etc), and the size of the legend now has to be specified in
-#   cex.leg
-# - Label y-axis: "Observed proportion"
-# - Stats: added the Estimated Calibration Index (ECI), a statistical
-#   measure to quantify lack of calibration (Van Hoorde et al., 2015)
-# - Stats to be shown in the plot: by default we shown the calibration
-#   intercept (calibration-in-the-large), calibration slope and c-
-#   statistic. Alternatively, the user can select the statistics of
-#   choice (e.g. dostats=c("C (ROC)","R2") or dostats=c(2,3).
-# - Vectors p, y and logit no longer have to be sorted
-
 #' Calibration performance
 #'
 #' The function val.prob.ci.2 is an adaptation of \code{\link{val.prob}} from Frank Harrell's rms package,
 #' \url{https://cran.r-project.org/web/packages/rms/rms.pdf}. Hence, the description of some of the functions of \code{val.prob.ci.2}
 #' come from the the original \code{\link{val.prob}}.
 #' \cr \cr The key feature of \code{val.prob.ci.2} is the generation of logistic and flexible calibration curves and related statistics.
-#' When using this code, please cite: Van Calster B, Nieboer D, Vergouwe Y, De Cock B, Pencina MJ, Steyerberg
-#' EW. A calibration hierarchy for risk models was defined: from utopia to
-#' empirical data. Journal of Clinical Epidemiology, in press (2016)
+#' When using this code, please cite: Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina, M.J., Steyerberg
+#' E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. Journal of Clinical Epidemiology, 74, pp. 167-176
 #'
 #' @inheritParams rms::val.prob
 #' @param smooth \code{"loess"} generates a flexible calibration curve based on \code{\link{loess}},
@@ -72,12 +21,12 @@
 #' In case the specified number of knots leads to estimation problems, then the number of knots is automatically reduced to the closest
 #'  value without estimation problems.
 #' @param dostats specifies whether and which performance measures are shown in the figure.
-#' \code{TRUE} shows the \code{"abc"} of model performance (Steyerberg et al, Rev Esp Cardiol 2011): calibration intercept, calibration slope,
+#' \code{TRUE} shows the \code{"abc"} of model performance (Steyerberg et al., 2011): calibration intercept, calibration slope,
 #'  and c statistic. \code{TRUE} is default.
 #'  \code{FALSE} suppresses the presentation of statistics in the figure. A \code{c()} list of specific stats shows the specified
 #'  stats. The key stats which are also mentioned in this paper are \code{"C (ROC)"} for the c statistic, \code{"Intercept"} for the
 #'  calibration intercept, \code{"Slope"} for the calibration slope, and \code{"ECI"} for the estimated calibration index
-#'  (Van Hoorde et al, J Biomed Inform 2015). The full list of possible statistics is taken from \code{\link{val.prob}} (Harrell, 2001)
+#'  (Van Hoorde et al, 2015). The full list of possible statistics is taken from \code{\link{val.prob}}
 #'  and augmented with the estimated calibration index: \code{"Dxy", "C (ROC)", "R2", "D", "D:Chi-sq", "D:p", "U", "U:Chi-sq",
 #'   "U:p", "Q", "Brier", "Intercept", "Slope", "Emax", "Brier scaled", "Eavg", "ECI"}. These statistics are always returned by the function.
 #' @param xlim,ylim numeric vectors of length 2, giving the x and y coordinates ranges (see \code{\link{plot.window}})
@@ -100,7 +49,7 @@
 #' Default is \code{FALSE}.
 #' @param xlab x-axis label, default is \code{"Predicted Probability"}.
 #' @param ylab y-axis label, default is \code{"Observed proportion"}.
-#' @param statloc the "abc" of model performance (Steyerberg et al, Rev Esp Cardiol 2011)-calibration intercept, calibration slope,
+#' @param statloc the "abc" of model performance (Steyerberg et al., 2011)-calibration intercept, calibration slope,
 #' and c statistic-will be added to the plot, using statloc as the upper left corner of a box (default is c(0,.85).
 #' You can specify a list or a vector. Use locator(1) for the mouse, \code{FALSE} to suppress statistics. This is plotted after
 #' the curve legends.
@@ -111,6 +60,10 @@
 #' curves and points. Default is \code{c(.50, .27)} scaled to lim. Use \code{locator(1)} to use the mouse, \code{FALSE} to suppress legend.
 #'
 #' @return A vector containing performance measures of calibration is returned.
+#'
+#' @references Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina M., Steyerberg E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. Journal of Clinical Epidemiology, 74, pp. 167-176
+#' @references Steyerberg, E.W.Van Calster, B., Pencina, M.J. (2011). Performance measures for prediction models and markers : evaluation of predictions and classifications. Revista Espanola de Cardiologia, 64(9), pp. 788-794
+#' @references Van Hoorde, K., Van Huffel, S., Timmerman, D., Bourne, T., Van Calster, B. (2015). A spline-based tool to assess and visualize the calibration of multiclass risk predictions. Journal of Biomedical Informatics, 54, pp. 283-93
 #' @export
 #'
 #' @examples

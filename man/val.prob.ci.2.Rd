@@ -93,18 +93,18 @@ compute \code{Emax}.
 \item{legendloc}{if \code{pl=TRUE}, list with components \code{x,y} or vector \code{c(x,y)} for bottom right corner of legend for
 curves and points. Default is \code{c(.50, .27)} scaled to lim. Use \code{locator(1)} to use the mouse, \code{FALSE} to suppress legend.}
 
-\item{statloc}{the "abc" of model performance (Steyerberg et al, Rev Esp Cardiol 2011)-calibration intercept, calibration slope,
+\item{statloc}{the "abc" of model performance (Steyerberg et al., 2011)-calibration intercept, calibration slope,
 and c statistic-will be added to the plot, using statloc as the upper left corner of a box (default is c(0,.85).
 You can specify a list or a vector. Use locator(1) for the mouse, \code{FALSE} to suppress statistics. This is plotted after
 the curve legends.}
 
 \item{dostats}{specifies whether and which performance measures are shown in the figure.
-\code{TRUE} shows the \code{"abc"} of model performance (Steyerberg et al, Rev Esp Cardiol 2011): calibration intercept, calibration slope,
+\code{TRUE} shows the \code{"abc"} of model performance (Steyerberg et al., 2011): calibration intercept, calibration slope,
  and c statistic. \code{TRUE} is default.
  \code{FALSE} suppresses the presentation of statistics in the figure. A \code{c()} list of specific stats shows the specified
  stats. The key stats which are also mentioned in this paper are \code{"C (ROC)"} for the c statistic, \code{"Intercept"} for the
  calibration intercept, \code{"Slope"} for the calibration slope, and \code{"ECI"} for the estimated calibration index
- (Van Hoorde et al, J Biomed Inform 2015). The full list of possible statistics is taken from \code{\link{val.prob}} (Harrell, 2001)
+ (Van Hoorde et al, 2015). The full list of possible statistics is taken from \code{\link{val.prob}}
  and augmented with the estimated calibration index: \code{"Dxy", "C (ROC)", "R2", "D", "D:Chi-sq", "D:p", "U", "U:Chi-sq",
   "U:p", "Q", "Brier", "Intercept", "Slope", "Emax", "Brier scaled", "Eavg", "ECI"}. These statistics are always returned by the function.}
 
@@ -184,9 +184,8 @@ The function val.prob.ci.2 is an adaptation of \code{\link{val.prob}} from Frank
 \url{https://cran.r-project.org/web/packages/rms/rms.pdf}. Hence, the description of some of the functions of \code{val.prob.ci.2}
 come from the the original \code{\link{val.prob}}.
 \cr \cr The key feature of \code{val.prob.ci.2} is the generation of logistic and flexible calibration curves and related statistics.
-When using this code, please cite: Van Calster B, Nieboer D, Vergouwe Y, De Cock B, Pencina MJ, Steyerberg
-EW. A calibration hierarchy for risk models was defined: from utopia to
-empirical data. Journal of Clinical Epidemiology, in press (2016)
+When using this code, please cite: Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina, M.J., Steyerberg
+E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. Journal of Clinical Epidemiology, 74, pp. 167-176
 }
 \examples{
 # simulated data
@@ -204,5 +203,12 @@ pred.lrm <- predict(fit.lrm,type="fitted")
 
 # calibration plot
 val.prob.ci.2(pred.lrm,y)
+}
+\references{
+Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina M., Steyerberg E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. Journal of Clinical Epidemiology, 74, pp. 167-176
+
+Steyerberg, E.W.Van Calster, B., Pencina, M.J. (2011). Performance measures for prediction models and markers : evaluation of predictions and classifications. Revista Espanola de Cardiologia, 64(9), pp. 788-794
+
+Van Hoorde, K., Van Huffel, S., Timmerman, D., Bourne, T., Van Calster, B. (2015). A spline-based tool to assess and visualize the calibration of multiclass risk predictions. Journal of Biomedical Informatics, 54, pp. 283-93
 }
 
