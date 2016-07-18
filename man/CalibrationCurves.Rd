@@ -27,7 +27,7 @@ this to \code{\link{val.prob.ci.2}}: \cr
   \item RCS: 3 to 5 knots can be used
     \itemize{
       \item the knot locations will be estimated using default quantiles of
-         x (by \code{\link{rcspline.eval}}, see \code{\link{rcspline.plot}} and \code{\link{rcspline.eval}})
+         x (by \code{\link[=rms]{rcspline.eval}}, see \code{\link[=rms]{rcspline.plot}} and \code{\link[=rms]{rcspline.eval}})
       \item if estimation problems occur at the specified number of knots
          (nr.knots, default is 5), the analysis is repeated with
           nr.knots-1 until the problem has disappeared and the function stops if there is still an estimation problem with 3 knots
