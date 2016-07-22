@@ -6,14 +6,16 @@
 \usage{
 val.prob.ci.2(p, y, logit, group, weights = rep(1, length(y)), normwt = F,
   pl = T, smooth = c("loess", "rcs", F), CL.smooth = "fill", CL.BT = F,
-  nr.knots = 5, logistic.cal = F, xlab = "Predicted probability",
-  ylab = "Observed proportion", xlim = c(-0.02, 1), ylim = c(-0.15, 1), m,
-  g, cuts, emax.lim = c(0, 1), legendloc = c(0.5, 0.27), statloc = c(0,
-  0.85), dostats = T, roundstats = 2, riskdist = "predicted",
-  cex = 0.75, cex.leg = 0.75, connect.group = F, connect.smooth = T,
-  g.group = 4, evaluate = 100, nmin = 0, d0lab = "0", d1lab = "1",
-  cex.d01 = 0.7, dist.label = 0.04, line.bins = -0.05,
-  dist.label2 = 0.03, cutoff, las = 1, length.seg = 1, y.intersp = 1,
+  lty.smooth = 1, col.smooth = "black", lwd.smooth = 1, nr.knots = 5,
+  logistic.cal = F, lty.log = 1, col.log = "black", lwd.log = 1,
+  xlab = "Predicted probability", ylab = "Observed proportion",
+  xlim = c(-0.02, 1), ylim = c(-0.15, 1), m, g, cuts, emax.lim = c(0, 1),
+  legendloc = c(0.5, 0.27), statloc = c(0, 0.85), dostats = T,
+  cl.level = 0.95, roundstats = 2, riskdist = "predicted", cex = 0.75,
+  cex.leg = 0.75, connect.group = F, connect.smooth = T, g.group = 4,
+  evaluate = 100, nmin = 0, d0lab = "0", d1lab = "1", cex.d01 = 0.7,
+  dist.label = 0.04, line.bins = -0.05, dist.label2 = 0.03, cutoff,
+  las = 1, length.seg = 1, y.intersp = 1, lty.ideal = 1,
   col.ideal = "grey", lwd.ideal = 1, ...)
 }
 \arguments{
@@ -59,12 +61,24 @@ area between the lower and upper limits, \code{TRUE} shows pointwise 95\% confid
 \item{CL.BT}{\code{TRUE} uses confidence limits based on 2000 bootstrap samples, \code{FALSE} uses closed form confidence limits.
 Default is \code{FALSE}.}
 
+\item{lty.smooth}{the linetype of the flexible calibration curve. Default is \code{1}.}
+
+\item{col.smooth}{the color of the flexible calibration curve. Default is \code{"black"}.}
+
+\item{lwd.smooth}{the line width of the flexible calibration curve. Default is \code{1}.}
+
 \item{nr.knots}{specifies the number of knots for rcs-based calibration curve. The default as well as the highest allowed value is 5.
 In case the specified number of knots leads to estimation problems, then the number of knots is automatically reduced to the closest
  value without estimation problems.}
 
 \item{logistic.cal}{\code{T} or \code{TRUE} plots the logistic calibration curve, \code{F} or \code{FALSE} suppresses this curve.
 Default is \code{FALSE}.}
+
+\item{lty.log}{if \code{logistic.cal=T}, the linetype of the logistic calibration curve. Default is \code{1}.}
+
+\item{col.log}{if \code{logistic.cal=T}, the color of the logistic calibration curve. Default is \code{"black"}.}
+
+\item{lwd.log}{if \code{logistic.cal=T}, the line width of the logistic calibration curve. Default is \code{1}.}
 
 \item{xlab}{x-axis label, default is \code{"Predicted Probability"}.}
 
@@ -100,13 +114,17 @@ the curve legends.}
 
 \item{dostats}{specifies whether and which performance measures are shown in the figure.
 \code{TRUE} shows the \code{"abc"} of model performance (Steyerberg et al., 2011): calibration intercept, calibration slope,
- and c statistic. \code{TRUE} is default.
+ and c-statistic. \code{TRUE} is default.
  \code{FALSE} suppresses the presentation of statistics in the figure. A \code{c()} list of specific stats shows the specified
  stats. The key stats which are also mentioned in this paper are \code{"C (ROC)"} for the c statistic, \code{"Intercept"} for the
  calibration intercept, \code{"Slope"} for the calibration slope, and \code{"ECI"} for the estimated calibration index
  (Van Hoorde et al, 2015). The full list of possible statistics is taken from \code{\link{val.prob}}
  and augmented with the estimated calibration index: \code{"Dxy", "C (ROC)", "R2", "D", "D:Chi-sq", "D:p", "U", "U:Chi-sq",
   "U:p", "Q", "Brier", "Intercept", "Slope", "Emax", "Brier scaled", "Eavg", "ECI"}. These statistics are always returned by the function.}
+
+\item{cl.level}{if \code{dostats=T}, the confidence level for the calculation of the confidence intervals of the calibration intercept,
+calibration slope and c-statistic. Default is \code{0.95}. The confidence interval of the c-statistic is a logit-transformation-based confidence
+interval (Qin and Hotilovac, 2008).}
 
 \item{roundstats}{specifies the number of decimals to which the statistics are rounded when shown in the plot. Default is 2.}
 
@@ -170,6 +188,8 @@ Defaults are \code{d1lab="1"} for events and \code{d0lab="0"} for non-events.}
 
 \item{y.intersp}{character interspacing for vertical line distances of the legend (\code{\link{legend}})}
 
+\item{lty.ideal}{linetype of the ideal line. Default is \code{1}.}
+
 \item{col.ideal}{controls the color of the ideal line on the plot. Default is \code{"grey"}.}
 
 \item{lwd.ideal}{controls the line width of the ideal line on the plot. Default is \code{1}.}
@@ -210,5 +230,7 @@ Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina M., Steyerberg 
 Steyerberg, E.W.Van Calster, B., Pencina, M.J. (2011). Performance measures for prediction models and markers : evaluation of predictions and classifications. Revista Espanola de Cardiologia, 64(9), pp. 788-794
 
 Van Hoorde, K., Van Huffel, S., Timmerman, D., Bourne, T., Van Calster, B. (2015). A spline-based tool to assess and visualize the calibration of multiclass risk predictions. Journal of Biomedical Informatics, 54, pp. 283-93
+
+Qin, G., & Hotilovac, L. (2008). Comparison of non-parametric confidence intervals for the area under the ROC curve of a continuous-scale diagnostic test. Statistical Methods in Medical Research, 17(2), pp. 207-21
 }
 
