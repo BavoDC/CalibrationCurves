@@ -11,12 +11,13 @@ val.prob.ci.2(p, y, logit, group, weights = rep(1, length(y)), normwt = F,
   xlab = "Predicted probability", ylab = "Observed proportion",
   xlim = c(-0.02, 1), ylim = c(-0.15, 1), m, g, cuts, emax.lim = c(0, 1),
   legendloc = c(0.5, 0.27), statloc = c(0, 0.85), dostats = T,
-  cl.level = 0.95, roundstats = 2, riskdist = "predicted", cex = 0.75,
-  cex.leg = 0.75, connect.group = F, connect.smooth = T, g.group = 4,
-  evaluate = 100, nmin = 0, d0lab = "0", d1lab = "1", cex.d01 = 0.7,
-  dist.label = 0.04, line.bins = -0.05, dist.label2 = 0.03, cutoff,
-  las = 1, length.seg = 1, y.intersp = 1, lty.ideal = 1,
-  col.ideal = "grey", lwd.ideal = 1, ...)
+  cl.level = 0.95, method.ci = "pepe", roundstats = 2,
+  riskdist = "predicted", cex = 0.75, cex.leg = 0.75, connect.group = F,
+  connect.smooth = T, g.group = 4, evaluate = 100, nmin = 0,
+  d0lab = "0", d1lab = "1", cex.d01 = 0.7, dist.label = 0.04,
+  line.bins = -0.05, dist.label2 = 0.03, cutoff, las = 1,
+  length.seg = 1, y.intersp = 1, lty.ideal = 1, col.ideal = "grey",
+  lwd.ideal = 1, ...)
 }
 \arguments{
 \item{p}{
@@ -123,8 +124,13 @@ the curve legends.}
   "U:p", "Q", "Brier", "Intercept", "Slope", "Emax", "Brier scaled", "Eavg", "ECI"}. These statistics are always returned by the function.}
 
 \item{cl.level}{if \code{dostats=T}, the confidence level for the calculation of the confidence intervals of the calibration intercept,
-calibration slope and c-statistic. Default is \code{0.95}. The confidence interval of the c-statistic is a logit-transformation-based confidence
-interval (Qin and Hotilovac, 2008).}
+calibration slope and c-statistic. Default is \code{0.95}.}
+
+\item{method.ci}{method to calculate the confidence interval of the c-statistic. The argument is passed to \code{\link{auc.nonpara.mw}} from
+the auRoc-package and possible methods to compute the confidence interval are \code{"newcombe"}, \code{"pepe"}, \code{"delong"} or
+\code{"jackknife"}. Bootstrap-based methods are not available. The default method is \code{"pepe"} and here, the confidence interval is
+the logit-transformation-based confidence interval as documented in Qin and Hotilovac (2008). See \code{\link{auc.nonpara.mw}} for
+more information on the other methods.}
 
 \item{roundstats}{specifies the number of decimals to which the statistics are rounded when shown in the plot. Default is 2.}
 
@@ -205,7 +211,13 @@ The function val.prob.ci.2 is an adaptation of \code{\link{val.prob}} from Frank
 come from the the original \code{\link{val.prob}}.
 \cr \cr The key feature of \code{val.prob.ci.2} is the generation of logistic and flexible calibration curves and related statistics.
 When using this code, please cite: Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina, M.J., Steyerberg
-E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. Journal of Clinical Epidemiology, 74, pp. 167-176
+E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. \emph{Journal of Clinical Epidemiology},
+\bold{74}, pp. 167-176
+}
+\note{
+In order to make use (of the functions) of the package auRoc, the user needs to install JAGS. However, since our package only uses the
+\code{auc.nonpara.mw} function which does not depend on the use of JAGS, we therefore copied the code and slightly adjusted it when
+\code{method="pepe"}.
 }
 \examples{
 # simulated data
@@ -218,19 +230,26 @@ y <-rbinom(500,1,p0true)
 data.0 <- data.frame(y,x1,x2,x3)
 
 # fit logistic model
-fit.lrm <- lrm(y~x1+x2+x3,data=data.0)
-pred.lrm <- predict(fit.lrm,type="fitted")
+fit.lrm <- lrm(y~x1+x2+x3, data=data.0)
+pred.lrm <- predict(fit.lrm, type="fitted")
 
-# calibration plot
-val.prob.ci.2(pred.lrm,y)
+# default calibration plot
+val.prob.ci.2(pred.lrm, y)
+
+# adding logistic calibration curves and other additional features
+val.prob.ci.2(pred.lrm, y, CL.smooth=TRUE, logistic.cal=TRUE, lty.log=2,
+ col.log="red", lwd.log=1.5)
+
+val.prob.ci.2(pred.lrm, y, CL.smooth=TRUE, logistic.cal=TRUE, lty.log=9,
+col.log="red", lwd.log=1.5, col.ideal=colors()[10], lwd.ideal=0.5)
 }
 \references{
-Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina M., Steyerberg E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. Journal of Clinical Epidemiology, 74, pp. 167-176
+Qin, G., & Hotilovac, L. (2008). Comparison of non-parametric confidence intervals for the area under the ROC curve of a continuous-scale diagnostic test. \emph{Statistical Methods in Medical Research}, \bold{17(2)}, pp. 207-21
 
-Steyerberg, E.W.Van Calster, B., Pencina, M.J. (2011). Performance measures for prediction models and markers : evaluation of predictions and classifications. Revista Espanola de Cardiologia, 64(9), pp. 788-794
+Steyerberg, E.W.Van Calster, B., Pencina, M.J. (2011). Performance measures for prediction models and markers : evaluation of predictions and classifications. \emph{Revista Espanola de Cardiologia}, \bold{64(9)}, pp. 788-794
 
-Van Hoorde, K., Van Huffel, S., Timmerman, D., Bourne, T., Van Calster, B. (2015). A spline-based tool to assess and visualize the calibration of multiclass risk predictions. Journal of Biomedical Informatics, 54, pp. 283-93
+Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina M., Steyerberg E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. \emph{Journal of Clinical Epidemiology}, \bold{74}, pp. 167-176
 
-Qin, G., & Hotilovac, L. (2008). Comparison of non-parametric confidence intervals for the area under the ROC curve of a continuous-scale diagnostic test. Statistical Methods in Medical Research, 17(2), pp. 207-21
+Van Hoorde, K., Van Huffel, S., Timmerman, D., Bourne, T., Van Calster, B. (2015). A spline-based tool to assess and visualize the calibration of multiclass risk predictions. \emph{Journal of Biomedical Informatics}, \bold{54}, pp. 283-93
 }
 

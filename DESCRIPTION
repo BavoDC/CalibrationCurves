@@ -13,4 +13,6 @@ Description: Plots calibration curves and computes statistics for assessing cali
 License: GPL (>= 2)
 LazyData: TRUE
 Depends: rms
+Imports: grDevices, graphics, methods, stats, utils
+Suggests: auRoc
 RoxygenNote: 5.0.1

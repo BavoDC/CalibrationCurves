@@ -43,15 +43,23 @@ this to \code{\link{val.prob.ci.2}}: \cr
     choice (e.g. \code{dostats=c("C (ROC)","R2")} or \code{dostats=c(2,3)}.
   \item Vectors p, y and logit no longer have to be sorted
   }
+\cr
+
+Since then, several new features have been added and are still being added. The most current version of this package can always be found on
+\url{https://github.com/BavoDC} and can easily be installed using the following code: \cr \cr
+\code{
+install.packages("devtools") # if not yet installed} \cr
+\code{require(devtools)} \cr
+\code{install_git("https://github.com/BavoDC/CalibrationCurves")} \cr
 }
 \references{
-Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina M., Steyerberg E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. Journal of Clinical Epidemiology, 74, pp. 167-176
+Steyerberg, E.W.Van Calster, B., Pencina, M.J. (2011). Performance measures for prediction models and markers : evaluation of predictions and classifications. \emph{Revista Espanola de Cardiologia}, \bold{64(9)}, pp. 788-794
+
+Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina M., Steyerberg E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. \emph{Journal of Clinical Epidemiology}, \bold{74}, pp. 167-176
 
 Van Hoorde, K., Van Huffel, S., Timmerman, D., Bourne, T., Van Calster, B. (2015).
 A spline-based tool to assess and visualize the calibration of multiclass risk predictions.
-Journal of Biomedical Informatics, 54, pp. 283-93
-
-Steyerberg, E.W.Van Calster, B., Pencina, M.J. (2011). Performance measures for prediction models and markers : evaluation of predictions and classifications. Revista Espanola de Cardiologia, 64(9), pp. 788-794
+\emph{Journal of Biomedical Informatics}, \bold{54}, pp. 283-93
 }
 %\author{William Revelle \cr
 %Department of Psychology \cr

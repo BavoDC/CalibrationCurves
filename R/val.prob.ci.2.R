@@ -5,7 +5,8 @@
 #' come from the the original \code{\link{val.prob}}.
 #' \cr \cr The key feature of \code{val.prob.ci.2} is the generation of logistic and flexible calibration curves and related statistics.
 #' When using this code, please cite: Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina, M.J., Steyerberg
-#' E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. Journal of Clinical Epidemiology, 74, pp. 167-176
+#' E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. \emph{Journal of Clinical Epidemiology},
+#' \bold{74}, pp. 167-176
 #'
 #' @inheritParams rms::val.prob
 #' @param smooth \code{"loess"} generates a flexible calibration curve based on \code{\link{loess}},
@@ -67,15 +68,23 @@
 #' @param lwd.smooth the line width of the flexible calibration curve. Default is \code{1}.
 #'
 #' @param cl.level if \code{dostats=T}, the confidence level for the calculation of the confidence intervals of the calibration intercept,
-#'  calibration slope and c-statistic. Default is \code{0.95}. The confidence interval of the c-statistic is a logit-transformation-based confidence
-#'  interval (Qin and Hotilovac, 2008).
+#'  calibration slope and c-statistic. Default is \code{0.95}.
+#' @param method.ci method to calculate the confidence interval of the c-statistic. The argument is passed to \code{\link{auc.nonpara.mw}} from
+#' the auRoc-package and possible methods to compute the confidence interval are \code{"newcombe"}, \code{"pepe"}, \code{"delong"} or
+#' \code{"jackknife"}. Bootstrap-based methods are not available. The default method is \code{"pepe"} and here, the confidence interval is
+#' the logit-transformation-based confidence interval as documented in Qin and Hotilovac (2008). See \code{\link{auc.nonpara.mw}} for
+#' more information on the other methods.
 #'
 #' @return A vector containing performance measures of calibration is returned.
 #'
-#' @references Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina M., Steyerberg E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. Journal of Clinical Epidemiology, 74, pp. 167-176
-#' @references Steyerberg, E.W.Van Calster, B., Pencina, M.J. (2011). Performance measures for prediction models and markers : evaluation of predictions and classifications. Revista Espanola de Cardiologia, 64(9), pp. 788-794
-#' @references Van Hoorde, K., Van Huffel, S., Timmerman, D., Bourne, T., Van Calster, B. (2015). A spline-based tool to assess and visualize the calibration of multiclass risk predictions. Journal of Biomedical Informatics, 54, pp. 283-93
-#' @references  Qin, G., & Hotilovac, L. (2008). Comparison of non-parametric confidence intervals for the area under the ROC curve of a continuous-scale diagnostic test. Statistical Methods in Medical Research, 17(2), pp. 207-21
+#' @note In order to make use (of the functions) of the package auRoc, the user needs to install JAGS. However, since our package only uses the
+#' \code{auc.nonpara.mw} function which does not depend on the use of JAGS, we therefore copied the code and slightly adjusted it when
+#' \code{method="pepe"}.
+#'
+#' @references  Qin, G., & Hotilovac, L. (2008). Comparison of non-parametric confidence intervals for the area under the ROC curve of a continuous-scale diagnostic test. \emph{Statistical Methods in Medical Research}, \bold{17(2)}, pp. 207-21
+#' @references Steyerberg, E.W.Van Calster, B., Pencina, M.J. (2011). Performance measures for prediction models and markers : evaluation of predictions and classifications. \emph{Revista Espanola de Cardiologia}, \bold{64(9)}, pp. 788-794
+#' @references Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina M., Steyerberg E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. \emph{Journal of Clinical Epidemiology}, \bold{74}, pp. 167-176
+#' @references Van Hoorde, K., Van Huffel, S., Timmerman, D., Bourne, T., Van Calster, B. (2015). A spline-based tool to assess and visualize the calibration of multiclass risk predictions. \emph{Journal of Biomedical Informatics}, \bold{54}, pp. 283-93
 #' @export
 #'
 #' @examples
@@ -89,17 +98,24 @@
 #' data.0 <- data.frame(y,x1,x2,x3)
 #'
 #' # fit logistic model
-#' fit.lrm <- lrm(y~x1+x2+x3,data=data.0)
-#' pred.lrm <- predict(fit.lrm,type="fitted")
+#' fit.lrm <- lrm(y~x1+x2+x3, data=data.0)
+#' pred.lrm <- predict(fit.lrm, type="fitted")
 #'
-#' # calibration plot
-#' val.prob.ci.2(pred.lrm,y)
+#' # default calibration plot
+#' val.prob.ci.2(pred.lrm, y)
+#'
+#' # adding logistic calibration curves and other additional features
+#' val.prob.ci.2(pred.lrm, y, CL.smooth=TRUE, logistic.cal=TRUE, lty.log=2,
+#'  col.log="red", lwd.log=1.5)
+#'
+#' val.prob.ci.2(pred.lrm, y, CL.smooth=TRUE, logistic.cal=TRUE, lty.log=9,
+#' col.log="red", lwd.log=1.5, col.ideal=colors()[10], lwd.ideal=0.5)
 
 val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normwt = F, pl = T,
                           smooth = c("loess","rcs",F), CL.smooth="fill",CL.BT=F,lty.smooth=1,col.smooth="black",lwd.smooth=1,
                           nr.knots=5,logistic.cal = F,lty.log=1,col.log="black",lwd.log=1, xlab = "Predicted probability", ylab =
                             "Observed proportion", xlim = c(-0.02, 1),ylim = c(-0.15,1), m, g, cuts, emax.lim = c(0, 1),
-                          legendloc =  c(0.50 , 0.27), statloc = c(0,.85),dostats=T,cl.level=0.95,roundstats=2,
+                          legendloc =  c(0.50 , 0.27), statloc = c(0,.85),dostats=T,cl.level=0.95,method.ci="pepe",roundstats=2,
                           riskdist = "predicted", cex=0.75,cex.leg = 0.75, connect.group =
                             F, connect.smooth = T, g.group = 4, evaluate = 100, nmin = 0, d0lab="0", d1lab="1", cex.d01=0.7,
                           dist.label=0.04, line.bins=-.05, dist.label2=.03, cutoff, las=1, length.seg=1,
@@ -182,7 +198,7 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
   f2<-	lrm.fit(offset=logit[i], y=y[i])
   cl.interc <- confint(f2,level=cl.level)
   stats <- f$stats
-  cl.auc <- auc.logit.ci(y,p,stats["C"],cl.level)
+  cl.auc <- ci.auc(y,p,cl.level,method.ci)
 
   n <- stats["Obs"]
   predprob <- seq(emax.lim[1], emax.lim[2], by = 0.0005)
@@ -429,16 +445,16 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
     if(!is.logical(statloc)) {
       if(dostats[1]==T){
         stats.2 <- paste('Calibration\n',
-                         '...intercept (',cl.level*100,'% CI): '
+                         '...intercept: '
                          , sprintf(paste("%.",roundstats,"f",sep=""), stats["Intercept"]), " (",
                          sprintf(paste("%.",roundstats,"f",sep=""),cl.interc[1])," to ",
                          sprintf(paste("%.",roundstats,"f",sep=""),cl.interc[2]),")",'\n',
-                         '...slope (',cl.level*100,'% CI): '
+                         '...slope: '
                          , sprintf(paste("%.",roundstats,"f",sep=""), stats["Slope"]), " (",
                          sprintf(paste("%.",roundstats,"f",sep=""),cl.slope[1])," to ",
                          sprintf(paste("%.",roundstats,"f",sep=""),cl.slope[2]),")",'\n',
                          'Discrimination\n',
-                         '...c-statistic (',cl.level*100,'% CI): '
+                         '...c-statistic: '
                          , sprintf(paste("%.",roundstats,"f",sep=""), stats["C (ROC)"]), " (",
                          sprintf(paste("%.",roundstats,"f",sep=""),cl.auc[2])," to ",
                          sprintf(paste("%.",roundstats,"f",sep=""),cl.auc[3]),")"
@@ -490,5 +506,9 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
 
     }
   }
+  if(dostats==T){
+    cat(paste("\n\n A ",cl.level*100,
+              "% confidence interval is given for the calibration intercept, calibration slope and c-statistic. \n\n",
+              sep=""))}
   stats
 }
