@@ -44,7 +44,7 @@
 #' @param length.seg controls the length of the histogram lines. Default is \code{1}.
 #' @param ... arguments to be passed to \code{\link{plot}}, see \code{\link{par}}
 #' @param y.intersp character interspacing for vertical line distances of the legend (\code{\link{legend}})
-#' @param col.ideal controls the color of the ideal line on the plot. Default is \code{"grey"}.
+#' @param col.ideal controls the color of the ideal line on the plot. Default is \code{"red"}.
 #' @param lwd.ideal controls the line width of the ideal line on the plot. Default is \code{1}.
 #' @param lty.ideal linetype of the ideal line. Default is \code{1}.
 #' @param logistic.cal \code{T} or \code{TRUE} plots the logistic calibration curve, \code{F} or \code{FALSE} suppresses this curve.
@@ -85,30 +85,31 @@
 #' @references Steyerberg, E.W.Van Calster, B., Pencina, M.J. (2011). Performance measures for prediction models and markers : evaluation of predictions and classifications. \emph{Revista Espanola de Cardiologia}, \bold{64(9)}, pp. 788-794
 #' @references Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina M., Steyerberg E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. \emph{Journal of Clinical Epidemiology}, \bold{74}, pp. 167-176
 #' @references Van Hoorde, K., Van Huffel, S., Timmerman, D., Bourne, T., Van Calster, B. (2015). A spline-based tool to assess and visualize the calibration of multiclass risk predictions. \emph{Journal of Biomedical Informatics}, \bold{54}, pp. 283-93
-#' @export
 #'
 #' @examples
-#' # simulated data
-#' x1 <- as.matrix(rnorm(500))
-#' x2 <- as.matrix(rnorm(500))
-#' x3 <- as.matrix(rnorm(500))
-#' lp0=0.5*x1+1.2*x2+0.75*x3
-#' p0true=exp(lp0)/(1+exp(lp0))
-#' y <-rbinom(500,1,p0true)
-#' data.0 <- data.frame(y,x1,x2,x3)
+#' # Simulate training data
+#' X      = replicate(4, rnorm(5e2))
+#' p0true = binomial()$linkinv(cbind(1, X)%*%c(0.1, 0.5, 1.2, -0.75, 0.8))
+#' y      = rbinom(5e2, 1, p0true)
+#' Df     = data.frame(y,X)
 #'
-#' # fit logistic model
-#' fit.lrm <- lrm(y~x1+x2+x3, data=data.0)
-#' pred.lrm <- predict(fit.lrm, type="fitted")
+#' # Fit logistic model
+#' FitLog = lrm(y~., Df)
 #'
-#' # default calibration plot
-#' val.prob.ci.2(pred.lrm, y)
+#' # Simulate validation data
+#' Xval   = replicate(4, rnorm(5e2))
+#' p0true = binomial()$linkinv(cbind(1, Xval)%*%c(0.1, 0.5, 1.2, -0.75, 0.8))
+#' yval   = rbinom(5e2, 1, p0true)
+#' Pred   = binomial()$linkinv(cbind(1, Xval)%*%coef(FitLog))
 #'
-#' # adding logistic calibration curves and other additional features
-#' val.prob.ci.2(pred.lrm, y, CL.smooth=TRUE, logistic.cal=TRUE, lty.log=2,
+#' # Default calibration plot
+#' val.prob.ci.2(Pred, yval)
+#'
+#' # Adding logistic calibration curves and other additional features
+#' val.prob.ci.2(Pred, yval, CL.smooth=TRUE, logistic.cal=TRUE, lty.log=2,
 #'  col.log="red", lwd.log=1.5)
 #'
-#' val.prob.ci.2(pred.lrm, y, CL.smooth=TRUE, logistic.cal=TRUE, lty.log=9,
+#' val.prob.ci.2(Pred, yval, CL.smooth=TRUE, logistic.cal=TRUE, lty.log=9,
 #' col.log="red", lwd.log=1.5, col.ideal=colors()[10], lwd.ideal=0.5)
 
 val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normwt = F, pl = T,
@@ -119,7 +120,7 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
                           riskdist = "predicted", cex=0.75,cex.leg = 0.75, connect.group =
                             F, connect.smooth = T, g.group = 4, evaluate = 100, nmin = 0, d0lab="0", d1lab="1", cex.d01=0.7,
                           dist.label=0.04, line.bins=-.05, dist.label2=.03, cutoff, las=1, length.seg=1,
-                          y.intersp=1,lty.ideal=1,col.ideal="grey",lwd.ideal=1,...)
+                          y.intersp=1,lty.ideal=1,col.ideal="red",lwd.ideal=1,...)
 {
   if(smooth[1]==F){smooth <- "F"}
   smooth <- match.arg(smooth)
@@ -128,7 +129,7 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
   if(missing(p))
     p <- 1/(1 + exp( - logit))
   else logit <- log(p/(1 - p))
-  if(!all(c(0,1)%in%y)){stop("The vector with the binary outcome can only contain the values 0 and 1.")}
+  if(!all(y%in%0:1)){stop("The vector with the binary outcome can only contain the values 0 and 1.")}
   if(length(p) != length(y))
     stop("lengths of p or logit and y do not agree")
   names(p) <- names(y) <- names(logit) <- NULL
@@ -195,8 +196,15 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
   f.or <- lrm(y[i]~logit[i])
   f <- lrm.fit(logit[i], y[i])
   cl.slope <- confint(f,level=cl.level)[2,]
-  f2<-	lrm.fit(offset=logit[i], y=y[i])
+  f2 <-	lrm.fit(offset=logit[i], y=y[i])
+  if(f2$fail){
+    warning("The lrm function did not converge when computing the calibration intercept!",immediate.=T)
+    f2 <- list()
+    f2$coef <- NA
+    cl.interc <- rep(NA,2)
+  }else{
   cl.interc <- confint(f2,level=cl.level)
+  }
   stats <- f$stats
   cl.auc <- ci.auc(y,p,cl.level,method.ci)
 

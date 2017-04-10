@@ -15,4 +15,4 @@ LazyData: TRUE
 Depends: rms
 Imports: grDevices, graphics, methods, stats, utils
 Suggests: auRoc
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1

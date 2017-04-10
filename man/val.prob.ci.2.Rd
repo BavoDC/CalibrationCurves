@@ -16,7 +16,7 @@ val.prob.ci.2(p, y, logit, group, weights = rep(1, length(y)), normwt = F,
   connect.smooth = T, g.group = 4, evaluate = 100, nmin = 0,
   d0lab = "0", d1lab = "1", cex.d01 = 0.7, dist.label = 0.04,
   line.bins = -0.05, dist.label2 = 0.03, cutoff, las = 1,
-  length.seg = 1, y.intersp = 1, lty.ideal = 1, col.ideal = "grey",
+  length.seg = 1, y.intersp = 1, lty.ideal = 1, col.ideal = "red",
   lwd.ideal = 1, ...)
 }
 \arguments{
@@ -135,10 +135,10 @@ more information on the other methods.}
 \item{roundstats}{specifies the number of decimals to which the statistics are rounded when shown in the plot. Default is 2.}
 
 \item{riskdist}{
-Defaults to \code{"calibrated"} to plot the relative frequency distribution of
+Use \code{"calibrated"} to plot the relative frequency distribution of
 calibrated probabilities after dividing into 101 bins from \code{lim[1]} to
 \code{lim[2]}.
-Set to \code{"predicted"} to use raw assigned risk, \code{FALSE} to omit risk distribution.
+Set to \code{"predicted"} (the default as of rms 4.5-1) to use raw assigned risk, \code{FALSE} to omit risk distribution.
 Values are scaled so that highest bar is \code{0.15*(lim[2]-lim[1])}.
 }
 
@@ -196,7 +196,7 @@ Defaults are \code{d1lab="1"} for events and \code{d0lab="0"} for non-events.}
 
 \item{lty.ideal}{linetype of the ideal line. Default is \code{1}.}
 
-\item{col.ideal}{controls the color of the ideal line on the plot. Default is \code{"grey"}.}
+\item{col.ideal}{controls the color of the ideal line on the plot. Default is \code{"red"}.}
 
 \item{lwd.ideal}{controls the line width of the ideal line on the plot. Default is \code{1}.}
 
@@ -220,27 +220,29 @@ In order to make use (of the functions) of the package auRoc, the user needs to 
 \code{method="pepe"}.
 }
 \examples{
-# simulated data
-x1 <- as.matrix(rnorm(500))
-x2 <- as.matrix(rnorm(500))
-x3 <- as.matrix(rnorm(500))
-lp0=0.5*x1+1.2*x2+0.75*x3
-p0true=exp(lp0)/(1+exp(lp0))
-y <-rbinom(500,1,p0true)
-data.0 <- data.frame(y,x1,x2,x3)
+# Simulate training data
+X      = replicate(4, rnorm(5e2))
+p0true = binomial()$linkinv(cbind(1, X)\%*\%c(0.1, 0.5, 1.2, -0.75, 0.8))
+y      = rbinom(5e2, 1, p0true)
+Df     = data.frame(y,X)
 
-# fit logistic model
-fit.lrm <- lrm(y~x1+x2+x3, data=data.0)
-pred.lrm <- predict(fit.lrm, type="fitted")
+# Fit logistic model
+FitLog = lrm(y~., Df)
 
-# default calibration plot
-val.prob.ci.2(pred.lrm, y)
+# Simulate validation data
+Xval   = replicate(4, rnorm(5e2))
+p0true = binomial()$linkinv(cbind(1, Xval)\%*\%c(0.1, 0.5, 1.2, -0.75, 0.8))
+yval   = rbinom(5e2, 1, p0true)
+Pred   = binomial()$linkinv(cbind(1, Xval)\%*\%coef(FitLog))
 
-# adding logistic calibration curves and other additional features
-val.prob.ci.2(pred.lrm, y, CL.smooth=TRUE, logistic.cal=TRUE, lty.log=2,
+# Default calibration plot
+val.prob.ci.2(Pred, yval)
+
+# Adding logistic calibration curves and other additional features
+val.prob.ci.2(Pred, yval, CL.smooth=TRUE, logistic.cal=TRUE, lty.log=2,
  col.log="red", lwd.log=1.5)
 
-val.prob.ci.2(pred.lrm, y, CL.smooth=TRUE, logistic.cal=TRUE, lty.log=9,
+val.prob.ci.2(Pred, yval, CL.smooth=TRUE, logistic.cal=TRUE, lty.log=9,
 col.log="red", lwd.log=1.5, col.ideal=colors()[10], lwd.ideal=0.5)
 }
 \references{
@@ -252,4 +254,3 @@ Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina M., Steyerberg 
 
 Van Hoorde, K., Van Huffel, S., Timmerman, D., Bourne, T., Van Calster, B. (2015). A spline-based tool to assess and visualize the calibration of multiclass risk predictions. \emph{Journal of Biomedical Informatics}, \bold{54}, pp. 283-93
 }
-
