@@ -87,6 +87,10 @@
 #' @references Van Hoorde, K., Van Huffel, S., Timmerman, D., Bourne, T., Van Calster, B. (2015). A spline-based tool to assess and visualize the calibration of multiclass risk predictions. \emph{Journal of Biomedical Informatics}, \bold{54}, pp. 283-93
 #'
 #' @examples
+#'
+#' # Load package
+#' library(CalibrationCurves)
+#'
 #' # Simulate training data
 #' X      = replicate(4, rnorm(5e2))
 #' p0true = binomial()$linkinv(cbind(1, X)%*%c(0.1, 0.5, 1.2, -0.75, 0.8))
