@@ -400,9 +400,12 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
         lt <- c(lt, 1)
         lw.d <- c(lw.d,1)
       }
-      else lt <- c(lt, 0)
-      lw.d <- c(lw.d,0)
+      else {
+        lt <- c(lt, 0)
+        lw.d <- c(lw.d, 0)
+      }
       leg <- c(leg, "Grouped observations")
+      all.col <- c(all.col, col.smooth)
       marks <- c(marks, 2)
     }
   }
