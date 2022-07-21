@@ -4,8 +4,8 @@
 \title{General information on package and val.prob.ci.2 function
 }
 \description{
-Some years ago, Yvonne Vergouwe and Ewout Steyerberg adapted the function \code{\link{val.prob}} from the rms-package (\url{https://cran.r-project.org/web/packages/rms/rms.pdf}) into \code{val.prob.ci} and added the following functions to \code{val.prob}:
-\cr
+Some years ago, Yvonne Vergouwe and Ewout Steyerberg adapted the function \code{\link{val.prob}} from the rms-package (\url{https://cran.r-project.org/package=rms}) into \code{val.prob.ci} and added the following functions to \code{val.prob}:
+
 \itemize{
   \item Scaled Brier score by relating to max for average calibrated Null model
   \item Risk distribution according to outcome
@@ -14,10 +14,10 @@ Some years ago, Yvonne Vergouwe and Ewout Steyerberg adapted the function \code{
   \item Confidence intervals around triangles
   \item A cut-off can be plotted; set x coordinate
 }
-\cr
+
 
 In December 2015, Bavo De Cock, Daan Nieboer, and Ben Van Calster adapted
-this to \code{\link{val.prob.ci.2}}: \cr
+this to \code{\link{val.prob.ci.2}}:
 \itemize{
   \item Flexible calibration curves can be obtained using loess (default) or
     restricted cubic splines, with pointwise 95\% confidence intervals. Flexible calibration curves are now given by default and this decision is based on the findings reported in Van Calster et al. (2016).
@@ -43,14 +43,14 @@ this to \code{\link{val.prob.ci.2}}: \cr
     choice (e.g. \code{dostats=c("C (ROC)","R2")} or \code{dostats=c(2,3)}.
   \item Vectors p, y and logit no longer have to be sorted
   }
-\cr
+
 
 Since then, several new features have been added and are still being added. The most current version of this package can always be found on
-\url{https://github.com/BavoDC} and can easily be installed using the following code: \cr \cr
+\url{https://github.com/BavoDC} and can easily be installed using the following code:
 \code{
-install.packages("devtools") # if not yet installed} \cr
-\code{require(devtools)} \cr
-\code{install_git("https://github.com/BavoDC/CalibrationCurves")} \cr
+install.packages("devtools") # if not yet installed}
+\code{require(devtools)}
+\code{install_git("https://github.com/BavoDC/CalibrationCurves")}
 }
 \references{
 Steyerberg, E.W.Van Calster, B., Pencina, M.J. (2011). Performance measures for prediction models and markers : evaluation of predictions and classifications. \emph{Revista Espanola de Cardiologia}, \bold{64(9)}, pp. 788-794
@@ -61,13 +61,3 @@ Van Hoorde, K., Van Huffel, S., Timmerman, D., Bourne, T., Van Calster, B. (2015
 A spline-based tool to assess and visualize the calibration of multiclass risk predictions.
 \emph{Journal of Biomedical Informatics}, \bold{54}, pp. 283-93
 }
-%\author{William Revelle \cr
-%Department of Psychology \cr
-%Northwestern University \cr
-%Evanston, Illiniois \cr
-%\url{http://personality-project.org/revelle.html}\cr
-%Maintainer: William Revelle <revelle@northwestern.edu>
-%}
-%\references{A general guide to personality theory and research may be found at the personality-project \url{http://personality-project.org}. %See also the short guide to R at \url{http://personality-project.org/r}.
-%In addition, see
-%Revelle, W. (in preparation) An Introduction to Psychometric Theory with applications in R. Springer. at \url{http://personality-project.org/r%/book/}    }

@@ -259,7 +259,7 @@ An object of type \code{CalibrationCurve} with the following slots:
 }
 \description{
 The function val.prob.ci.2 is an adaptation of \code{\link{val.prob}} from Frank Harrell's rms package,
-\url{https://cran.r-project.org/web/packages/rms/rms.pdf}. Hence, the description of some of the functions of \code{val.prob.ci.2}
+\url{https://cran.r-project.org/package=rms}. Hence, the description of some of the functions of \code{val.prob.ci.2}
 come from the the original \code{\link{val.prob}}.
 \cr \cr The key feature of \code{val.prob.ci.2} is the generation of logistic and flexible calibration curves and related statistics.
 When using this code, please cite: Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina, M.J., Steyerberg,
@@ -274,7 +274,7 @@ In order to make use (of the functions) of the package auRoc, the user needs to 
 \examples{
 
 # Load package
-library(CalibrationCurvesCRAN)
+library(CalibrationCurves)
 set.seed(1783)
 
 # Simulate training data
