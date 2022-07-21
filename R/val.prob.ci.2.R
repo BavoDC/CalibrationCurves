@@ -11,7 +11,7 @@
 #' @inheritParams rms::val.prob
 #' @param smooth \code{"loess"} generates a flexible calibration curve based on \code{\link{loess}},
 #'  \code{"rcs"} generates a calibration curves based on restricted cubic splines (see \code{\link{rcs}} and
-#'  \code{\link[Hmisc]{rcspline.plot}}), \code{FALSE} suppresses the flexible curve. We recommend to use loess unless N is large,
+#'  \code{\link[Hmisc]{rcspline.plot}}), \code{"none"} suppresses the flexible curve. We recommend to use loess unless N is large,
 #'   for example N>5000. Default is \code{"loess"}.
 #' @param CL.smooth \code{"fill"} shows pointwise 95\% confidence limits for the flexible calibration curve with a gray
 #' area between the lower and upper limits, \code{TRUE} shows pointwise 95\% confidence limits for the flexible calibration curve
@@ -47,7 +47,7 @@
 #' @param col.ideal controls the color of the ideal line on the plot. Default is \code{"red"}.
 #' @param lwd.ideal controls the line width of the ideal line on the plot. Default is \code{1}.
 #' @param lty.ideal linetype of the ideal line. Default is \code{1}.
-#' @param logistic.cal \code{T} or \code{TRUE} plots the logistic calibration curve, \code{F} or \code{FALSE} suppresses this curve.
+#' @param logistic.cal \code{TRUE} plots the logistic calibration curve, \code{FALSE} suppresses this curve.
 #' Default is \code{FALSE}.
 #' @param xlab x-axis label, default is \code{"Predicted Probability"}.
 #' @param ylab y-axis label, default is \code{"Observed proportion"}.
@@ -60,14 +60,14 @@
 #' @param connect.smooth Defaults to \code{TRUE} to draw smoothed estimates using a line. Set to \code{FALSE} to instead use dots at individual estimates
 #' @param legendloc if \code{pl=TRUE}, list with components \code{x,y} or vector \code{c(x,y)} for bottom right corner of legend for
 #' curves and points. Default is \code{c(.50, .27)} scaled to lim. Use \code{locator(1)} to use the mouse, \code{FALSE} to suppress legend.
-#' @param col.log if \code{logistic.cal=T}, the color of the logistic calibration curve. Default is \code{"black"}.
-#' @param lty.log if \code{logistic.cal=T}, the linetype of the logistic calibration curve. Default is \code{1}.
-#' @param lwd.log if \code{logistic.cal=T}, the line width of the logistic calibration curve. Default is \code{1}.
+#' @param col.log if \code{logistic.cal=TRUE}, the color of the logistic calibration curve. Default is \code{"black"}.
+#' @param lty.log if \code{logistic.cal=TRUE}, the linetype of the logistic calibration curve. Default is \code{1}.
+#' @param lwd.log if \code{logistic.cal=TRUE}, the line width of the logistic calibration curve. Default is \code{1}.
 #' @param col.smooth the color of the flexible calibration curve. Default is \code{"black"}.
 #' @param lty.smooth the linetype of the flexible calibration curve. Default is \code{1}.
 #' @param lwd.smooth the line width of the flexible calibration curve. Default is \code{1}.
 #'
-#' @param cl.level if \code{dostats=T}, the confidence level for the calculation of the confidence intervals of the calibration intercept,
+#' @param cl.level if \code{dostats=TRUE}, the confidence level for the calculation of the confidence intervals of the calibration intercept,
 #'  calibration slope and c-statistic. Default is \code{0.95}.
 #' @param method.ci method to calculate the confidence interval of the c-statistic. The argument is passed to \code{\link{auc.nonpara.mw}} from
 #' the auRoc-package and possible methods to compute the confidence interval are \code{"newcombe"}, \code{"pepe"}, \code{"delong"} or
@@ -124,21 +124,30 @@
 #' val.prob.ci.2(Pred, yval, CL.smooth = TRUE, logistic.cal = TRUE, lty.log = 9,
 #' col.log = "red", lwd.log = 1.5, col.ideal = colors()[10], lwd.ideal = 0.5)
 
-val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normwt = F, pl = T,
-                          smooth = c("loess","rcs",F), CL.smooth="fill",CL.BT=F,lty.smooth=1,col.smooth="black",lwd.smooth=1,
-                          nr.knots=5,logistic.cal = F,lty.log=1,col.log="black",lwd.log=1, xlab = "Predicted probability", ylab =
-                            "Observed proportion", xlim = c(-0.02, 1),ylim = c(-0.15,1), m, g, cuts, emax.lim = c(0, 1),
-                          legendloc =  c(0.50 , 0.27), statloc = c(0,.85),dostats=T,cl.level=0.95,method.ci="pepe",roundstats=2,
-                          riskdist = "predicted", cex=0.75,cex.leg = 0.75, connect.group =
-                            F, connect.smooth = T, g.group = 4, evaluate = 100, nmin = 0, d0lab="0", d1lab="1", cex.d01=0.7,
-                          dist.label=0.04, line.bins=-.05, dist.label2=.03, cutoff, las=1, length.seg=1,
-                          y.intersp=1,lty.ideal=1,col.ideal="red",lwd.ideal=1,...)
+val.prob.ci.2 <- function(p, y, logit, group,
+                          weights = rep(1, length(y)), normwt = FALSE, pl = TRUE,
+                          smooth = c("loess", "rcs", "none"), CL.smooth = "fill",
+                          CL.BT = FALSE, lty.smooth = 1, col.smooth = "black", lwd.smooth = 1,
+                          nr.knots = 5, logistic.cal = FALSE, lty.log = 1,
+                          col.log = "black", lwd.log = 1, xlab = "Predicted probability", ylab = "Observed proportion",
+                          xlim = c(-0.02, 1), ylim = c(-0.15, 1), m, g, cuts, emax.lim = c(0, 1),
+                          legendloc =  c(0.50 , 0.27), statloc = c(0, .85), dostats = TRUE, cl.level = 0.95, method.ci = "pepe",
+                          roundstats = 2,
+                          riskdist = "predicted", cex = 0.75, cex.leg = 0.75, connect.group = FALSE, connect.smooth = TRUE,
+                          g.group = 4, evaluate = 100, nmin = 0, d0lab =
+                            "0", d1lab = "1", cex.d01 = 0.7,
+                          dist.label = 0.04, line.bins = -.05, dist.label2 =
+                            .03, cutoff, las = 1, length.seg = 1,
+                          y.intersp = 1, lty.ideal = 1, col.ideal = "red", lwd.ideal =
+                            1, ...)
 {
-  call = match.call()
-  if (smooth[1] == F) {
+  call   = match.call()
+  oldpar = par(no.readonly = TRUE)
+  on.exit(par(oldpar))
+  smooth <- match.arg(smooth)
+  if (smooth == "none") {
     smooth <- "F"
   }
-  smooth <- match.arg(smooth)
   if (!missing(p))
     if (any(!(p >= 0 |
               p <= 1))) {
@@ -188,11 +197,11 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
 
   if (length(p) > 5000 & smooth == "loess") {
     warning("Number of observations > 5000, RCS is recommended.",
-            immediate. = T)
+            immediate. = TRUE)
   }
-  if (length(p) > 1000 & CL.BT == T) {
+  if (length(p) > 1000 & CL.BT == TRUE) {
     warning("Number of observations is > 1000, this could take a while...",
-            immediate. = T)
+            immediate. = TRUE)
   }
 
   if(length(unique(p)) == 1) {
@@ -201,8 +210,8 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
     Intc <- log(P/(1 - P))
     n <- length(y)
     D <- -1/n
-    L01 <- -2 * sum(y * logit - log(1 + exp(logit)), na.rm = T)
-    L.cal <- -2 * sum(y * Intc - log(1 + exp(Intc)), na.rm = T)
+    L01 <- -2 * sum(y * logit - log(1 + exp(logit)), na.rm = TRUE)
+    L.cal <- -2 * sum(y * Intc - log(1 + exp(Intc)), na.rm = TRUE)
     U.chisq <- L01 - L.cal
     U.p <- 1 - pchisq(U.chisq, 1)
     U <- (U.chisq - 1)/n
@@ -225,7 +234,7 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
   cl.slope <- confint(f, level = cl.level)[2, ]
   f2   <-	lrm.fit(offset = logit[i], y = y[i])
   if(f2$fail){
-    warning("The lrm function did not converge when computing the calibration intercept!",immediate.=T)
+    warning("The lrm function did not converge when computing the calibration intercept!",immediate.=TRUE)
     f2 <- list()
     f2$coef <- NA
     cl.interc <- rep(NA,2)
@@ -269,7 +278,7 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
       Sm <- data.frame(Sm$x, Sm$fitted)
       Sm.01 <- Sm
 
-      if (connect.smooth == T & CL.smooth != "fill") {
+      if (connect.smooth == TRUE & CL.smooth != "fill") {
         clip(0, 1, 0, 1)
         lines(Sm,
               lty = lty.smooth,
@@ -279,7 +288,7 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
         lt <- c(lt, lty.smooth)
         lw.d <- c(lw.d, lwd.smooth)
         marks <- c(marks,-1)
-      } else if (connect.smooth == F & CL.smooth != "fill") {
+      } else if (connect.smooth == FALSE & CL.smooth != "fill") {
         clip(0, 1, 0, 1)
         points(Sm, col = col.smooth)
         do.call("clip", as.list(par()$usr))
@@ -287,9 +296,9 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
         lw.d <- c(lw.d, 1)
         marks <- c(marks, 1)
       }
-      if (CL.smooth == T | CL.smooth == "fill") {
+      if (CL.smooth == TRUE | CL.smooth == "fill") {
         to.pred <- seq(min(p), max(p), length = 200)
-        if (CL.BT == T) {
+        if (CL.BT == TRUE) {
           cat("Bootstrap samples are being generated.\n\n\n")
 
           res.BT = replicate(2000, BT.samples(y, p, to.pred))
@@ -313,7 +322,7 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
               lt <- c(lt, lty.smooth)
               lw.d <- c(lw.d, lwd.smooth)
               marks <- c(marks,-1)
-            } else if (connect.smooth == F) {
+            } else if (connect.smooth == FALSE) {
               points(Sm, col = col.smooth)
               lt <- c(lt, 0)
               lw.d <- c(lw.d, 1)
@@ -345,7 +354,7 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
 
         } else{
           Sm.0     = loess(y ~ p, degree = 2)
-          cl.loess = predict(Sm.0, type = "fitted", se = T)
+          cl.loess = predict(Sm.0, type = "fitted", se = TRUE)
           clip(0, 1, 0, 1)
           if (CL.smooth == "fill") {
             polygon(
@@ -358,7 +367,7 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
               col = rgb(177, 177, 177, 177, maxColorValue = 255),
               border = NA
             )
-            if (connect.smooth == T) {
+            if (connect.smooth == TRUE) {
               lines(Sm,
                     lty = lty.smooth,
                     lwd = lwd.smooth,
@@ -366,7 +375,7 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
               lt <- c(lt, lty.smooth)
               lw.d <- c(lw.d, lwd.smooth)
               marks <- c(marks,-1)
-            } else if (connect.smooth == F) {
+            } else if (connect.smooth == FALSE) {
               points(Sm, col = col.smooth)
               lt <- c(lt, 0)
               lw.d <- c(lw.d, 1)
@@ -422,14 +431,14 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
             show = "prob",
             statloc = "none"
             ,
-            add = T,
-            showknots = F,
+            add = TRUE,
+            showknots = FALSE,
             xrange = c(min(na.omit(p)), max(na.omit(p))),
             lty = lty.smooth
           ),
           error = function(e) {
             warning("The number of knots led to estimation problems, nk will be set to 4.",
-                    immediate. = T)
+                    immediate. = TRUE)
             tryCatch(
               .rcspline.plot(
                 p,
@@ -439,15 +448,15 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
                 show = "prob",
                 statloc = "none"
                 ,
-                add = T,
-                showknots = F,
+                add = TRUE,
+                showknots = FALSE,
                 xrange = c(min(na.omit(p)), max(na.omit(p))),
                 lty = lty.smooth
               )
               ,
               error = function(e) {
                 warning("Nk 4 also led to estimation problems, nk will be set to 3.",
-                        immediate. = T)
+                        immediate. = TRUE)
                 .rcspline.plot(
                   p,
                   y,
@@ -456,8 +465,8 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
                   show = "prob",
                   statloc = "none"
                   ,
-                  add = T,
-                  showknots = F,
+                  add = TRUE,
+                  showknots = FALSE,
                   xrange = c(min(na.omit(p)), max(na.omit(p)))
                   ,
                   lty = lty.smooth
@@ -476,14 +485,14 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
             show = "prob",
             statloc = "none"
             ,
-            add = T,
-            showknots = F,
+            add = TRUE,
+            showknots = FALSE,
             xrange = c(min(na.omit(p)), max(na.omit(p))),
             lty = lty.smooth
           ),
           error = function(e) {
             warning("The number of knots led to estimation problems, nk will be set to 3.",
-                    immediate. = T)
+                    immediate. = TRUE)
             .rcspline.plot(
               p,
               y,
@@ -492,8 +501,8 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
               show = "prob",
               statloc = "none"
               ,
-              add = T,
-              showknots = F,
+              add = TRUE,
+              showknots = FALSE,
               xrange = c(min(na.omit(p)), max(na.omit(p))),
               lty = lty.smooth
             )
@@ -509,8 +518,8 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
             show = "prob",
             statloc = "none"
             ,
-            add = T,
-            showknots = F,
+            add = TRUE,
+            showknots = FALSE,
             xrange = c(min(na.omit(p)), max(na.omit(p))),
             lty = lty.smooth
           ),
@@ -538,21 +547,21 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
       if (!missing(m))
         q <- cut2(p,
                   m = m,
-                  levels.mean = T,
+                  levels.mean = TRUE,
                   digits = 7)
       else if (!missing(g))
         q <- cut2(p,
                   g = g,
-                  levels.mean = T,
+                  levels.mean = TRUE,
                   digits = 7)
       else if (!missing(cuts))
         q <- cut2(p,
                   cuts = cuts,
-                  levels.mean = T,
+                  levels.mean = TRUE,
                   digits = 7)
       means <- as.single(levels(q))
       prop <- tapply(y, q, function(x)
-        mean(x, na.rm = T))
+        mean(x, na.rm = TRUE))
       points(means, prop, pch = 2, cex = 1)
       #18.11.02: CI triangles
       ng	<- tapply(y, q, length)
@@ -667,7 +676,7 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
              col=all.col,y.intersp = y.intersp)
     }
     if(!is.logical(statloc)) {
-      if(dostats[1]==T){
+      if(dostats[1] == TRUE){
         stats.2 <- paste('Calibration\n',
                          '...intercept: '
                          , sprintf(paste("%.", roundstats, "f", sep = ""), stats["Intercept"]), " (",
@@ -735,16 +744,6 @@ val.prob.ci.2 <- function(p, y, logit, group, weights = rep(1, length(y)), normw
            cex = cex.d01)
 
     }
-  }
-  if (dostats == T) {
-    cat(
-      paste(
-        "\n\n A ",
-        cl.level * 100,
-        "% confidence interval is given for the calibration intercept, calibration slope and c-statistic. \n\n",
-        sep = ""
-      )
-    )
   }
   Results =
     structure(

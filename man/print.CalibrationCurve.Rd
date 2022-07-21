@@ -2,103 +2,21 @@
 % Please edit documentation in R/printFunction.R
 \name{print.CalibrationCurve}
 \alias{print.CalibrationCurve}
-\title{Default Printing}
+\title{Print function for a CalibrationCurve object}
 \usage{
 \method{print}{CalibrationCurve}(x, ...)
 }
 \arguments{
-\item{x}{the object to be printed.}
+\item{x}{an object of type CalibrationCurve, resulting from \code{\link{val.prob.ci.2}}.}
 
-\item{...}{further arguments to be passed to or from other
-    methods.  They are ignored in this function.}
+\item{...}{arguments passed to \code{\link{print}}}
+}
+\value{
+The original \code{CalibrationCurve} object is returned.
 }
 \description{
-\code{print.default} is the \emph{default} method of the generic
-  \code{\link[base]{print}} function which prints its argument.
-}
-\details{
-The default for printing \code{NA}s is to print \code{NA} (without
-  quotes) unless this is a character \code{NA} \emph{and} \code{quote =
-    FALSE}, when \samp{<NA>} is printed.
-
-  The same number of decimal places is used throughout a vector.  This
-  means that \code{digits} specifies the minimum number of significant
-  digits to be used, and that at least one entry will be encoded with
-  that minimum number.  However, if all the encoded elements then have
-  trailing zeroes, the number of decimal places is reduced until at
-  least one element has a non-zero final digit.  Decimal points are only
-  included if at least one decimal place is selected.
-
-  Attributes are printed respecting their class(es), using the values of
-  \code{digits} to \code{print.default}, but using the default values
-  (for the methods called) of the other arguments.
-
-  Option \code{width} controls the printing of vectors, matrices and
-  arrays, and option \code{deparse.cutoff} controls the printing of
-  \link[base]{language objects} such as calls and formulae.
-
-  When the \pkg{methods} package is attached, \code{print} will call
-  \code{\link{show}} for \R objects with formal classes (\sQuote{S4})
-  if called with no optional arguments.
-}
-\section{Large number of digits}{
-
-  Note that for large values of \code{digits}, currently for
-  \code{digits >= 16}, the calculation of the number of significant
-  digits will depend on the platform's internal (C library)
-  implementation of \samp{sprintf()} functionality.
-
-}
-
-\section{Single-byte locales}{
-
-  If a non-printable character is encountered during output, it is
-  represented as one of the ANSI escape sequences (\samp{\\a}, \samp{\\b},
-  \samp{\\f}, \samp{\\n}, \samp{\\r}, \samp{\\t}, \samp{\\v}, \samp{\\\\} and
-  \samp{\\0}: see \link[base]{Quotes}), or failing that as a 3-digit octal
-  code: for example the UK currency pound sign in the C locale (if
-  implemented correctly) is printed as \samp{\\243}.  Which characters
-  are non-printable depends on the locale.
-  (Because some versions of Windows get this wrong, all bytes with the
-  upper bit set are regarded as printable on Windows in a single-byte
-  locale.)
-
-}
-
-\section{Multi-byte locales}{
-
-  In all locales, the characters in the ASCII range (\samp{0x00} to
-  \samp{0x7f}) are printed in the same way, as-is if printable, otherwise
-  via ANSI escape sequences or 3-digit octal escapes as described for
-  single-byte locales. Whether a character is printable depends on the
-  current locale and the operating system (C library).
-
-  Multi-byte non-printing characters are printed as an escape sequence
-  of the form \samp{\\uxxxx} (in hexadecimal). This is the Unicode code
-  point of the character.
-
-  It is possible to have a character string in a character vector that
-  is not valid in the current locale.  If a byte is encountered that is
-  not part of a valid character it is printed in hex in the form
-  \samp{\\xab} and this is repeated until the start of a valid character.
-
-}
-
-\examples{
-pi
-print(pi, digits = 16)
-LETTERS[1:16]
-print(LETTERS, quote = FALSE)
-
-M <- cbind(I = 1, matrix(1:10000, ncol = 10,
-                         dimnames = list(NULL, LETTERS[1:10])))
-utils::head(M)        # makes more sense than
-print(M, max = 1000)  # prints 90 rows and a message about omitting 910
+Prints the call, confidence level and values for the performance measures.
 }
 \seealso{
-The generic \code{\link[base]{print}}, \code{\link[base]{options}}.
-  The \code{"\link[base]{noquote}"} class and print method.
-
-  \code{\link[base]{encodeString}}, which encodes a character vector the way
-  it would be printed.
+\code{\link{val.prob.ci.2}}
 }

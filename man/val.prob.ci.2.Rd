@@ -10,16 +10,16 @@ val.prob.ci.2(
   logit,
   group,
   weights = rep(1, length(y)),
-  normwt = F,
-  pl = T,
-  smooth = c("loess", "rcs", F),
+  normwt = FALSE,
+  pl = TRUE,
+  smooth = c("loess", "rcs", "none"),
   CL.smooth = "fill",
-  CL.BT = F,
+  CL.BT = FALSE,
   lty.smooth = 1,
   col.smooth = "black",
   lwd.smooth = 1,
   nr.knots = 5,
-  logistic.cal = F,
+  logistic.cal = FALSE,
   lty.log = 1,
   col.log = "black",
   lwd.log = 1,
@@ -33,15 +33,15 @@ val.prob.ci.2(
   emax.lim = c(0, 1),
   legendloc = c(0.5, 0.27),
   statloc = c(0, 0.85),
-  dostats = T,
+  dostats = TRUE,
   cl.level = 0.95,
   method.ci = "pepe",
   roundstats = 2,
   riskdist = "predicted",
   cex = 0.75,
   cex.leg = 0.75,
-  connect.group = F,
-  connect.smooth = T,
+  connect.group = FALSE,
+  connect.smooth = TRUE,
   g.group = 4,
   evaluate = 100,
   nmin = 0,
@@ -94,7 +94,7 @@ but statistics will still be computed and outputted.}
 
 \item{smooth}{\code{"loess"} generates a flexible calibration curve based on \code{\link{loess}},
 \code{"rcs"} generates a calibration curves based on restricted cubic splines (see \code{\link{rcs}} and
-\code{\link[Hmisc]{rcspline.plot}}), \code{FALSE} suppresses the flexible curve. We recommend to use loess unless N is large,
+\code{\link[Hmisc]{rcspline.plot}}), \code{"none"} suppresses the flexible curve. We recommend to use loess unless N is large,
  for example N>5000. Default is \code{"loess"}.}
 
 \item{CL.smooth}{\code{"fill"} shows pointwise 95\% confidence limits for the flexible calibration curve with a gray
@@ -114,14 +114,14 @@ Default is \code{FALSE}.}
 In case the specified number of knots leads to estimation problems, then the number of knots is automatically reduced to the closest
  value without estimation problems.}
 
-\item{logistic.cal}{\code{T} or \code{TRUE} plots the logistic calibration curve, \code{F} or \code{FALSE} suppresses this curve.
+\item{logistic.cal}{\code{TRUE} plots the logistic calibration curve, \code{FALSE} suppresses this curve.
 Default is \code{FALSE}.}
 
-\item{lty.log}{if \code{logistic.cal=T}, the linetype of the logistic calibration curve. Default is \code{1}.}
+\item{lty.log}{if \code{logistic.cal=TRUE}, the linetype of the logistic calibration curve. Default is \code{1}.}
 
-\item{col.log}{if \code{logistic.cal=T}, the color of the logistic calibration curve. Default is \code{"black"}.}
+\item{col.log}{if \code{logistic.cal=TRUE}, the color of the logistic calibration curve. Default is \code{"black"}.}
 
-\item{lwd.log}{if \code{logistic.cal=T}, the line width of the logistic calibration curve. Default is \code{1}.}
+\item{lwd.log}{if \code{logistic.cal=TRUE}, the line width of the logistic calibration curve. Default is \code{1}.}
 
 \item{xlab}{x-axis label, default is \code{"Predicted Probability"}.}
 
@@ -165,7 +165,7 @@ the curve legends.}
  and augmented with the estimated calibration index: \code{"Dxy", "C (ROC)", "R2", "D", "D:Chi-sq", "D:p", "U", "U:Chi-sq",
   "U:p", "Q", "Brier", "Intercept", "Slope", "Emax", "Brier scaled", "Eavg", "ECI"}. These statistics are always returned by the function.}
 
-\item{cl.level}{if \code{dostats=T}, the confidence level for the calculation of the confidence intervals of the calibration intercept,
+\item{cl.level}{if \code{dostats=TRUE}, the confidence level for the calculation of the confidence intervals of the calibration intercept,
 calibration slope and c-statistic. Default is \code{0.95}.}
 
 \item{method.ci}{method to calculate the confidence interval of the c-statistic. The argument is passed to \code{\link{auc.nonpara.mw}} from
