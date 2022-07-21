@@ -1,0 +1,38 @@
+citHeader("To cite the 'CalibrationCurves' R package in publications, please use:")
+
+citEntry(entry   = "Article",
+         title   = "A calibration hierarchy for risk models was defined: from utopia to empirical data",
+         author  = personList(c(person(given = "Ben", family = "Van Calster"),
+                                person(given = "Daan", family = "Nieboer"),
+                                person(given = "Yvonne", family = "Vergouwe"),
+                                person(given = "Bavo", family = "De Cock"),
+                                person(given = "Michael J.", family = "Pencina"),
+                                person(given = "Ewout W.", family = "Steyerberg"))),
+         journal = "Journal of Clinical Epidemiology",
+         year    = "2016",
+         volume  = "74",
+         pages   = "167--176",
+         doi     = "10.1016/j.jclinepi.2015.12.005",
+         textVersion =
+           paste("Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina, M.J., Steyerberg, E.W. (2016).",
+                 "A calibration hierarchy for risk models was defined: from utopia to empirical data.",
+                 "Journal of Clinical Epidemiology, 74, pp. 167-176.",
+                 "doi: 10.1016/j.jclinepi.2015.12.005."))
+
+
+citEntry(entry = "Misc",
+         title = "The CalibrationCurves package: validating predicted probabilities against binary events.",
+         author  = personList(c(person(given = "Bavo", family = "De Cock"),
+                                person(given = "Daan", family = "Nieboer"),
+                                person(given = "Ben", family = "Van Calster"),
+                                person(given = "Ewout W.", family = "Steyerberg"),
+                                person(given = "Yvonne", family = "Vergouwe"))),
+         year = "2016",
+         url = "https://github.com/BavoDC/CalibrationCurves",
+         textVersion  =
+           paste("De Cock, B., Nieboer, D., Van Calster, B., Steyerberg, E.W., Vergouwe, Y. (2016).",
+                 "The CalibrationCurves package: validating predicted probabilities against binary events.",
+                 "https://github.com/BavoDC/CalibrationCurves")
+)
+
+

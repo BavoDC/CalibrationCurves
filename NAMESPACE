@@ -6,5 +6,8 @@ importFrom("methods", "existsFunction")
 importFrom("stats", "approx", "confint", "loess", "na.omit", "pchisq",
              "plogis", "predict", "quantile", "supsmu","pnorm", "qnorm", "qt")
 importFrom("utils", "getFromNamespace")
+importFrom("Hmisc", "cut2", "groupn", "label", "rcspline.eval")
+importFrom("survival", "coxph.control")
 import(rms)
 export(val.prob.ci.2)
+S3method(print, CalibrationCurve)

@@ -4,20 +4,62 @@
 \alias{val.prob.ci.2}
 \title{Calibration performance}
 \usage{
-val.prob.ci.2(p, y, logit, group, weights = rep(1, length(y)), normwt = F,
-  pl = T, smooth = c("loess", "rcs", F), CL.smooth = "fill", CL.BT = F,
-  lty.smooth = 1, col.smooth = "black", lwd.smooth = 1, nr.knots = 5,
-  logistic.cal = F, lty.log = 1, col.log = "black", lwd.log = 1,
-  xlab = "Predicted probability", ylab = "Observed proportion",
-  xlim = c(-0.02, 1), ylim = c(-0.15, 1), m, g, cuts, emax.lim = c(0, 1),
-  legendloc = c(0.5, 0.27), statloc = c(0, 0.85), dostats = T,
-  cl.level = 0.95, method.ci = "pepe", roundstats = 2,
-  riskdist = "predicted", cex = 0.75, cex.leg = 0.75, connect.group = F,
-  connect.smooth = T, g.group = 4, evaluate = 100, nmin = 0,
-  d0lab = "0", d1lab = "1", cex.d01 = 0.7, dist.label = 0.04,
-  line.bins = -0.05, dist.label2 = 0.03, cutoff, las = 1,
-  length.seg = 1, y.intersp = 1, lty.ideal = 1, col.ideal = "red",
-  lwd.ideal = 1, ...)
+val.prob.ci.2(
+  p,
+  y,
+  logit,
+  group,
+  weights = rep(1, length(y)),
+  normwt = F,
+  pl = T,
+  smooth = c("loess", "rcs", F),
+  CL.smooth = "fill",
+  CL.BT = F,
+  lty.smooth = 1,
+  col.smooth = "black",
+  lwd.smooth = 1,
+  nr.knots = 5,
+  logistic.cal = F,
+  lty.log = 1,
+  col.log = "black",
+  lwd.log = 1,
+  xlab = "Predicted probability",
+  ylab = "Observed proportion",
+  xlim = c(-0.02, 1),
+  ylim = c(-0.15, 1),
+  m,
+  g,
+  cuts,
+  emax.lim = c(0, 1),
+  legendloc = c(0.5, 0.27),
+  statloc = c(0, 0.85),
+  dostats = T,
+  cl.level = 0.95,
+  method.ci = "pepe",
+  roundstats = 2,
+  riskdist = "predicted",
+  cex = 0.75,
+  cex.leg = 0.75,
+  connect.group = F,
+  connect.smooth = T,
+  g.group = 4,
+  evaluate = 100,
+  nmin = 0,
+  d0lab = "0",
+  d1lab = "1",
+  cex.d01 = 0.7,
+  dist.label = 0.04,
+  line.bins = -0.05,
+  dist.label2 = 0.03,
+  cutoff,
+  las = 1,
+  length.seg = 1,
+  y.intersp = 1,
+  lty.ideal = 1,
+  col.ideal = "red",
+  lwd.ideal = 1,
+  ...
+)
 }
 \arguments{
 \item{p}{
@@ -203,14 +245,24 @@ Defaults are \code{d1lab="1"} for events and \code{d0lab="0"} for non-events.}
 \item{...}{arguments to be passed to \code{\link{plot}}, see \code{\link{par}}}
 }
 \value{
-A vector containing performance measures of calibration is returned.
+An object of type \code{CalibrationCurve} with the following slots:
+
+\item{call}{the matched call.}
+
+\item{stats}{a vector containing performance measures of calibration.}
+
+\item{cl.level}{the confidence level used.}
+
+\item{Calibration}{contains the calibration intercept and slope, together with their confidence intervals.}
+
+\item{Cindex}{the value of the c-statistic, together with its confidence interval.}
 }
 \description{
 The function val.prob.ci.2 is an adaptation of \code{\link{val.prob}} from Frank Harrell's rms package,
 \url{https://cran.r-project.org/web/packages/rms/rms.pdf}. Hence, the description of some of the functions of \code{val.prob.ci.2}
 come from the the original \code{\link{val.prob}}.
 \cr \cr The key feature of \code{val.prob.ci.2} is the generation of logistic and flexible calibration curves and related statistics.
-When using this code, please cite: Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina, M.J., Steyerberg
+When using this code, please cite: Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina, M.J., Steyerberg,
 E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. \emph{Journal of Clinical Epidemiology},
 \bold{74}, pp. 167-176
 }
@@ -222,37 +274,38 @@ In order to make use (of the functions) of the package auRoc, the user needs to 
 \examples{
 
 # Load package
-library(CalibrationCurves)
+library(CalibrationCurvesCRAN)
+set.seed(1783)
 
 # Simulate training data
 X      = replicate(4, rnorm(5e2))
-p0true = binomial()$linkinv(cbind(1, X)\%*\%c(0.1, 0.5, 1.2, -0.75, 0.8))
+p0true = binomial()$linkinv(cbind(1, X) \%*\% c(0.1, 0.5, 1.2, -0.75, 0.8))
 y      = rbinom(5e2, 1, p0true)
-Df     = data.frame(y,X)
+Df     = data.frame(y, X)
 
 # Fit logistic model
-FitLog = lrm(y~., Df)
+FitLog = lrm(y ~ ., Df)
 
 # Simulate validation data
 Xval   = replicate(4, rnorm(5e2))
-p0true = binomial()$linkinv(cbind(1, Xval)\%*\%c(0.1, 0.5, 1.2, -0.75, 0.8))
+p0true = binomial()$linkinv(cbind(1, Xval) \%*\% c(0.1, 0.5, 1.2, -0.75, 0.8))
 yval   = rbinom(5e2, 1, p0true)
-Pred   = binomial()$linkinv(cbind(1, Xval)\%*\%coef(FitLog))
+Pred   = binomial()$linkinv(cbind(1, Xval) \%*\% coef(FitLog))
 
 # Default calibration plot
 val.prob.ci.2(Pred, yval)
 
 # Adding logistic calibration curves and other additional features
-val.prob.ci.2(Pred, yval, CL.smooth=TRUE, logistic.cal=TRUE, lty.log=2,
- col.log="red", lwd.log=1.5)
+val.prob.ci.2(Pred, yval, CL.smooth = TRUE, logistic.cal = TRUE, lty.log = 2,
+ col.log = "red", lwd.log = 1.5)
 
-val.prob.ci.2(Pred, yval, CL.smooth=TRUE, logistic.cal=TRUE, lty.log=9,
-col.log="red", lwd.log=1.5, col.ideal=colors()[10], lwd.ideal=0.5)
+val.prob.ci.2(Pred, yval, CL.smooth = TRUE, logistic.cal = TRUE, lty.log = 9,
+col.log = "red", lwd.log = 1.5, col.ideal = colors()[10], lwd.ideal = 0.5)
 }
 \references{
 Qin, G., & Hotilovac, L. (2008). Comparison of non-parametric confidence intervals for the area under the ROC curve of a continuous-scale diagnostic test. \emph{Statistical Methods in Medical Research}, \bold{17(2)}, pp. 207-21
 
-Steyerberg, E.W.Van Calster, B., Pencina, M.J. (2011). Performance measures for prediction models and markers : evaluation of predictions and classifications. \emph{Revista Espanola de Cardiologia}, \bold{64(9)}, pp. 788-794
+Steyerberg, E.W., Van Calster, B., Pencina, M.J. (2011). Performance measures for prediction models and markers : evaluation of predictions and classifications. \emph{Revista Espanola de Cardiologia}, \bold{64(9)}, pp. 788-794
 
 Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina M., Steyerberg E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. \emph{Journal of Clinical Epidemiology}, \bold{74}, pp. 167-176
 

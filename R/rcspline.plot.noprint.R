@@ -1,4 +1,9 @@
-rcspline.plot <- function(x, y, model=c("logistic","cox","ols"), xrange,
+#' Internal function
+#'
+#' Adjusted version of the \code{\link[Hmisc]{rcspline.plot}} function where only the output is returned and no plot is made
+#'
+#' @inheritParams Hmisc::rcspline.plot
+.rcspline.plot <- function(x, y, model=c("logistic","cox","ols"), xrange,
                           event, nk=5, knots=NULL, show=c("xbeta", "prob"),
                           adj=NULL, xlab, ylab, ylim, plim=c(0,1),
                           plotcl=TRUE, showknots=TRUE, add=FALSE, subset,
