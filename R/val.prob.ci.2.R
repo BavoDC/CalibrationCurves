@@ -132,14 +132,10 @@ val.prob.ci.2 <- function(p, y, logit, group,
                           col.log = "black", lwd.log = 1, xlab = "Predicted probability", ylab = "Observed proportion",
                           xlim = c(-0.02, 1), ylim = c(-0.15, 1), m, g, cuts, emax.lim = c(0, 1),
                           legendloc =  c(0.50 , 0.27), statloc = c(0, .85), dostats = TRUE, cl.level = 0.95, method.ci = "pepe",
-                          roundstats = 2,
-                          riskdist = "predicted", cex = 0.75, cex.leg = 0.75, connect.group = FALSE, connect.smooth = TRUE,
-                          g.group = 4, evaluate = 100, nmin = 0, d0lab =
-                            "0", d1lab = "1", cex.d01 = 0.7,
-                          dist.label = 0.04, line.bins = -.05, dist.label2 =
-                            .03, cutoff, las = 1, length.seg = 1,
-                          y.intersp = 1, lty.ideal = 1, col.ideal = "red", lwd.ideal =
-                            1, ...)
+                          roundstats = 2, riskdist = "predicted", cex = 0.75, cex.leg = 0.75, connect.group = FALSE, connect.smooth = TRUE,
+                          g.group = 4, evaluate = 100, nmin = 0, d0lab = "0", d1lab = "1", cex.d01 = 0.7,
+                          dist.label = 0.04, line.bins = -.05, dist.label2 = .03, cutoff, las = 1, length.seg = 1,
+                          y.intersp = 1, lty.ideal = 1, col.ideal = "red", lwd.ideal = 1, ...)
 {
   call   = match.call()
   oldpar = par(no.readonly = TRUE)
@@ -299,11 +295,9 @@ val.prob.ci.2 <- function(p, y, logit, group,
       if (CL.smooth == TRUE | CL.smooth == "fill") {
         to.pred <- seq(min(p), max(p), length = 200)
         if (CL.BT == TRUE) {
-          cat("Bootstrap samples are being generated.\n\n\n")
-
           res.BT = replicate(2000, BT.samples(y, p, to.pred))
           CL.BT  = apply(res.BT, 1, quantile, c(0.025, 0.975))
-          colnames(CL.BT) <- to.pred
+          colnames(CL.BT) = to.pred
 
           if (CL.smooth == "fill") {
             clip(0, 1, 0, 1)

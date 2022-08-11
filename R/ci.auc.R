@@ -11,9 +11,9 @@ ci.auc <- function(crit,pred,conf.level=0.95,method="pepe"){
   if (!grepl("bootstrap", method)) {
     result <- auc.nonpara.mw(dis$pred, nondis$pred, conf.level, method)
   } else if (grepl("bootstrap", method)) {
-    cat(
+    warning(
       "Bootstrap-based methods are not supported by this package. Method will be set to 'pepe'. \n\n"
-    )
+    , immediate. = TRUE)
     result <- auc.nonpara.mw(dis$pred, nondis$pred, conf.level, method = "pepe")
   }
 

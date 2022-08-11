@@ -11,7 +11,9 @@
                           main="auto", statloc)
 {
   model <- match.arg(model)
-  show <- match.arg(show)
+  show  <- match.arg(show)
+  oldpar = par(no.readonly = TRUE)
+  on.exit(par(oldpar))
 
   if(! missing(event))
     model<-"cox"
@@ -186,7 +188,6 @@
     if(! missing(statloc) && statloc[1] == "ll")
       oldmar[1]<- 11
 
-    oldpar <- par(err= - 1, mar=oldmar)
     plot(xe, xbeta, type="n", main=main, xlab=xlab, ylab=ylabl,
          xlim=xlim, ylim=ylim)
     lines(xe, xbeta, lty=lty)
@@ -200,7 +201,7 @@
 
     sl<-0
     if(missing(statloc)) {
-      cat("Click left mouse button at upper left corner for statistics\n")
+      message("Click left mouse button at upper left corner for statistics\n")
       z<-locator(1)
       statloc<-"l"
     } else if(statloc[1] != "none") {
@@ -255,8 +256,11 @@
       points(z, pch=2, mkh=.05)}
   }
 
-  if(! add)
-    par(oldpar)
-
-  invisible(list(knots=knots, x=xe, xbeta=xbeta, lower=lower, upper=upper))
+  invisible(list(
+    knots = knots,
+    x = xe,
+    xbeta = xbeta,
+    lower = lower,
+    upper = upper
+  ))
 }
