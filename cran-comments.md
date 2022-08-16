@@ -1,5 +1,6 @@
 ## Resubmission
 This is a resubmission. In this version:
+- man/dot-rcspline.plot.Rd: removed \var in \eqn (resulted in a note in the pretest on Debian).
 - R/ci.auc.R (line 14): replaced cat() by warning().
 - R/rcspline.plot.noprint.R: 
   * line 203: replaced cat() by message().

@@ -2,7 +2,38 @@
 #'
 #' Adjusted version of the \code{\link[Hmisc]{rcspline.plot}} function where only the output is returned and no plot is made
 #'
-#' @inheritParams Hmisc::rcspline.plot
+#'
+#' @param x a numeric predictor
+#' @param y a numeric response. For binary logistic regression, \code{y} should be either 0 or 1.
+#' @param model \code{"logistic"} or \code{"cox"}. For \code{"cox"}, uses the \code{coxph.fit} function with \code{method="efron"} arguement set.
+#' @param xrange range for evaluating \code{x}, default is \eqn{f} and \eqn{1 - f} quantiles of \code{x},
+#' where \eqn{f = \frac{10}{\max{(n, 200)}}}{f = 10/max(\code{n}, 200)} and \eqn{n} the number of observations
+#' @param event event/censoring indicator if \code{model="cox"}. If \code{event} is present, \code{model} is assumed to be \code{"cox"}
+#' @param nk number of knots
+#' @param knots knot locations, default based on quantiles of \code{x} (by \code{\link[Hmisc]{rcspline.eval}})
+#' @param show \code{"xbeta"} or \code{"prob"} - what is plotted on \verb{y}-axis
+#' @param adj optional matrix of adjustment variables
+#' @param xlab \verb{x}-axis label, default is the \dQuote{label} attribute of \code{x}
+#' @param ylab \verb{y}-axis label, default is the \dQuote{label} attribute of \code{y}
+#' @param ylim \verb{y}-axis limits for logit or log hazard
+#' @param plim \verb{y}-axis limits for probability scale
+#' @param plotcl plot confidence limits
+#' @param showknots show knot locations with arrows
+#' @param add add this plot to an already existing plot
+#' @param subset subset of observations to process, e.g. \code{sex == "male"}
+#' @param lty line type for plotting estimated spline function
+#' @param noprint suppress printing regression coefficients and standard errors
+#' @param m for \code{model="logistic"}, plot grouped estimates with triangles. Each group contains \code{m} ordered observations on \code{x}.
+#' @param smooth plot nonparametric estimate if \code{model="logistic"} and \code{adj} is not specified
+#' @param bass smoothing parameter (see \code{supsmu})
+#' @param main main title, default is \code{"Estimated Spline Transformation"}
+#' @param statloc location of summary statistics. Default positioning by clicking left mouse button where upper left corner of statistics should appear.
+#'  Alternative is \code{"ll"} to place below the graph on the lower left, or the actual \code{x} and \code{y} coordinates. Use \code{"none"} to suppress statistics.
+#'
+#' @return list with components (\samp{knots}, \samp{x}, \samp{xbeta}, \samp{lower}, \samp{upper}) which are respectively the knot locations, design matrix,
+#' linear predictor, and lower and upper confidence limits
+#' @seealso   \code{\link[rms]{lrm}}, \code{\link[rms]{cph}}, \code{\link[Hmisc]{rcspline.eval}}, \code{\link[graphics]{plot}}, \code{\link[stats]{supsmu}},
+#' \code{\link[survival:survival-internal]{coxph.fit}}, \code{\link[rms]{lrm.fit}}
 .rcspline.plot <- function(x, y, model=c("logistic","cox","ols"), xrange,
                           event, nk=5, knots=NULL, show=c("xbeta", "prob"),
                           adj=NULL, xlab, ylab, ylim, plim=c(0,1),
