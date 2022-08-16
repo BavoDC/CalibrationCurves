@@ -29,7 +29,7 @@
   The function implements various methods based on the Mann-Whitney statistic.
 }
 \note{
-  The observations from class P tend to have larger values then that from
+  The observations from class P tend to have larger values than that from
   class N.
 
   This help-file is a copy of the original help-file of the function \code{auc.nonpara.mw} from the auRoc-package. It is important to note
