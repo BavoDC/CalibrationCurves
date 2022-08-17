@@ -21,7 +21,6 @@
 
 
 getAUCmw <- function(x, y){
-
   xy <- expand.grid(x, y)
   mean(ifelse(xy[,2] < xy[,1], 1, (ifelse(xy[,2] == xy[,1], 1/2, 0))))
 

@@ -29,8 +29,7 @@
   The function implements various methods based on the Mann-Whitney statistic.
 }
 \note{
-  The observations from class P tend to have larger values than that from
-  class N.
+  The observations from class P tend to have larger values than that from class N.
 
   This help-file is a copy of the original help-file of the function \code{auc.nonpara.mw} from the auRoc-package. It is important to note
   that, when using \code{method="pepe"}, the confidence interval is computed as documented in Qin and Hotilovac (2008) and that this is

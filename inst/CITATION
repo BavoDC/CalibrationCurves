@@ -20,18 +20,19 @@ citEntry(entry   = "Article",
                  "doi: 10.1016/j.jclinepi.2015.12.005."))
 
 
-citEntry(entry = "Misc",
+citEntry(entry = "Manual",
          title = "The CalibrationCurves package: validating predicted probabilities against binary events.",
          author  = personList(c(person(given = "Bavo", family = "De Cock"),
                                 person(given = "Daan", family = "Nieboer"),
                                 person(given = "Ben", family = "Van Calster"),
                                 person(given = "Ewout W.", family = "Steyerberg"),
                                 person(given = "Yvonne", family = "Vergouwe"))),
-         year = "2016",
+         year = "2022",
+         note = "R package version 0.1.5",
          url = "https://github.com/BavoDC/CalibrationCurves",
          textVersion  =
-           paste("De Cock, B., Nieboer, D., Van Calster, B., Steyerberg, E.W., Vergouwe, Y. (2016).",
-                 "The CalibrationCurves package: validating predicted probabilities against binary events.",
+           paste("De Cock, B., Nieboer, D., Van Calster, B., Steyerberg, E.W., Vergouwe, Y. (2022).",
+                 "The CalibrationCurves package: validating predicted probabilities against binary events. R package version 0.1.5,",
                  "https://github.com/BavoDC/CalibrationCurves")
 )
 

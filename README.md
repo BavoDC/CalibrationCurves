@@ -20,5 +20,5 @@ If you have questions, remarks or suggestions regarding the package, you can con
 ## Citation
 If you use this package, please cite:
 
-- De Cock, B., Nieboer, D., Van Calster, B., Steyerberg, E.W., Vergouwe, Y. (2016). _CalibrationCurves: Calibration performance_. R package version 0.1.2. [https://github.com/BavoDC/CalibrationCurves](https://github.com/BavoDC/CalibrationCurves)
+- De Cock, B., Nieboer, D., Van Calster, B., Steyerberg, E.W., Vergouwe, Y. (2022). _The CalibrationCurves package: validating predicted probabilities against binary events_. R package version 0.1.5, [https://github.com/BavoDC/CalibrationCurves](https://github.com/BavoDC/CalibrationCurves)
 - Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina, M.J., Steyerberg, E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. _Journal of Clinical Epidemiology_, __74__, pp. 167-176
