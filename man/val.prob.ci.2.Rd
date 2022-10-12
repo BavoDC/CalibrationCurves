@@ -266,6 +266,10 @@ When using this code, please cite: Van Calster, B., Nieboer, D., Vergouwe, Y., D
 E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. \emph{Journal of Clinical Epidemiology},
 \bold{74}, pp. 167-176
 }
+\details{
+When using the predicted probabilities of an uninformative model (i.e. equal probabilities for all observations), the model has no predictive value.
+ Consequently, where applicable, the value of the performance measure corresponds to the worst possible theoretical value. For the ECI, for example, this equals 1 (Edlinger et al., 2022).
+}
 \note{
 In order to make use (of the functions) of the package auRoc, the user needs to install JAGS. However, since our package only uses the
 \code{auc.nonpara.mw} function which does not depend on the use of JAGS, we therefore copied the code and slightly adjusted it when
@@ -303,6 +307,8 @@ val.prob.ci.2(Pred, yval, CL.smooth = TRUE, logistic.cal = TRUE, lty.log = 9,
 col.log = "red", lwd.log = 1.5, col.ideal = colors()[10], lwd.ideal = 0.5)
 }
 \references{
+Edlinger, M, van Smeden, M, Alber, HF, Wanitschek, M, Van Calster, B. (2022). Risk prediction models for discrete ordinal outcomes: Calibration and the impact of the proportional odds assumption. \emph{Statistics in Medicine}, \bold{41( 8)}, pp. 1334– 1360
+
 Qin, G., & Hotilovac, L. (2008). Comparison of non-parametric confidence intervals for the area under the ROC curve of a continuous-scale diagnostic test. \emph{Statistical Methods in Medical Research}, \bold{17(2)}, pp. 207-21
 
 Steyerberg, E.W., Van Calster, B., Pencina, M.J. (2011). Performance measures for prediction models and markers : evaluation of predictions and classifications. \emph{Revista Espanola de Cardiologia}, \bold{64(9)}, pp. 788-794

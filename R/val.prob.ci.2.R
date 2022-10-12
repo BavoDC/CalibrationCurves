@@ -86,6 +86,10 @@
 #' \code{auc.nonpara.mw} function which does not depend on the use of JAGS, we therefore copied the code and slightly adjusted it when
 #' \code{method="pepe"}.
 #'
+#' @details When using the predicted probabilities of an uninformative model (i.e. equal probabilities for all observations), the model has no predictive value.
+#'  Consequently, where applicable, the value of the performance measure corresponds to the worst possible theoretical value. For the ECI, for example, this equals 1 (Edlinger et al., 2022).
+#'
+#' @references  Edlinger, M, van Smeden, M, Alber, HF, Wanitschek, M, Van Calster, B. (2022). Risk prediction models for discrete ordinal outcomes: Calibration and the impact of the proportional odds assumption. \emph{Statistics in Medicine}, \bold{41( 8)}, pp. 1334– 1360
 #' @references  Qin, G., & Hotilovac, L. (2008). Comparison of non-parametric confidence intervals for the area under the ROC curve of a continuous-scale diagnostic test. \emph{Statistical Methods in Medical Research}, \bold{17(2)}, pp. 207-21
 #' @references Steyerberg, E.W., Van Calster, B., Pencina, M.J. (2011). Performance measures for prediction models and markers : evaluation of predictions and classifications. \emph{Revista Espanola de Cardiologia}, \bold{64(9)}, pp. 788-794
 #' @references Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina M., Steyerberg E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. \emph{Journal of Clinical Epidemiology}, \bold{74}, pp. 167-176
@@ -201,24 +205,44 @@ val.prob.ci.2 <- function(p, y, logit, group,
   }
 
   if(length(unique(p)) == 1) {
-    #22Sep94
-    P <- mean(y)
-    Intc <- log(P/(1 - P))
-    n <- length(y)
-    D <- -1/n
-    L01 <- -2 * sum(y * logit - log(1 + exp(logit)), na.rm = TRUE)
-    L.cal <- -2 * sum(y * Intc - log(1 + exp(Intc)), na.rm = TRUE)
+    # Adjusted 2022-09-26
+    P       <- mean(y)
+    Intc    <- log(P/(1 - P))
+    n       <- length(y)
+    D       <- -1/n
+    L01     <- -2 * sum(y * logit - log(1 + exp(logit)), na.rm = TRUE)
+    L.cal   <- -2 * sum(y * Intc - log(1 + exp(Intc)), na.rm = TRUE)
     U.chisq <- L01 - L.cal
-    U.p <- 1 - pchisq(U.chisq, 1)
-    U <- (U.chisq - 1)/n
-    Q <- D - U
+    U.p     <- 1 - pchisq(U.chisq, 1)
+    U       <- (U.chisq - 1)/n
+    Q       <- D - U
+    cl.auc  <- ci.auc(y, p, cl.level, method.ci)
 
-    stats <- c(0, 0.5, 0, D, 0, 1, U, U.chisq, U.p, Q, mean((y - p[
-      1])^2), Intc, 0, rep(abs(p[1] - P), 2))
+
+    stats   <- c(0, 0.5, 0, D, 0, 1, U, U.chisq, U.p, Q, mean((y - p[1])^2), Intc, 0, rep(abs(p[1] - P), 2), 1)
     names(stats) <- c("Dxy", "C (ROC)", "R2", "D", "D:Chi-sq",
                       "D:p", "U", "U:Chi-sq", "U:p", "Q", "Brier",
                       "Intercept", "Slope", "Emax", "Eavg", "ECI")
-    return(stats)
+    Results =
+      structure(
+        list(
+          call = call,
+          stats = stats,
+          cl.level = cl.level,
+          Calibration = list(
+            Intercept = c("Point estimate" = unname(stats["Intercept"]),
+                          "Lower confidence limit" = NA,
+                          "Upper confidence limit" = NA),
+            Slope = c("Point estimate" = unname(stats["Slope"]),
+                      "Lower confidence limit" = NA,
+                      "Upper confidence limit" = NA)
+          ),
+          Cindex = c("Point estimate" = unname(stats["C (ROC)"]),
+                     "Lower confidence limit" = cl.auc[2],
+                     "Upper confidence limit" = cl.auc[3])
+        ), class = "CalibrationCurve"
+      )
+    return(Results)
   }
   i <- !is.infinite(logit)
   nm <- sum(!i)

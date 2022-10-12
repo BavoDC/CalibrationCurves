@@ -40,3 +40,6 @@ vignettes/*.pdf
 # Submission CRAN
 cran-comments.md
 CRAN-SUBMISSION
+
+# Text-file with to-do
+*.txt
