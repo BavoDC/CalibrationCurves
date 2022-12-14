@@ -20,6 +20,7 @@
 #' @param plotcl plot confidence limits
 #' @param showknots show knot locations with arrows
 #' @param add add this plot to an already existing plot
+#' @param plot logical to indicate whether a plot has to be made. \code{FALSE} suppresses the plot.
 #' @param subset subset of observations to process, e.g. \code{sex == "male"}
 #' @param lty line type for plotting estimated spline function
 #' @param noprint suppress printing regression coefficients and standard errors
@@ -37,14 +38,16 @@
 .rcspline.plot <- function(x, y, model=c("logistic","cox","ols"), xrange,
                           event, nk=5, knots=NULL, show=c("xbeta", "prob"),
                           adj=NULL, xlab, ylab, ylim, plim=c(0,1),
-                          plotcl=TRUE, showknots=TRUE, add=FALSE, subset,
+                          plotcl=TRUE, showknots=TRUE, add=FALSE, plot = TRUE, subset,
                           lty=1, noprint=FALSE, m, smooth=FALSE, bass=1,
                           main="auto", statloc)
 {
   model <- match.arg(model)
   show  <- match.arg(show)
-  oldpar = par(no.readonly = TRUE)
-  on.exit(par(oldpar))
+  if(plot) {
+    oldpar = par(no.readonly = TRUE)
+    on.exit(par(oldpar))
+  }
 
   if(! missing(event))
     model<-"cox"
@@ -214,77 +217,79 @@
   if(! interactive() & missing(statloc))
     statloc<-"ll"
 
-  if(! add) {
-    oldmar<-par("mar")
-    if(! missing(statloc) && statloc[1] == "ll")
-      oldmar[1]<- 11
+  if(plot) {
+    if(! add) {
+      oldmar<-par("mar")
+      if(! missing(statloc) && statloc[1] == "ll")
+        oldmar[1]<- 11
 
-    plot(xe, xbeta, type="n", main=main, xlab=xlab, ylab=ylabl,
-         xlim=xlim, ylim=ylim)
-    lines(xe, xbeta, lty=lty)
-    ltext<-function(z, line, label, cex=.8, adj=0)
-    {
-      zz<-z
-      zz$y<-z$y-(line - 1)*1.2*cex*par("csi")*(par("usr")[4]-par("usr")[3])/
-        (par("fin")[2])   #was 1.85
-      text(zz, label, cex=cex, adj=adj)
+      plot(xe, xbeta, type="n", main=main, xlab=xlab, ylab=ylabl,
+           xlim=xlim, ylim=ylim)
+      lines(xe, xbeta, lty=lty)
+      ltext<-function(z, line, label, cex=.8, adj=0)
+      {
+        zz<-z
+        zz$y<-z$y-(line - 1)*1.2*cex*par("csi")*(par("usr")[4]-par("usr")[3])/
+          (par("fin")[2])   #was 1.85
+        text(zz, label, cex=cex, adj=adj)
+      }
+
+      sl<-0
+      if(missing(statloc)) {
+        message("Click left mouse button at upper left corner for statistics\n")
+        z<-locator(1)
+        statloc<-"l"
+      } else if(statloc[1] != "none") {
+        if(statloc[1] == "ll") {
+          z<-list(x=par("usr")[1], y=par("usr")[3])
+          sl<-3
+        } else z<-list(x=statloc[1], y=statloc[2])
+      }
+
+      if(statloc[1] != "none" & (model == "logistic" | model == "cox"))	{
+        rnd <- function(x, r=2) as.single(round(x, r))
+
+        ltext(z, 1 + sl, sampled)
+        ltext(z, 2 + sl, "    Statistic        X2  df")
+        chistats<-format(as.single(round(c(model.lr, model.aic,
+                                           assoc.chi, linear.chi, adj.chi), 2)))
+        pvals<-format(as.single(round(c(assoc.p, linear.p, adj.p), 4)))
+        ltext(z, 3 + sl, paste("Model        L.R. ", chistats[1], model.df,
+                               " AIC=", chistats[2]))
+        ltext(z, 4 + sl, paste("Association  Wald ", chistats[3], assoc.df,
+                               " p= ", pvals[1]))
+        ltext(z, 5 + sl, paste("Linearity    Wald ", chistats[4], linear.df,
+                               " p= ", pvals[2]))
+        if(nadj > 0)ltext(z, 6 + sl, paste("Adjustment   Wald " , chistats[5],
+                                           adj.df, " p= ", pvals[3]))}
+    } else lines(xe, xbeta, lty=lty)
+
+    if(plotcl) {
+      #prn(cbind(xe, lower, upper))
+      lines(xe, lower, lty=2)
+      lines(xe, upper, lty=2)
     }
 
-    sl<-0
-    if(missing(statloc)) {
-      message("Click left mouse button at upper left corner for statistics\n")
-      z<-locator(1)
-      statloc<-"l"
-    } else if(statloc[1] != "none") {
-      if(statloc[1] == "ll") {
-        z<-list(x=par("usr")[1], y=par("usr")[3])
-        sl<-3
-      } else z<-list(x=statloc[1], y=statloc[2])
+    if(showknots) {
+      bot.arrow <- par("usr")[3]
+      top.arrow <- bot.arrow + .05 * (par("usr")[4]-par("usr")[3])
+      for(i in 1 : nk)
+        arrows(knots[i], top.arrow, knots[i], bot.arrow, length=.1)
     }
 
-    if(statloc[1] != "none" & (model == "logistic" | model == "cox"))	{
-      rnd <- function(x, r=2) as.single(round(x, r))
+    if(model == "logistic" & nadj == 0) {
+      if(smooth) {
+        z<-supsmu(x, y, bass=bass)
+        if(show == "xbeta") z$y <- logb(z$y/(1.-z$y))
+        points(z, cex=.4)
+      }
 
-      ltext(z, 1 + sl, sampled)
-      ltext(z, 2 + sl, "    Statistic        X2  df")
-      chistats<-format(as.single(round(c(model.lr, model.aic,
-                                         assoc.chi, linear.chi, adj.chi), 2)))
-      pvals<-format(as.single(round(c(assoc.p, linear.p, adj.p), 4)))
-      ltext(z, 3 + sl, paste("Model        L.R. ", chistats[1], model.df,
-                             " AIC=", chistats[2]))
-      ltext(z, 4 + sl, paste("Association  Wald ", chistats[3], assoc.df,
-                             " p= ", pvals[1]))
-      ltext(z, 5 + sl, paste("Linearity    Wald ", chistats[4], linear.df,
-                             " p= ", pvals[2]))
-      if(nadj > 0)ltext(z, 6 + sl, paste("Adjustment   Wald " , chistats[5],
-                                         adj.df, " p= ", pvals[3]))}
-  } else lines(xe, xbeta, lty=lty)
+      if(! missing(m)) {
+        z<-groupn(x, y, m=m)
+        if(show == "xbeta") z$y <- logb(z$y/(1.-z$y))
 
-  if(plotcl) {
-    #prn(cbind(xe, lower, upper))
-    lines(xe, lower, lty=2)
-    lines(xe, upper, lty=2)
-  }
-
-  if(showknots) {
-    bot.arrow <- par("usr")[3]
-    top.arrow <- bot.arrow + .05 * (par("usr")[4]-par("usr")[3])
-    for(i in 1 : nk)
-      arrows(knots[i], top.arrow, knots[i], bot.arrow, length=.1)
-  }
-
-  if(model == "logistic" & nadj == 0) {
-    if(smooth) {
-      z<-supsmu(x, y, bass=bass)
-      if(show == "xbeta") z$y <- logb(z$y/(1.-z$y))
-      points(z, cex=.4)
+        points(z, pch=2, mkh=.05)}
     }
-
-    if(! missing(m)) {
-      z<-groupn(x, y, m=m)
-      if(show == "xbeta") z$y <- logb(z$y/(1.-z$y))
-
-      points(z, pch=2, mkh=.05)}
   }
 
   invisible(list(

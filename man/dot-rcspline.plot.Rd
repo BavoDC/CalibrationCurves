@@ -21,6 +21,7 @@
   plotcl = TRUE,
   showknots = TRUE,
   add = FALSE,
+  plot = TRUE,
   subset,
   lty = 1,
   noprint = FALSE,
@@ -64,6 +65,8 @@ where \eqn{f = \frac{10}{\max{(n, 200)}}}{f = 10/max(\code{n}, 200)} and \eqn{n}
 \item{showknots}{show knot locations with arrows}
 
 \item{add}{add this plot to an already existing plot}
+
+\item{plot}{logical to indicate whether a plot has to be made. \code{FALSE} suppresses the plot.}
 
 \item{subset}{subset of observations to process, e.g. \code{sex == "male"}}
 

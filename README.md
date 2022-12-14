@@ -15,7 +15,7 @@ library("devtools"); install_github("BavoDC/CalibrationCurves", dependencies = T
 This approach builds the package from source, i.e. `make` and compilers must be installed on your system -- see the R FAQ for your operating system; you may also need to install dependencies manually.
 
 ## Contact
-If you have questions, remarks or suggestions regarding the package, you can contact me at [bavo.decock@kuleuven.be](mailto:bavo.decock@kuleuven.be).
+If you have questions, remarks or suggestions regarding the package, you can contact me at [bavo.decock@kuleuven.be](mailto:bavo.decock@kuleuven.be) or [bavo.campo@kuleuven.be](mailto:bavo.campo@kuleuven.be).
 
 ## Citation
 If you use this package, please cite:

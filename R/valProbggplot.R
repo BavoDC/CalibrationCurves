@@ -1,9 +1,9 @@
-#' Calibration performance
+#' Calibration performance: ggplot version
 #'
-#' The function \code{val.prob.ci.2} is an adaptation of \code{\link{val.prob}} from Frank Harrell's rms package,
-#' \url{https://cran.r-project.org/package=rms}. Hence, the description of some of the functions of \code{val.prob.ci.2}
+#' The function \code{valProbggplot} is an adaptation of \code{\link{val.prob}} from Frank Harrell's rms package,
+#' \url{https://cran.r-project.org/package=rms}. Hence, the description of some of the functions of \code{valProbggplot}
 #' come from the the original \code{\link{val.prob}}.
-#' \cr \cr The key feature of \code{val.prob.ci.2} is the generation of logistic and flexible calibration curves and related statistics.
+#' \cr \cr The key feature of \code{valProbggplot} is the generation of logistic and flexible calibration curves and related statistics.
 #' When using this code, please cite: Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina, M.J., Steyerberg,
 #' E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. \emph{Journal of Clinical Epidemiology},
 #' \bold{74}, pp. 167-176
@@ -30,25 +30,21 @@
 #'  (Van Hoorde et al, 2015). The full list of possible statistics is taken from \code{\link{val.prob}}
 #'  and augmented with the estimated calibration index: \code{"Dxy", "C (ROC)", "R2", "D", "D:Chi-sq", "D:p", "U", "U:Chi-sq",
 #'   "U:p", "Q", "Brier", "Intercept", "Slope", "Emax", "Brier scaled", "Eavg", "ECI"}. These statistics are always returned by the function.
-#' @param xlim,ylim numeric vectors of length 2, giving the x and y coordinates ranges (see \code{\link{plot.window}})
-#' @param cex,cex.leg controls the font size of the statistics (\code{cex}) or plot legend (\code{cex.leg}). Default is 0.75
+#' @param xlim,ylim numeric vectors of length 2, giving the x and y coordinates ranges (see \code{\link{xlim}} and \code{\link{ylim}}).
+#' @param size,size.leg controls the font size of the statistics (\code{size}) or plot legend (\code{size.leg}). Default is 3 and 5, respectively.
 #' @param roundstats specifies the number of decimals to which the statistics are rounded when shown in the plot. Default is 2.
 #' @param d0lab,d1lab controls the labels for events and non-events (i.e. outcome y) for the histograms.
 #' Defaults are \code{d1lab="1"} for events and \code{d0lab="0"} for non-events.
-#' @param cex.d01 controls the size of the labels for events and non-events. Default is 0.7.
-#' @param dist.label controls the horizontal position of the labels for events and non-events. Default is 0.04.
+#' @param size.d01 controls the size of the labels for events and non-events. Default is 5.
+#' @param dist.label controls the horizontal position of the labels for events and non-events. Default is 0.01.
 #' @param dist.label2 controls the vertical distance between the labels for events and non-events. Default is 0.03.
 #' @param line.bins controls the horizontal (y-axis) position of the histograms. Default is -0.05.
 #' @param cutoff puts an arrow at the specified risk cut-off(s). Default is none.
-#' @param las controls whether y-axis values are shown horizontally (1) or vertically (0).
-#' @param length.seg controls the length of the histogram lines. Default is \code{1}.
-#' @param ... arguments to be passed to \code{\link{plot}}, see \code{\link{par}}
-#' @param y.intersp character interspacing for vertical line distances of the legend (\code{\link{legend}})
+#' @param length.seg controls the length of the histogram lines. Default is \code{0.85}.
 #' @param col.ideal controls the color of the ideal line on the plot. Default is \code{"red"}.
 #' @param lwd.ideal controls the line width of the ideal line on the plot. Default is \code{1}.
 #' @param lty.ideal linetype of the ideal line. Default is \code{1}.
-#' @param logistic.cal \code{TRUE} plots the logistic calibration curve, \code{FALSE} suppresses this curve.
-#' Default is \code{FALSE}.
+#' @param logistic.cal \code{TRUE} plots the logistic calibration curve, \code{FALSE} suppresses this curve. Default is \code{FALSE}.
 #' @param xlab x-axis label, default is \code{"Predicted Probability"}.
 #' @param ylab y-axis label, default is \code{"Observed proportion"}.
 #' @param statloc the "abc" of model performance (Steyerberg et al., 2011)-calibration intercept, calibration slope,
@@ -66,7 +62,6 @@
 #' @param col.smooth the color of the flexible calibration curve. Default is \code{"black"}.
 #' @param lty.smooth the linetype of the flexible calibration curve. Default is \code{1}.
 #' @param lwd.smooth the line width of the flexible calibration curve. Default is \code{1}.
-#'
 #' @param cl.level if \code{dostats=TRUE}, the confidence level for the calculation of the confidence intervals of the calibration intercept,
 #'  calibration slope and c-statistic. Default is \code{0.95}.
 #' @param method.ci method to calculate the confidence interval of the c-statistic. The argument is passed to \code{\link{auc.nonpara.mw}} from
@@ -75,8 +70,9 @@
 #' the logit-transformation-based confidence interval as documented in Qin and Hotilovac (2008). See \code{\link{auc.nonpara.mw}} for
 #' more information on the other methods.
 #'
-#' @return An object of type \code{CalibrationCurve} with the following slots:
+#' @return An object of type \code{ggplotCalibrationCurve} with the following slots:
 #' @return \item{call}{the matched call.}
+#' @return \item{ggPlot}{the ggplot object.}
 #' @return \item{stats}{a vector containing performance measures of calibration.}
 #' @return \item{cl.level}{the confidence level used.}
 #' @return \item{Calibration}{contains the calibration intercept and slope, together with their confidence intervals.}
@@ -89,13 +85,14 @@
 #' @details When using the predicted probabilities of an uninformative model (i.e. equal probabilities for all observations), the model has no predictive value.
 #'  Consequently, where applicable, the value of the performance measure corresponds to the worst possible theoretical value. For the ECI, for example, this equals 1 (Edlinger et al., 2022).
 #'
-#' @references  Edlinger, M, van Smeden, M, Alber, HF, Wanitschek, M, Van Calster, B. (2022). Risk prediction models for discrete ordinal outcomes: Calibration and the impact of the proportional odds assumption. \emph{Statistics in Medicine}, \bold{41( 8)}, pp. 1334– 1360
-#' @references  Qin, G., & Hotilovac, L. (2008). Comparison of non-parametric confidence intervals for the area under the ROC curve of a continuous-scale diagnostic test. \emph{Statistical Methods in Medical Research}, \bold{17(2)}, pp. 207-21
+#' @references Edlinger, M, van Smeden, M, Alber, HF, Wanitschek, M, Van Calster, B. (2022). Risk prediction models for discrete ordinal outcomes: Calibration and the impact of the proportional odds assumption. \emph{Statistics in Medicine}, \bold{41( 8)}, pp. 1334– 1360
+#' @references Qin, G., & Hotilovac, L. (2008). Comparison of non-parametric confidence intervals for the area under the ROC curve of a continuous-scale diagnostic test. \emph{Statistical Methods in Medical Research}, \bold{17(2)}, pp. 207-21
 #' @references Steyerberg, E.W., Van Calster, B., Pencina, M.J. (2011). Performance measures for prediction models and markers : evaluation of predictions and classifications. \emph{Revista Espanola de Cardiologia}, \bold{64(9)}, pp. 788-794
 #' @references Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina M., Steyerberg E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. \emph{Journal of Clinical Epidemiology}, \bold{74}, pp. 167-176
 #' @references Van Hoorde, K., Van Huffel, S., Timmerman, D., Bourne, T., Van Calster, B. (2015). A spline-based tool to assess and visualize the calibration of multiclass risk predictions. \emph{Journal of Biomedical Informatics}, \bold{54}, pp. 283-93
 #'
 #' @importFrom Hmisc cut2
+#' @import ggplot2
 #'
 #' @examples
 #'
@@ -119,16 +116,16 @@
 #' Pred   = binomial()$linkinv(cbind(1, Xval) %*% coef(FitLog))
 #'
 #' # Default calibration plot
-#' val.prob.ci.2(Pred, yval)
+#' valProbggplot(Pred, yval)
 #'
 #' # Adding logistic calibration curves and other additional features
-#' val.prob.ci.2(Pred, yval, CL.smooth = TRUE, logistic.cal = TRUE, lty.log = 2,
+#' valProbggplot(Pred, yval, CL.smooth = TRUE, logistic.cal = TRUE, lty.log = 2,
 #'  col.log = "red", lwd.log = 1.5)
 #'
-#' val.prob.ci.2(Pred, yval, CL.smooth = TRUE, logistic.cal = TRUE, lty.log = 9,
+#' valProbggplot(Pred, yval, CL.smooth = TRUE, logistic.cal = TRUE, lty.log = 9,
 #' col.log = "red", lwd.log = 1.5, col.ideal = colors()[10], lwd.ideal = 0.5)
 
-val.prob.ci.2 <- function(p, y, logit, group,
+valProbggplot <- function(p, y, logit, group,
                           weights = rep(1, length(y)), normwt = FALSE, pl = TRUE,
                           smooth = c("loess", "rcs", "none"), CL.smooth = "fill",
                           CL.BT = FALSE, lty.smooth = 1, col.smooth = "black", lwd.smooth = 1,
@@ -136,23 +133,32 @@ val.prob.ci.2 <- function(p, y, logit, group,
                           col.log = "black", lwd.log = 1, xlab = "Predicted probability", ylab = "Observed proportion",
                           xlim = c(-0.02, 1), ylim = c(-0.15, 1), m, g, cuts, emax.lim = c(0, 1),
                           legendloc =  c(0.50 , 0.27), statloc = c(0, .85), dostats = TRUE, cl.level = 0.95, method.ci = "pepe",
-                          roundstats = 2, riskdist = "predicted", cex = 0.75, cex.leg = 0.75, connect.group = FALSE, connect.smooth = TRUE,
-                          g.group = 4, evaluate = 100, nmin = 0, d0lab = "0", d1lab = "1", cex.d01 = 0.7,
-                          dist.label = 0.04, line.bins = -.05, dist.label2 = .03, cutoff, las = 1, length.seg = 1,
-                          y.intersp = 1, lty.ideal = 1, col.ideal = "red", lwd.ideal = 1, ...)
+                          roundstats = 2, riskdist = "predicted", size = 3, size.leg = 5, connect.group = FALSE, connect.smooth = TRUE,
+                          g.group = 4, evaluate = 100, nmin = 0, d0lab = "0", d1lab = "1", size.d01 = 5,
+                          dist.label = 0.01, line.bins = -.05, dist.label2 = .04, cutoff, length.seg = 0.85,
+                          lty.ideal = 1, col.ideal = "red", lwd.ideal = 1)
 {
   call   = match.call()
-  oldpar = par(no.readonly = TRUE)
-  on.exit(par(oldpar))
-  smooth <- match.arg(smooth)
-  if (smooth == "none") {
+  smooth = match.arg(smooth)
+  if (smooth == "none")
     smooth <- "F"
-  }
   if (!missing(p))
-    if (any(!(p >= 0 |
-              p <= 1))) {
+    if (any(!(p >= 0 | p <= 1)))
       stop("Probabilities can not be > 1 or < 0.")
-    }
+  if(!is.logical(connect.smooth))
+    stop("Argument connect.smooth has to be of type logical.")
+  if (!is.numeric(nr.knots))
+    stop("Nr.knots must be numeric.")
+  if(nr.knots > 5 | nr.knots < 3)
+    stop(paste(
+      "Number of knots = ",
+      nr.knots,
+      sep = "",
+      ", only 5 >= nk >=3 is allowed."
+    ))
+
+  a = 1 - cl.level
+
   if (missing(p))
     p <- 1 / (1 + exp(-logit))
   else
@@ -170,8 +176,8 @@ val.prob.ci.2 <- function(p, y, logit, group,
       group <-
         if (is.logical(group) || is.character(group))
           as.factor(group)
-        else
-          cut2(group, g = g.group)
+    else
+      cut2(group, g = g.group)
     names(group) <- NULL
     nma <- !(is.na(p + y + weights) | is.na(group))
     ng <- length(levels(group))
@@ -185,9 +191,12 @@ val.prob.ci.2 <- function(p, y, logit, group,
   if(ng > 0) {
     group <- group[nma]
     weights <- weights[nma]
-    return(val.probg(p, y, group, evaluate, weights, normwt, nmin)
-    )
+    return(val.probg(p, y, group, evaluate, weights, normwt, nmin))
   }
+
+  # Fix 'No visible global binding for global variable' note
+  # https://stackoverflow.com/questions/9439256/how-can-i-handle-r-cmd-check-no-visible-binding-for-global-variable-notes-when
+  ymin <- ymax <- xbeta <- lower <- upper <- xend <- yend <- NULL
 
   # Sort vector with probabilities
   y     <- y[order(p)]
@@ -251,6 +260,9 @@ val.prob.ci.2 <- function(p, y, logit, group,
   i.2  <- i
   f.or <- lrm(y[i] ~ logit[i])
   f    <- lrm.fit(logit[i], y[i])
+  # glm(y ~ offset(Eta), family = binomial, control = glm.control(maxit = 1e2))
+  # glm(y ~ Eta, family = binomial)
+
   cl.slope <- confint(f, level = cl.level)[2, ]
   f2   <-	lrm.fit(offset = logit[i], y = y[i])
   if(f2$fail){
@@ -258,7 +270,7 @@ val.prob.ci.2 <- function(p, y, logit, group,
     f2 <- list()
     f2$coef <- NA
     cl.interc <- rep(NA,2)
-  }else{
+  } else{
     cl.interc <- confint(f2, level = cl.level)
   }
   stats <- f$stats
@@ -270,296 +282,132 @@ val.prob.ci.2 <- function(p, y, logit, group,
   calp <- 1/(1 + exp( - lt))
   emax <- max(abs(predprob - calp))
   if (pl) {
-    plot(0.5, 0.5, xlim = xlim, ylim = ylim, type = "n", xlab = xlab,
-         ylab = ylab, las=las,...)
-    clip(0,1,0,1)
-    abline(0, 1, lty = lty.ideal,col=col.ideal,lwd=lwd.ideal)
-    do.call("clip", as.list(par()$usr))
+    gg = ggplot(data.frame()) +
+      xlim(xlim) + ylim(ylim) +
+      geom_line(data = data.frame(x = 0:1, y = 0:1), aes(x = x, y = y, colour = "Ideal"), linewidth = lwd.ideal, show.legend = TRUE) +
+      labs(x = xlab, y = ylab)
+
+    legCol = c("Ideal" = col.ideal)
+    lt      <- lty.ideal
+    lw.d    <- lwd.ideal
+    marks   <- NA
 
 
-    lt <- lty.ideal
-    lw.d <- lwd.ideal
-    all.col <- col.ideal
-    leg <- "Ideal"
-    marks <- -1
     if (logistic.cal) {
-      lt <- c(lt, lty.log)
-      lw.d <- c(lw.d, lwd.log)
-      all.col <- c(all.col, col.log)
-      leg <- c(leg, "Logistic calibration")
-      marks <- c(marks,-1)
-    }
-    if (smooth != "F") {
-      all.col <- c(all.col, col.smooth)
+      if (min(p) > plogis(-7) | max(p) < plogis(7)) {
+        lrm.fit.1 = lrm(y[i.2] ~ qlogis(p[i.2]))
+        gg = gg + geom_line(data = data.frame(x = p[i.2], y = plogis(lrm.fit.1$linear.predictors), show.legend = TRUE),
+                            aes(x = x, y = y, color = "Logistic calibration"), linewidth = lwd.log, linetype = lty.log)
+      } else {
+        logit <- seq(-7, 7, length = 200)
+        prob  <- 1 / (1 + exp(-logit))
+        pHat  <- binomial()$linkinv(cbind(1, logit) %*% coef(f))
+        gg = gg + geom_line(data = data.frame(x = prob, y = pHat), aes(x = x, y = y, color = "Logistic calibration"), linewidth = lwd.log, linetype = lty.log)
+      }
+
+      legCol = c(legCol, "Logistic calibration" = col.log)
+      lt      <- c(lt, lty.log)
+      lw.d    <- c(lw.d, lwd.log)
+      marks   <- c(marks, NA)
     }
     if (smooth == "loess") {
-      #Sm <- lowess(p,y,iter=0)
-      Sm <- loess(y ~ p, degree = 2)
-      Sm <- data.frame(Sm$x, Sm$fitted)
-      Sm.01 <- Sm
+      SmFit = loess(y ~ p, degree = 2)
+      Sm    = data.frame(x = unname(SmFit$x), y = SmFit$fitted)
+      Sm.01 = Sm
 
-      if (connect.smooth == TRUE & CL.smooth != "fill") {
-        clip(0, 1, 0, 1)
-        lines(Sm,
-              lty = lty.smooth,
-              lwd = lwd.smooth,
-              col = col.smooth)
-        do.call("clip", as.list(par()$usr))
-        lt <- c(lt, lty.smooth)
-        lw.d <- c(lw.d, lwd.smooth)
-        marks <- c(marks,-1)
-      } else if (connect.smooth == FALSE & CL.smooth != "fill") {
-        clip(0, 1, 0, 1)
-        points(Sm, col = col.smooth)
-        do.call("clip", as.list(par()$usr))
-        lt <- c(lt, 0)
-        lw.d <- c(lw.d, 1)
+      if(any(Sm$y < 0)) {
+        sel = which(Sm$y < 0)
+        sel = c(sel[length(sel)], sel[length(sel)] + 1)
+        tmp = Sm[sel, ]
+        Sm    = Sm[Sm$y >= 0 & Sm$y <= 1, ]
+        Sm  = rbind.data.frame(
+          data.frame(x = predict(lm(x ~ y, data = tmp), data.frame(y = 0)), y = 0),
+          Sm
+        )
+      }
+
+      if (connect.smooth) {
+        gg = gg + geom_line(data = Sm, aes(x = x, y = y, color = "Flexible calibration (Loess)"), linetype = lty.smooth, linewidth = lwd.smooth)
+
+        legCol = c(legCol, "Flexible calibration (Loess)" = col.smooth)
+        lt    <- c(lt, lty.smooth)
+        lw.d  <- c(lw.d, lwd.smooth)
+        marks <- c(marks, NA)
+      } else {
+        gg = gg + geom_point(data = Sm, aes(x = x, y = y, color = "Flexible calibration (Loess)"))
+        legCol = c(legCol, "Flexible calibration (Loess)")
+        lt    <- c(lt, 0)
+        lw.d  <- c(lw.d, 1)
         marks <- c(marks, 1)
       }
-      if (CL.smooth == TRUE | CL.smooth == "fill") {
-        to.pred <- seq(min(p), max(p), length = 200)
-        if (CL.BT == TRUE) {
-          res.BT = replicate(2000, BT.samples(y, p, to.pred))
-          CL.BT  = apply(res.BT, 1, quantile, c(0.025, 0.975))
+
+      if(CL.smooth != FALSE) {
+        if(CL.BT) {
+          to.pred = seq(min(p), max(p), length = 200)
+          res.BT  = replicate(2000, BT.samples(y, p, to.pred))
+          CL.BT   = apply(res.BT, 1, quantile, c(0.025, 0.975))
           colnames(CL.BT) = to.pred
-
-          if (CL.smooth == "fill") {
-            clip(0, 1, 0, 1)
-            polygon(
-              x = c(to.pred, rev(to.pred)),
-              y = c(CL.BT[2, ],
-                    rev(CL.BT[1, ])),
-              col = rgb(177, 177, 177, 177, maxColorValue = 255),
-              border = NA
-            )
-            if (connect.smooth == T) {
-              lines(Sm,
-                    lty = lty.smooth,
-                    lwd = lwd.smooth,
-                    col = col.smooth)
-              lt <- c(lt, lty.smooth)
-              lw.d <- c(lw.d, lwd.smooth)
-              marks <- c(marks,-1)
-            } else if (connect.smooth == FALSE) {
-              points(Sm, col = col.smooth)
-              lt <- c(lt, 0)
-              lw.d <- c(lw.d, 1)
-              marks <- c(marks, 1)
-            }
-            do.call("clip", as.list(par()$usr))
-            leg <- c(leg, "Flexible calibration (Loess)")
-          } else{
-            clip(0, 1, 0, 1)
-            lines(to.pred,
-                  CL.BT[1, ],
-                  lty = 2,
-                  lwd = 1,
-                  col = col.smooth)
-            clip(0, 1, 0, 1)
-            lines(to.pred,
-                  CL.BT[2, ],
-                  lty = 2,
-                  lwd = 1,
-                  col = col.smooth)
-            do.call("clip", as.list(par()$usr))
-            leg <-
-              c(leg, "Flexible calibration (Loess)", "CL flexible")
-            lt <- c(lt, 2)
-            lw.d <- c(lw.d, 1)
-            all.col <- c(all.col, col.smooth)
-            marks <- c(marks, -1)
-          }
-
-        } else{
-          Sm.0     = loess(y ~ p, degree = 2)
-          cl.loess = predict(Sm.0, type = "fitted", se = TRUE)
-          clip(0, 1, 0, 1)
-          if (CL.smooth == "fill") {
-            polygon(
-              x = c(Sm.0$x, rev(Sm.0$x)),
-              y = c(
-                cl.loess$fit + cl.loess$se.fit * 1.96,
-                rev(cl.loess$fit -
-                      cl.loess$se.fit * 1.96)
-              ),
-              col = rgb(177, 177, 177, 177, maxColorValue = 255),
-              border = NA
-            )
-            if (connect.smooth == TRUE) {
-              lines(Sm,
-                    lty = lty.smooth,
-                    lwd = lwd.smooth,
-                    col = col.smooth)
-              lt <- c(lt, lty.smooth)
-              lw.d <- c(lw.d, lwd.smooth)
-              marks <- c(marks,-1)
-            } else if (connect.smooth == FALSE) {
-              points(Sm, col = col.smooth)
-              lt <- c(lt, 0)
-              lw.d <- c(lw.d, 1)
-              marks <- c(marks, 1)
-            }
-            do.call("clip", as.list(par()$usr))
-            leg <- c(leg, "Flexible calibration (Loess)")
-          } else{
-            lines(
-              Sm.0$x,
-              cl.loess$fit + cl.loess$se.fit * 1.96,
-              lty = 2,
-              lwd = 1,
-              col = col.smooth
-            )
-            lines(
-              Sm.0$x,
-              cl.loess$fit - cl.loess$se.fit * 1.96,
-              lty = 2,
-              lwd = 1,
-              col = col.smooth
-            )
-            do.call("clip", as.list(par()$usr))
-            leg <-
-              c(leg, "Flexible calibration (Loess)", "CL flexible")
-            lt <- c(lt, 2)
-            lw.d <- c(lw.d, 1)
-            all.col <- c(all.col, col.smooth)
-            marks <- c(marks, -1)
-          }
-
+          dfCL    = data.frame(x = to.pred, ymin = CL.BT[1, ], ymax = CL.BT[2, ])
+        } else {
+          cl.loess = predict(SmFit, type = "fitted", se = TRUE)
+          dfCL     = data.frame(x = p, ymin = with(cl.loess, fit - qnorm(1 - a / 2) * se.fit), ymax = with(cl.loess, fit + qnorm(1 - a / 2) * se.fit))
         }
+        if (CL.smooth == "fill") {
+          dfCL[dfCL$ymax < 0, "ymax"] <- dfCL[dfCL$ymin < 0, "ymin"] <- 0
+          dfCL[dfCL$ymax > 1, "ymax"] <- dfCL[dfCL$ymin > 1, "ymin"] <- 1
+          gg = gg + geom_ribbon(data = dfCL, aes(x = x, ymin = ymin, ymax = ymax),
+                                fill = rgb(177, 177, 177, 177, maxColorValue = 255))
+        } else{
+          gg =
+            gg +
+            geom_line(data = dfCL[dfCL$ymin > 0, ], aes(x = x, y = ymin, color = "CL flexible"), linetype = 2, linewidth = 1) +
+            geom_line(data = dfCL[dfCL$ymax < 1, ], aes(x = x, y = ymax), linetype = 2, linewidth = 1, col = col.smooth)
 
-      } else{
-        leg <- c(leg, "Flexible calibration (Loess)")
+          legCol = c(legCol, "CL flexible" = col.smooth)
+          lt      <- c(lt, 2)
+          lw.d    <- c(lw.d, 1)
+          marks   <- c(marks, NA)
+        }
       }
+
       cal.smooth <- approx(Sm.01, xout = p)$y
-      eavg <- mean(abs(p - cal.smooth))
-      ECI <- mean((p - cal.smooth) ^ 2) * 100
-    }
-    if (smooth == "rcs") {
-      par(lwd = lwd.smooth, bty = "n", col = col.smooth)
-      if (!is.numeric(nr.knots)) {
-        stop("Nr.knots must be numeric.")
+      eavg       <- mean(abs(p - cal.smooth))
+      ECI        <- mean((p - cal.smooth) ^ 2) * 100
+    } else if (smooth == "rcs") {
+      argzRCS = alist(x = p,
+                      y = y,
+                      model = "logistic",
+                      nk = nr.knots,
+                      show = "prob",
+                      statloc = "none",
+                      plot = FALSE,
+                      showknots = FALSE,
+                      xrange = c(min(na.omit(p)), max(na.omit(p))),
+                      lty = lty.smooth)
+      nkDecrease <- function(Argz) {
+        tryCatch(
+          do.call(".rcspline.plot", Argz),
+          error = function(e) {
+            nk = Argz$nk
+            warning(paste0("The number of knots led to estimation problems, nk will be set to ", nk), immediate. = TRUE)
+            if(nk < 3)
+              stop("Nk = 3 led to estimation problems.")
+            Argz$nk = nk - 1
+            nkDecrease(Argz)
+          }
+        )
       }
-      if (nr.knots == 5) {
-        tryCatch(
-          .rcspline.plot(
-            p,
-            y,
-            model = "logistic",
-            nk = 5,
-            show = "prob",
-            statloc = "none"
-            ,
-            add = TRUE,
-            showknots = FALSE,
-            xrange = c(min(na.omit(p)), max(na.omit(p))),
-            lty = lty.smooth
-          ),
-          error = function(e) {
-            warning("The number of knots led to estimation problems, nk will be set to 4.",
-                    immediate. = TRUE)
-            tryCatch(
-              .rcspline.plot(
-                p,
-                y,
-                model = "logistic",
-                nk = 4,
-                show = "prob",
-                statloc = "none"
-                ,
-                add = TRUE,
-                showknots = FALSE,
-                xrange = c(min(na.omit(p)), max(na.omit(p))),
-                lty = lty.smooth
-              )
-              ,
-              error = function(e) {
-                warning("Nk 4 also led to estimation problems, nk will be set to 3.",
-                        immediate. = TRUE)
-                .rcspline.plot(
-                  p,
-                  y,
-                  model = "logistic",
-                  nk = 3,
-                  show = "prob",
-                  statloc = "none"
-                  ,
-                  add = TRUE,
-                  showknots = FALSE,
-                  xrange = c(min(na.omit(p)), max(na.omit(p)))
-                  ,
-                  lty = lty.smooth
-                )
-              }
-            )
-          }
-        )
-      } else if (nr.knots == 4) {
-        tryCatch(
-          .rcspline.plot(
-            p,
-            y,
-            model = "logistic",
-            nk = 4,
-            show = "prob",
-            statloc = "none"
-            ,
-            add = TRUE,
-            showknots = FALSE,
-            xrange = c(min(na.omit(p)), max(na.omit(p))),
-            lty = lty.smooth
-          ),
-          error = function(e) {
-            warning("The number of knots led to estimation problems, nk will be set to 3.",
-                    immediate. = TRUE)
-            .rcspline.plot(
-              p,
-              y,
-              model = "logistic",
-              nk = 3,
-              show = "prob",
-              statloc = "none"
-              ,
-              add = TRUE,
-              showknots = FALSE,
-              xrange = c(min(na.omit(p)), max(na.omit(p))),
-              lty = lty.smooth
-            )
-          }
-        )
-      } else if (nr.knots == 3) {
-        tryCatch(
-          .rcspline.plot(
-            p,
-            y,
-            model = "logistic",
-            nk = 3,
-            show = "prob",
-            statloc = "none"
-            ,
-            add = TRUE,
-            showknots = FALSE,
-            xrange = c(min(na.omit(p)), max(na.omit(p))),
-            lty = lty.smooth
-          ),
-          error = function(e) {
-            stop("Nk = 3 led to estimation problems.")
-          }
-        )
-      } else{
-        stop(paste(
-          "Number of knots = ",
-          nr.knots,
-          sep = "",
-          ", only 5 >= nk >=3 is allowed."
-        ))
-      }
+      rcsFit = nkDecrease(argzRCS)
+      rcsDf  = as.data.frame(rcsFit)
+      gg = gg +
+        geom_line(data = rcsDf, aes(x = x, y = xbeta, color = "Flexible calibration (RCS)"), linetype = lty.smooth, linewidth = lwd.smooth) +
+        geom_line(data = rcsDf, aes(x = x, y = lower, color = "CL flexible"), linetype = 2, linewidth = 1) +
+        geom_line(data = rcsDf, aes(x = x, y = upper), linetype = 2, linewidth = 1, col = col.smooth)
 
-      par(lwd = 1, bty = "o", col = "black")
-      leg <- c(leg, "Flexible calibration (RCS)", "CL flexible")
-      lt <- c(lt, lty.smooth, 2)
-      lw.d <- c(lw.d, rep(lwd.smooth, 2))
-      all.col <- c(all.col, col.smooth)
-      marks <- c(marks, -1, -1)
+      legCol = c(legCol, "Flexible calibration (RCS)" = col.smooth, "CL flexible" = col.smooth)
+      lt      <- c(lt, lty.smooth, 2)
+      lw.d    <- c(lw.d, rep(lwd.smooth, 2))
+      marks   <- c(marks, NA, NA)
     }
     if (!missing(m) | !missing(g) | !missing(cuts)) {
       if (!missing(m))
@@ -578,9 +426,8 @@ val.prob.ci.2 <- function(p, y, logit, group,
                   levels.mean = TRUE,
                   digits = 7)
       means <- as.single(levels(q))
-      prop <- tapply(y, q, function(x)
-        mean(x, na.rm = TRUE))
-      points(means, prop, pch = 2, cex = 1)
+      prop <- tapply(y, q, function(x) mean(x, na.rm = TRUE))
+      gg = gg + geom_point(data = data.frame(x = means, y = prop), aes(x = x, y = y, color = "Grouped observations"), shape = 2, size = 3)
       #18.11.02: CI triangles
       ng	<- tapply(y, q, length)
       og	<- tapply(y, q, sum)
@@ -589,42 +436,39 @@ val.prob.ci.2 <- function(p, y, logit, group,
       g		<- length(as.single(levels(q)))
 
       for (i in 1:g)
-        lines(c(means[i], means[i]), c(prop[i], min(1, prop[i] + 1.96 * se.ob[i])), type =
-                "l")
+        gg = gg + geom_line(data = data.frame(x = c(means[i], means[i]), y = c(prop[i], min(1, prop[i] + 1.96 * se.ob[i]))), aes(x = x, y = y))
       for (i in 1:g)
-        lines(c(means[i], means[i]), c(prop[i], max(0, prop[i] - 1.96 * se.ob[i])), type =
-                "l")
+        gg = gg + geom_line(data = data.frame(x = c(means[i], means[i]), y = c(prop[i], max(0, prop[i] - 1.96 * se.ob[i]))), aes(x = x, y = y))
 
       if (connect.group) {
-        lines(means, prop)
-        lt <- c(lt, 1)
+        gg = gg + geom_line(data = data.frame(x = means, y = prop), aes(x = x, y = y))
+        lt   <- c(lt, 1)
         lw.d <- c(lw.d, 1)
-      }
-      else {
-        lt <- c(lt, 0)
+      } else {
+        lt   <- c(lt, 0)
         lw.d <- c(lw.d, 0)
       }
-      leg <- c(leg, "Grouped observations")
+      legCol = c(legCol, "Grouped observations" = "black")
       all.col <- c(all.col, col.smooth)
-      marks <- c(marks, 2)
+      marks   <- c(marks, 2)
     }
   }
-  lr <- stats["Model L.R."]
-  p.lr <- stats["P"]
-  D <- (lr - 1) / n
-  L01 <- -2 * sum(y * logit - logb(1 + exp(logit)), na.rm = TRUE)
-  U.chisq <- L01 - f$deviance[2]
-  p.U <- 1 - pchisq(U.chisq, 2)
-  U <- (U.chisq - 2) / n
-  Q <- D - U
-  Dxy <- stats["Dxy"]
-  C <- stats["C"]
-  R2 <- stats["R2"]
-  B <- sum((p - y) ^ 2) / n
-  # ES 15dec08 add Brier scaled
-  Bmax  <- mean(y) * (1 - mean(y)) ^ 2 + (1 - mean(y)) * mean(y) ^ 2
-  Bscaled <- 1 - B / Bmax
-  stats <- c(Dxy,
+  lr      = stats["Model L.R."]
+  p.lr    = stats["P"]
+  D       = (lr - 1) / n
+  L01     = -2 * sum(y * logit - logb(1 + exp(logit)), na.rm = TRUE)
+  U.chisq = L01 - f$deviance[2]
+  p.U     = 1 - pchisq(U.chisq, 2)
+  U       = (U.chisq - 2) / n
+  Q       = D - U
+  Dxy     = stats["Dxy"]
+  C       = stats["C"]
+  R2      = stats["R2"]
+  B       = sum((p - y) ^ 2) / n
+  Bmax    = mean(y) * (1 - mean(y)) ^ 2 + (1 - mean(y)) * mean(y) ^ 2
+  Bscaled = 1 - B / Bmax
+
+  stats = c(Dxy,
              C,
              R2,
              D,
@@ -639,7 +483,7 @@ val.prob.ci.2 <- function(p, y, logit, group,
              f$coef[2],
              emax,
              Bscaled)
-  names(stats) <- c(
+  names(stats) = c(
     "Dxy",
     "C (ROC)",
     "R2",
@@ -661,38 +505,9 @@ val.prob.ci.2 <- function(p, y, logit, group,
 
   # Cut off definition
   if(!missing(cutoff)) {
-    arrows(x0=cutoff,y0=.1,x1=cutoff,y1=-0.025,length=.15)
+    gg = gg + geom_segment(aes(x = cutoff, y = .1, xend = cutoff, yend = -0.025), arrow = arrow(length = unit(.15, "npc")))
   }
   if(pl) {
-    if (min(p) > plogis(-7) | max(p) < plogis(7)) {
-      lrm.fit.1 = lrm(y[i.2] ~ qlogis(p[i.2]))
-      if(logistic.cal)
-        lines(
-          p[i.2],
-          plogis(lrm.fit.1$linear.predictors),
-          lwd = lwd.log,
-          lty = lty.log,
-          col = col.log
-        )
-    } else {
-      logit <- seq(-7, 7, length = 200)
-      prob <- 1 / (1 + exp(-logit))
-      pred.prob <- f$coef[1] + f$coef[2] * logit
-      pred.prob <- 1 / (1 + exp(-pred.prob))
-      if (logistic.cal)
-        lines(prob,
-              pred.prob,
-              lty = lty.log,
-              lwd = lwd.log,
-              col = col.log)
-    }
-    lp <- legendloc
-    if (!is.logical(lp)) {
-      if (!is.list(lp))
-        lp <- list(x = lp[1], y = lp[2])
-      legend(lp, leg, lty = lt, pch = marks, cex = cex.leg, bty = "n",lwd=lw.d,
-             col=all.col,y.intersp = y.intersp)
-    }
     if(!is.logical(statloc)) {
       if(dostats[1] == TRUE){
         stats.2 <- paste('Calibration\n',
@@ -710,19 +525,17 @@ val.prob.ci.2 <- function(p, y, logit, group,
                          sprintf(paste("%.", roundstats, "f", sep = ""), cl.auc[2]), " to ",
                          sprintf(paste("%.", roundstats, "f", sep = ""), cl.auc[3]), ")"
                          , sep = '')
-        text(statloc[1], statloc[2], stats.2, pos = 4, cex = cex)
+        gg = gg + annotate("text", x = statloc[1], y = statloc[2], label = stats.2, hjust = 0)
       } else {
         dostats <- dostats
         leg <- format(names(stats)[dostats])	#constant length
-        leg <- paste(leg, ":", format(stats[dostats], digits=roundstats), sep =
-                       "")
+        leg <- paste0(leg, ":", format(stats[dostats], digits=roundstats))
         if(!is.list(statloc))
           statloc <- list(x = statloc[1], y = statloc[2])
-        text(statloc, paste(format(names(stats[dostats])),
-                            collapse = "\n"), adj = 0, cex = cex)
-        text(statloc$x + (xlim[2]-xlim[1])/3 , statloc$y, paste(
-          format(round(stats[dostats], digits=roundstats)), collapse =
-            "\n"), adj = 1, cex = cex)
+        gg =
+          gg + annotate("text", x = statloc$x, y = statloc$y, label = paste(format(names(stats[dostats])), collapse = "\n"), hjust = 0, size = size) +
+          annotate("text", x = statloc$x + (xlim[2] - xlim[1])/3, y = statloc$y, label = paste(format(round(stats[dostats], digits = roundstats)), collapse = "\n"),
+                   hjust = 0, size = size)
       }
     }
     if(is.character(riskdist)) {
@@ -731,9 +544,9 @@ val.prob.ci.2 <- function(p, y, logit, group,
         x <- 1 / (1 + exp(-x))
         x[p == 0] <- 0
         x[p == 1] <- 1
-      }
-      else
+      } else {
         x <- p
+      }
       bins <- seq(0, min(1, max(xlim)), length = 101)
       x <- x[x >= 0 & x <= 1]
       #08.04.01,yvon: distribution of predicted prob according to outcome
@@ -749,25 +562,37 @@ val.prob.ci.2 <- function(p, y, logit, group,
       f0	<- (0.1 * f0) / maxf
       f1	<- (0.1 * f1) / maxf
 
-      segments(bins1, line.bins, bins1, length.seg * f1 + line.bins)
-      segments(bins0, line.bins, bins0, length.seg * -f0 + line.bins)
-      lines(c(min(bins0, bins1) - 0.01, max(bins0, bins1) + 0.01), c(line.bins, line.bins))
-      text(max(bins0, bins1) + dist.label,
-           line.bins + dist.label2,
-           d1lab,
-           cex = cex.d01)
-      text(max(bins0, bins1) + dist.label,
-           line.bins - dist.label2,
-           d0lab,
-           cex = cex.d01)
+      gg =
+        gg +
+        geom_segment(data = data.frame(x = bins1, xend = bins1, y = rep(line.bins, length(bins1)), yend = c(length.seg * f1 + line.bins)),
+                     aes(x = x, y = y, xend = xend, yend = yend)) +
+        geom_segment(data = data.frame(x = bins0, xend = bins0, y = rep(line.bins, length(bins0)), yend = c(length.seg * -f0 + line.bins)),
+                     aes(x = x, y = y, xend = xend, yend = yend)) +
+        geom_line(data = data.frame(x = c(min(bins0, bins1) - 0.01, max(bins0, bins1) + 0.01), y = c(line.bins, line.bins)),
+                  aes(x = x, y = y)) +
+        annotate(geom = "text", x = max(bins0, bins1) + dist.label, y = line.bins + dist.label2, label = d1lab, size = size.d01) +
+        annotate(geom = "text", x = max(bins0, bins1) + dist.label, y = line.bins - dist.label2, label = d0lab, size = size.d01)
 
     }
   }
+  gg =
+    gg +
+    scale_color_manual("", values = legCol, breaks = names(legCol)) +
+    guides(colour = guide_legend(override.aes = list(linetype = lt, shape = marks, linewidth = lw.d * 0.5, size = 7))) +
+    theme_bw() +
+    theme(plot.background=element_blank(),
+          panel.border = element_rect(colour = "black", fill = NA, linewidth = 1),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          axis.text = element_text(size = 12),
+          axis.title = element_text(size = 14),
+          plot.margin = margin(11, 11, 5.5, 5.5, "points"), legend.position = "bottom")
   Results =
     structure(
       list(
-        call = call,
-        stats = stats,
+        call   = call,
+        ggPlot = gg,
+        stats  = stats,
         cl.level = cl.level,
         Calibration = list(
           Intercept = c("Point estimate" = unname(stats["Intercept"]),
@@ -780,7 +605,7 @@ val.prob.ci.2 <- function(p, y, logit, group,
         Cindex = c("Point estimate" = unname(stats["C (ROC)"]),
                    "Lower confidence limit" = cl.auc[2],
                    "Upper confidence limit" = cl.auc[3])
-      ), class = "CalibrationCurve"
-      )
+      ), class = "ggplotCalibrationCurve"
+    )
   return(Results)
 }
