@@ -27,12 +27,12 @@ citEntry(entry = "Manual",
                                 person(given = "Ben", family = "Van Calster"),
                                 person(given = "Ewout W.", family = "Steyerberg"),
                                 person(given = "Yvonne", family = "Vergouwe"))),
-         year = "2022",
-         note = "R package version 0.1.5",
+         year = "2023",
+         note = "R package version 1.0.0",
          url = "https://github.com/BavoDC/CalibrationCurves",
          textVersion  =
-           paste("De Cock, B., Nieboer, D., Van Calster, B., Steyerberg, E.W., Vergouwe, Y. (2022).",
-                 "The CalibrationCurves package: validating predicted probabilities against binary events. R package version 0.1.5,",
+           paste("De Cock, B., Nieboer, D., Van Calster, B., Steyerberg, E.W., Vergouwe, Y. (2023).",
+                 "The CalibrationCurves package: validating predicted probabilities against binary events. R package version 1.0.0,",
                  "https://github.com/BavoDC/CalibrationCurves")
 )
 
