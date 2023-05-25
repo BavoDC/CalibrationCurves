@@ -3,7 +3,7 @@ CalibrationCurves: Validating predicted probabilities against binary events.
 Package to generate logistic and flexible calibration curves and related statistics. Based on the val.prob function from Frank Harrell's [rms](https://cran.r-project.org/package=rms) package.
 
 <p align="left">
-  <img src="vignettes/CalibrationCurves.png" width="25%">
+  <img src="inst/figures/CalibrationCurves.png" width="25%">
 </p>
 
 ## Installation
