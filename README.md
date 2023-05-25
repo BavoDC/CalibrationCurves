@@ -2,6 +2,10 @@ CalibrationCurves: Validating predicted probabilities against binary events.
 ====
 Package to generate logistic and flexible calibration curves and related statistics. Based on the val.prob function from Frank Harrell's [rms](https://cran.r-project.org/package=rms) package.
 
+<p align="left">
+  <img src="vignettes/CalibrationCurves.png" width="25%">
+</p>
+
 ## Installation
 
 ### On current R (>= 3.0.0)
@@ -20,5 +24,5 @@ If you have questions, remarks or suggestions regarding the package, you can con
 ## Citation
 If you use this package, please cite:
 
-- De Cock, B., Nieboer, D., Van Calster, B., Steyerberg, E.W., Vergouwe, Y. (2023). _The CalibrationCurves package: validating predicted probabilities against binary events_. R package version 1.0.0, [https://github.com/BavoDC/CalibrationCurves](https://github.com/BavoDC/CalibrationCurves)
+- De Cock, B., Nieboer, D., Van Calster, B., Steyerberg, E.W., Vergouwe, Y. (2023). _The CalibrationCurves package: validating predicted probabilities against binary events_. R package version 2.0.0, [https://cran.r-project.org/package=CalibrationCurves](https://cran.r-project.org/package=CalibrationCurves)
 - Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina, M.J., Steyerberg, E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. _Journal of Clinical Epidemiology_, __74__, pp. 167-176

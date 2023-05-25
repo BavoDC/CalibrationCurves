@@ -43,3 +43,20 @@ CRAN-SUBMISSION
 
 # Text-file with to-do
 *.txt
+inst/doc
+
+# Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
+rsconnect/
+docs
+
+# files produced from pkgdown
+*.yml
+.github/
+
+# logo package
+./inst/figures
+/doc/
+/Meta/
+
+# vignettes
+/vignettes/

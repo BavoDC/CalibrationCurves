@@ -66,6 +66,9 @@
 #' @param col.smooth the color of the flexible calibration curve. Default is \code{"black"}.
 #' @param lty.smooth the linetype of the flexible calibration curve. Default is \code{1}.
 #' @param lwd.smooth the line width of the flexible calibration curve. Default is \code{1}.
+#' @param allowPerfectPredictions Logical, indicates whether perfect predictions (i.e. values of either 0 or 1) are allowed. Default is \code{FALSE}, since we transform
+#' the predictions using the logit transformation to calculate the calibration measures. In case of 0 and 1, this results in minus infinity and infinity, respectively. if
+#' \code{allowPerfectPredictions = TRUE}, 0 and 1 are replaced by 1e-8 and 1 - 1e-8, respectively.
 #'
 #' @param cl.level if \code{dostats=TRUE}, the confidence level for the calculation of the confidence intervals of the calibration intercept,
 #'  calibration slope and c-statistic. Default is \code{0.95}.
@@ -81,6 +84,8 @@
 #' @return \item{cl.level}{the confidence level used.}
 #' @return \item{Calibration}{contains the calibration intercept and slope, together with their confidence intervals.}
 #' @return \item{Cindex}{the value of the c-statistic, together with its confidence interval.}
+#' @return \item{warningMessages}{if any, the warning messages that were printed while running the function.}
+#' @return \item{CalibrationCurves}{The coordinates for plotting the calibration curves. }
 #'
 #' @note In order to make use (of the functions) of the package auRoc, the user needs to install JAGS. However, since our package only uses the
 #' \code{auc.nonpara.mw} function which does not depend on the use of JAGS, we therefore copied the code and slightly adjusted it when
@@ -139,7 +144,7 @@ val.prob.ci.2 <- function(p, y, logit, group,
                           roundstats = 2, riskdist = "predicted", cex = 0.75, cex.leg = 0.75, connect.group = FALSE, connect.smooth = TRUE,
                           g.group = 4, evaluate = 100, nmin = 0, d0lab = "0", d1lab = "1", cex.d01 = 0.7,
                           dist.label = 0.04, line.bins = -.05, dist.label2 = .03, cutoff, las = 1, length.seg = 1,
-                          y.intersp = 1, lty.ideal = 1, col.ideal = "red", lwd.ideal = 1, ...)
+                          y.intersp = 1, lty.ideal = 1, col.ideal = "red", lwd.ideal = 1, allowPerfectPredictions = FALSE, ...)
 {
   call   = match.call()
   oldpar = par(no.readonly = TRUE)
@@ -149,10 +154,39 @@ val.prob.ci.2 <- function(p, y, logit, group,
     smooth <- "F"
   }
   if (!missing(p))
-    if (any(!(p >= 0 |
-              p <= 1))) {
+    if(allowPerfectPredictions & any(!(p > 0 | p < 1)))
       stop("Probabilities can not be > 1 or < 0.")
+  else if (any(!(p >= 0 | p <= 1)))
+    stop("Probabilities can not be >= 1 or <= 0.")
+  if(allowPerfectPredictions) {
+    if(all(p %in% 0:1))
+      stop("All predicted values are equal to 0 or 1, implying that the underlying process is deterministic. Please check your model or the input.")
+    if(any(p %in% c(0, 1))) {
+      p = sapply(p, function(x) {
+        if(is.na(x) | is.nan(x))
+          x
+        else if(x == 0)
+          1e-8
+        else if(x == 1)
+          1 - 1e-8
+        else
+          x
+      })
+      wmess = paste0("There are predictions with value 0 or 1! These are replaced by values 1e-8 and 1 - 1e-8, respectively. ",
+                     "Take this into account when interpreting the performance measures, as these are not calculated with the original values.",
+                     "\n\nPlease check your model, as this may be an indication of overfitting. Predictions of 0 or 1 imply that these predicted values are deterministic.\n\n",
+                     "We observe this in the following cases:\n - logistic regression: with quasi-complete separation, the coefficients tend to infinity;\n",
+                     " - tree-based methods: one of the leaf nodes contains only observations with either 0 or 1;\n",
+                     " - neural networks: the weights tend to infinity and this is known as weight/gradient explosion.")
+      warning(wmess, immediate. = TRUE)
+    } else {
+      wmess = NULL
     }
+  } else {
+    wmess = NULL
+  }
+  a = 1 - cl.level
+
   if (missing(p))
     p <- 1 / (1 + exp(-logit))
   else
@@ -179,6 +213,15 @@ val.prob.ci.2 <- function(p, y, logit, group,
     nma <- !is.na(p + y + weights)
     ng <- 0
   }
+  if(any(nma == FALSE)) {
+    tmpmess = "There are observations with missing values. These are removed."
+    warning(tmpmess, immediate. = TRUE)
+    wmess = c(wmess, tmpmess)
+  }
+  if (!is.numeric(nr.knots)) {
+    stop("Nr.knots must be numeric.")
+  }
+
   logit <- logit[nma]
   y <- y[nma]
   p <- p[nma]
@@ -249,7 +292,7 @@ val.prob.ci.2 <- function(p, y, logit, group,
   if(nm > 0)
     warning(paste(nm, "observations deleted from logistic calibration due to probs. of 0 or 1"))
   i.2  <- i
-  f.or <- lrm(y[i] ~ logit[i])
+  f.or <- glm(y[i] ~ logit[i], family = binomial) # lrm(y[i] ~ logit[i])
   f    <- lrm.fit(logit[i], y[i])
   cl.slope <- confint(f, level = cl.level)[2, ]
   f2   <-	lrm.fit(offset = logit[i], y = y[i])
@@ -269,12 +312,14 @@ val.prob.ci.2 <- function(p, y, logit, group,
   lt <- f$coef[1] + f$coef[2] * log(predprob/(1 - predprob))
   calp <- 1/(1 + exp( - lt))
   emax <- max(abs(predprob - calp))
+
   if (pl) {
     plot(0.5, 0.5, xlim = xlim, ylim = ylim, type = "n", xlab = xlab,
          ylab = ylab, las=las,...)
     clip(0,1,0,1)
     abline(0, 1, lty = lty.ideal,col=col.ideal,lwd=lwd.ideal)
     do.call("clip", as.list(par()$usr))
+    calCurves = list()
 
 
     lt <- lty.ideal
@@ -322,6 +367,8 @@ val.prob.ci.2 <- function(p, y, logit, group,
           res.BT = replicate(2000, BT.samples(y, p, to.pred))
           CL.BT  = apply(res.BT, 1, quantile, c(0.025, 0.975))
           colnames(CL.BT) = to.pred
+          dfCL    = data.frame(x = to.pred, y = apply(res.BT, 1, quantile, 0.5), ymin = CL.BT[1, ], ymax = CL.BT[2, ])
+          rownames(dfCL) = NULL
 
           if (CL.smooth == "fill") {
             clip(0, 1, 0, 1)
@@ -373,14 +420,15 @@ val.prob.ci.2 <- function(p, y, logit, group,
         } else{
           Sm.0     = loess(y ~ p, degree = 2)
           cl.loess = predict(Sm.0, type = "fitted", se = TRUE)
+          dfCL     = data.frame(x = p, ymin = with(cl.loess, fit - qnorm(1 - a / 2) * se.fit), ymax = with(cl.loess, fit + qnorm(1 - a / 2) * se.fit))
+
           clip(0, 1, 0, 1)
           if (CL.smooth == "fill") {
             polygon(
               x = c(Sm.0$x, rev(Sm.0$x)),
               y = c(
-                cl.loess$fit + cl.loess$se.fit * 1.96,
-                rev(cl.loess$fit -
-                      cl.loess$se.fit * 1.96)
+                dfCL$ymax,
+                rev(dfCL$ymin)
               ),
               col = rgb(177, 177, 177, 177, maxColorValue = 255),
               border = NA
@@ -404,14 +452,14 @@ val.prob.ci.2 <- function(p, y, logit, group,
           } else{
             lines(
               Sm.0$x,
-              cl.loess$fit + cl.loess$se.fit * 1.96,
+              dfCL$ymax,
               lty = 2,
               lwd = 1,
               col = col.smooth
             )
             lines(
               Sm.0$x,
-              cl.loess$fit - cl.loess$se.fit * 1.96,
+              dfCL$ymin,
               lty = 2,
               lwd = 1,
               col = col.smooth
@@ -426,133 +474,63 @@ val.prob.ci.2 <- function(p, y, logit, group,
           }
 
         }
-
+        dfCL[dfCL$ymax < 0, "ymax"] <- dfCL[dfCL$ymin < 0, "ymin"] <- 0
+        dfCL[dfCL$ymax > 1, "ymax"] <- dfCL[dfCL$ymin > 1, "ymin"] <- 1
       } else{
         leg <- c(leg, "Flexible calibration (Loess)")
       }
-      cal.smooth <- approx(Sm.01, xout = p)$y
+      cal.smooth <- approx(Sm.01, xout = p, ties = "ordered")$y
       eavg <- mean(abs(p - cal.smooth))
       ECI <- mean((p - cal.smooth) ^ 2) * 100
+
+      if(any(Sm$y < 0)) {
+        sel = which(Sm$y < 0)
+        sel = c(sel[length(sel)], sel[length(sel)] + 1)
+        tmp = Sm[sel, ]
+        Sm    = Sm[Sm$y >= 0 & Sm$y <= 1, ]
+        Sm  = rbind.data.frame(
+          data.frame(x = predict(lm(x ~ y, data = tmp), data.frame(y = 0)), y = 0),
+          Sm
+        )
+      }
+      colnames(Sm) = c("x", "y")
+      if(exists("dfCL", envir = environment())) {
+        flexCal = if("CL.BT" %in% names(call) && call$CL.BT) list(loessFit = Sm, BootstrapConfidenceLimits = dfCL) else merge(Sm, dfCL, by = "x")
+      } else {
+        flexCal = Sm
+      }
+      calCurves$FlexibleCalibration = flexCal
     }
     if (smooth == "rcs") {
       par(lwd = lwd.smooth, bty = "n", col = col.smooth)
-      if (!is.numeric(nr.knots)) {
-        stop("Nr.knots must be numeric.")
+
+      argzRCS = alist(x = p,
+                      y = y,
+                      model = "logistic",
+                      nk = nr.knots,
+                      show = "prob",
+                      statloc = "none",
+                      plot = TRUE,
+                      add = TRUE,
+                      showknots = FALSE,
+                      xrange = c(min(na.omit(p)), max(na.omit(p))),
+                      lty = lty.smooth)
+      nkDecrease <- function(Argz) {
+        tryCatch(
+          do.call(".rcspline.plot", Argz),
+          error = function(e) {
+            nk = Argz$nk
+            warning(paste0("The number of knots led to estimation problems, nk will be set to ", nk), immediate. = TRUE)
+            if(nk < 3)
+              stop("Nk = 3 led to estimation problems.")
+            Argz$nk = nk - 1
+            nkDecrease(Argz)
+          }
+        )
       }
-      if (nr.knots == 5) {
-        tryCatch(
-          .rcspline.plot(
-            p,
-            y,
-            model = "logistic",
-            nk = 5,
-            show = "prob",
-            statloc = "none"
-            ,
-            add = TRUE,
-            showknots = FALSE,
-            xrange = c(min(na.omit(p)), max(na.omit(p))),
-            lty = lty.smooth
-          ),
-          error = function(e) {
-            warning("The number of knots led to estimation problems, nk will be set to 4.",
-                    immediate. = TRUE)
-            tryCatch(
-              .rcspline.plot(
-                p,
-                y,
-                model = "logistic",
-                nk = 4,
-                show = "prob",
-                statloc = "none"
-                ,
-                add = TRUE,
-                showknots = FALSE,
-                xrange = c(min(na.omit(p)), max(na.omit(p))),
-                lty = lty.smooth
-              )
-              ,
-              error = function(e) {
-                warning("Nk 4 also led to estimation problems, nk will be set to 3.",
-                        immediate. = TRUE)
-                .rcspline.plot(
-                  p,
-                  y,
-                  model = "logistic",
-                  nk = 3,
-                  show = "prob",
-                  statloc = "none"
-                  ,
-                  add = TRUE,
-                  showknots = FALSE,
-                  xrange = c(min(na.omit(p)), max(na.omit(p)))
-                  ,
-                  lty = lty.smooth
-                )
-              }
-            )
-          }
-        )
-      } else if (nr.knots == 4) {
-        tryCatch(
-          .rcspline.plot(
-            p,
-            y,
-            model = "logistic",
-            nk = 4,
-            show = "prob",
-            statloc = "none"
-            ,
-            add = TRUE,
-            showknots = FALSE,
-            xrange = c(min(na.omit(p)), max(na.omit(p))),
-            lty = lty.smooth
-          ),
-          error = function(e) {
-            warning("The number of knots led to estimation problems, nk will be set to 3.",
-                    immediate. = TRUE)
-            .rcspline.plot(
-              p,
-              y,
-              model = "logistic",
-              nk = 3,
-              show = "prob",
-              statloc = "none"
-              ,
-              add = TRUE,
-              showknots = FALSE,
-              xrange = c(min(na.omit(p)), max(na.omit(p))),
-              lty = lty.smooth
-            )
-          }
-        )
-      } else if (nr.knots == 3) {
-        tryCatch(
-          .rcspline.plot(
-            p,
-            y,
-            model = "logistic",
-            nk = 3,
-            show = "prob",
-            statloc = "none"
-            ,
-            add = TRUE,
-            showknots = FALSE,
-            xrange = c(min(na.omit(p)), max(na.omit(p))),
-            lty = lty.smooth
-          ),
-          error = function(e) {
-            stop("Nk = 3 led to estimation problems.")
-          }
-        )
-      } else{
-        stop(paste(
-          "Number of knots = ",
-          nr.knots,
-          sep = "",
-          ", only 5 >= nk >=3 is allowed."
-        ))
-      }
+      rcsFit        = nkDecrease(argzRCS)
+      rcsDf         = as.data.frame(rcsFit)
+      calCurves$RCS = rcsDf
 
       par(lwd = 1, bty = "o", col = "black")
       leg <- c(leg, "Flexible calibration (RCS)", "CL flexible")
@@ -666,7 +644,8 @@ val.prob.ci.2 <- function(p, y, logit, group,
   if(pl) {
     if (min(p) > plogis(-7) | max(p) < plogis(7)) {
       lrm.fit.1 = lrm(y[i.2] ~ qlogis(p[i.2]))
-      if(logistic.cal)
+      logCal    = data.frame(x = p[i.2], y = plogis(lrm.fit.1$linear.predictors))
+      if(logistic.cal) {
         lines(
           p[i.2],
           plogis(lrm.fit.1$linear.predictors),
@@ -674,17 +653,21 @@ val.prob.ci.2 <- function(p, y, logit, group,
           lty = lty.log,
           col = col.log
         )
+        calCurves$LogisticCalibration = logCal
+      }
     } else {
-      logit <- seq(-7, 7, length = 200)
-      prob <- 1 / (1 + exp(-logit))
-      pred.prob <- f$coef[1] + f$coef[2] * logit
-      pred.prob <- 1 / (1 + exp(-pred.prob))
-      if (logistic.cal)
+      logit  = seq(-7, 7, length = 200)
+      prob   = 1 / (1 + exp(-logit))
+      pHat   = binomial()$linkinv(cbind(1, logit) %*% coef(f))
+      logCal = data.frame(x = prob, y = pHat)
+      if (logistic.cal) {
         lines(prob,
-              pred.prob,
+              pHat,
               lty = lty.log,
               lwd = lwd.log,
               col = col.log)
+        calCurves$LogisticCalibration = logCal
+      }
     }
     lp <- legendloc
     if (!is.logical(lp)) {
@@ -779,7 +762,9 @@ val.prob.ci.2 <- function(p, y, logit, group,
         ),
         Cindex = c("Point estimate" = unname(stats["C (ROC)"]),
                    "Lower confidence limit" = cl.auc[2],
-                   "Upper confidence limit" = cl.auc[3])
+                   "Upper confidence limit" = cl.auc[3]),
+        warningMessages = wmess,
+        CalibrationCurves = calCurves
       ), class = "CalibrationCurve"
       )
   return(Results)

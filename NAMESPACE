@@ -4,7 +4,7 @@ importFrom("graphics", "abline", "arrows", "clip", "legend", "lines",
              "text")
 importFrom("methods", "existsFunction")
 importFrom("stats", "approx", "confint", "loess", "na.omit", "pchisq",
-             "plogis", "predict", "quantile", "supsmu","pnorm", "qnorm", "qt", "binomial", "coef", "lm")
+             "plogis", "predict", "quantile", "supsmu","pnorm", "qnorm", "qt", "binomial", "coef", "lm", "glm")
 importFrom("utils", "getFromNamespace")
 importFrom("Hmisc", "cut2", "groupn", "label", "rcspline.eval")
 importFrom("survival", "coxph.control")

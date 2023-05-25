@@ -1,8 +1,8 @@
 Package: CalibrationCurves
 Type: Package
 Title: Calibration Performance
-Version: 1.0.0
-Date: 2023-01-19
+Version: 1.0.1
+Date: 2023-05-02
 Authors@R: c(person("De Cock", "Bavo", role = c("aut", "cre"),
 		     email = "bavo.decock@kuleuven.be"),
 	      person("Nieboer", "Daan", role = "aut"),
@@ -17,3 +17,4 @@ Imports: grDevices, graphics, methods, stats, utils, survival, Hmisc
 Suggests: knitr, rmarkdown
 RoxygenNote: 7.2.3
 Encoding: UTF-8
+VignetteBuilder: knitr

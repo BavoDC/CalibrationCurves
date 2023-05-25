@@ -55,7 +55,8 @@ valProbggplot(
   length.seg = 0.85,
   lty.ideal = 1,
   col.ideal = "red",
-  lwd.ideal = 1
+  lwd.ideal = 1,
+  allowPerfectPredictions = FALSE
 )
 }
 \arguments{
@@ -233,6 +234,10 @@ Defaults are \code{d1lab="1"} for events and \code{d0lab="0"} for non-events.}
 \item{col.ideal}{controls the color of the ideal line on the plot. Default is \code{"red"}.}
 
 \item{lwd.ideal}{controls the line width of the ideal line on the plot. Default is \code{1}.}
+
+\item{allowPerfectPredictions}{Logical, indicates whether perfect predictions (i.e. values of either 0 or 1) are allowed. Default is \code{FALSE}, since we transform
+the predictions using the logit transformation to calculate the calibration measures. In case of 0 and 1, this results in minus infinity and infinity, respectively. if
+\code{allowPerfectPredictions = TRUE}, 0 and 1 are replaced by 1e-8 and 1 - 1e-8, respectively.}
 }
 \value{
 An object of type \code{ggplotCalibrationCurve} with the following slots:
@@ -248,6 +253,10 @@ An object of type \code{ggplotCalibrationCurve} with the following slots:
 \item{Calibration}{contains the calibration intercept and slope, together with their confidence intervals.}
 
 \item{Cindex}{the value of the c-statistic, together with its confidence interval.}
+
+\item{warningMessages}{if any, the warning messages that were printed while running the function.}
+
+\item{CalibrationCurves}{The coordinates for plotting the calibration curves. }
 }
 \description{
 The function \code{valProbggplot} is an adaptation of \code{\link{val.prob}} from Frank Harrell's rms package,

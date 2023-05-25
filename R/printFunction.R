@@ -20,6 +20,9 @@ print.CalibrationCurve <- function(x, ...) {
     )
   )
   print(x$stats, ...)
+  if(!is.null(x$warningMessages))
+    for(w in x$warningMessages)
+      warning(paste0(w, "\n"), immediate. = TRUE)
   invisible(x)
 }
 
@@ -46,5 +49,8 @@ print.ggplotCalibrationCurve <- function(x, ...) {
     )
   )
   print(x$stats, ...)
+  if(!is.null(x$warningMessages))
+    for(w in x$warningMessages)
+      warning(paste0(w, "\n"), immediate. = TRUE)
   invisible(x)
 }

@@ -69,6 +69,9 @@
 #' \code{"jackknife"}. Bootstrap-based methods are not available. The default method is \code{"pepe"} and here, the confidence interval is
 #' the logit-transformation-based confidence interval as documented in Qin and Hotilovac (2008). See \code{\link{auc.nonpara.mw}} for
 #' more information on the other methods.
+#' @param allowPerfectPredictions Logical, indicates whether perfect predictions (i.e. values of either 0 or 1) are allowed. Default is \code{FALSE}, since we transform
+#' the predictions using the logit transformation to calculate the calibration measures. In case of 0 and 1, this results in minus infinity and infinity, respectively. if
+#' \code{allowPerfectPredictions = TRUE}, 0 and 1 are replaced by 1e-8 and 1 - 1e-8, respectively.
 #'
 #' @return An object of type \code{ggplotCalibrationCurve} with the following slots:
 #' @return \item{call}{the matched call.}
@@ -77,6 +80,8 @@
 #' @return \item{cl.level}{the confidence level used.}
 #' @return \item{Calibration}{contains the calibration intercept and slope, together with their confidence intervals.}
 #' @return \item{Cindex}{the value of the c-statistic, together with its confidence interval.}
+#' @return \item{warningMessages}{if any, the warning messages that were printed while running the function.}
+#' @return \item{CalibrationCurves}{The coordinates for plotting the calibration curves. }
 #'
 #' @note In order to make use (of the functions) of the package auRoc, the user needs to install JAGS. However, since our package only uses the
 #' \code{auc.nonpara.mw} function which does not depend on the use of JAGS, we therefore copied the code and slightly adjusted it when
@@ -136,15 +141,12 @@ valProbggplot <- function(p, y, logit, group,
                           roundstats = 2, riskdist = "predicted", size = 3, size.leg = 5, connect.group = FALSE, connect.smooth = TRUE,
                           g.group = 4, evaluate = 100, nmin = 0, d0lab = "0", d1lab = "1", size.d01 = 5,
                           dist.label = 0.01, line.bins = -.05, dist.label2 = .04, cutoff, length.seg = 0.85,
-                          lty.ideal = 1, col.ideal = "red", lwd.ideal = 1)
+                          lty.ideal = 1, col.ideal = "red", lwd.ideal = 1, allowPerfectPredictions = FALSE)
 {
   call   = match.call()
   smooth = match.arg(smooth)
   if (smooth == "none")
     smooth <- "F"
-  if (!missing(p))
-    if (any(!(p >= 0 | p <= 1)))
-      stop("Probabilities can not be > 1 or < 0.")
   if(!is.logical(connect.smooth))
     stop("Argument connect.smooth has to be of type logical.")
   if (!is.numeric(nr.knots))
@@ -156,6 +158,38 @@ valProbggplot <- function(p, y, logit, group,
       sep = "",
       ", only 5 >= nk >=3 is allowed."
     ))
+  if (!missing(p))
+    if(allowPerfectPredictions & any(!(p > 0 | p < 1)))
+      stop("Probabilities can not be > 1 or < 0.")
+  else if (any(!(p >= 0 | p <= 1)))
+    stop("Probabilities can not be >= 1 or <= 0.")
+  if(allowPerfectPredictions) {
+    if(all(p %in% 0:1))
+      stop("All predicted values are equal to 0 or 1, implying that the underlying process is deterministic. Please check your model or the input.")
+    if(any(p %in% c(0, 1))) {
+      p = sapply(p, function(x) {
+        if(is.na(x) | is.nan(x))
+          x
+        else if(x == 0)
+          1e-8
+        else if(x == 1)
+          1 - 1e-8
+        else
+          x
+      })
+      wmess = paste0("There are predictions with value 0 or 1! These are replaced by values 1e-8 and 1 - 1e-8, respectively. ",
+                     "Take this into account when interpreting the performance measures, as these are not calculated with the original values.",
+                     "\n\nPlease check your model, as this may be an indication of overfitting. Predictions of 0 or 1 imply that these predicted values are deterministic.\n\n",
+                     "We observe this in the following cases:\n - logistic regression: with quasi-complete separation, the coefficients tend to infinity;\n",
+                     " - tree-based methods: one of the leaf nodes contains only observations with either 0 or 1;\n",
+                     " - neural networks: the weights tend to infinity and this is known as weight/gradient explosion.")
+      warning(wmess, immediate. = TRUE)
+    } else {
+      wmess = NULL
+    }
+  } else {
+    wmess = NULL
+  }
 
   a = 1 - cl.level
 
@@ -184,6 +218,11 @@ valProbggplot <- function(p, y, logit, group,
   } else {
     nma <- !is.na(p + y + weights)
     ng <- 0
+  }
+  if(any(nma == FALSE)) {
+    tmpmess = "There are observations with missing values. These are removed."
+    warning(tmpmess, immediate. = TRUE)
+    wmess = c(wmess, tmpmess)
   }
   logit <- logit[nma]
   y <- y[nma]
@@ -258,7 +297,7 @@ valProbggplot <- function(p, y, logit, group,
   if(nm > 0)
     warning(paste(nm, "observations deleted from logistic calibration due to probs. of 0 or 1"))
   i.2  <- i
-  f.or <- lrm(y[i] ~ logit[i])
+  f.or <- glm(y[i] ~ logit[i], family = binomial) # lrm(y[i] ~ logit[i])
   f    <- lrm.fit(logit[i], y[i])
   # glm(y ~ offset(Eta), family = binomial, control = glm.control(maxit = 1e2))
   # glm(y ~ Eta, family = binomial)
@@ -287,24 +326,27 @@ valProbggplot <- function(p, y, logit, group,
       geom_line(data = data.frame(x = 0:1, y = 0:1), aes(x = x, y = y, colour = "Ideal"), linewidth = lwd.ideal, show.legend = TRUE) +
       labs(x = xlab, y = ylab)
 
-    legCol = c("Ideal" = col.ideal)
-    lt      <- lty.ideal
-    lw.d    <- lwd.ideal
-    marks   <- NA
+    legCol    = c("Ideal" = col.ideal)
+    lt        = lty.ideal
+    lw.d      = lwd.ideal
+    marks     = NA
+    calCurves = list()
 
 
     if (logistic.cal) {
       if (min(p) > plogis(-7) | max(p) < plogis(7)) {
         lrm.fit.1 = lrm(y[i.2] ~ qlogis(p[i.2]))
-        gg = gg + geom_line(data = data.frame(x = p[i.2], y = plogis(lrm.fit.1$linear.predictors), show.legend = TRUE),
+        logCal    = data.frame(x = p[i.2], y = plogis(lrm.fit.1$linear.predictors))
+        gg = gg + geom_line(data = logCal, show.legend = TRUE,
                             aes(x = x, y = y, color = "Logistic calibration"), linewidth = lwd.log, linetype = lty.log)
       } else {
-        logit <- seq(-7, 7, length = 200)
-        prob  <- 1 / (1 + exp(-logit))
-        pHat  <- binomial()$linkinv(cbind(1, logit) %*% coef(f))
-        gg = gg + geom_line(data = data.frame(x = prob, y = pHat), aes(x = x, y = y, color = "Logistic calibration"), linewidth = lwd.log, linetype = lty.log)
+        logit  = seq(-7, 7, length = 200)
+        prob   = 1 / (1 + exp(-logit))
+        pHat   = binomial()$linkinv(cbind(1, logit) %*% coef(f))
+        logCal = data.frame(x = prob, y = pHat)
+        gg = gg + geom_line(data = logCal, aes(x = x, y = y, color = "Logistic calibration"), linewidth = lwd.log, linetype = lty.log)
       }
-
+      calCurves$LogisticCalibration = logCal
       legCol = c(legCol, "Logistic calibration" = col.log)
       lt      <- c(lt, lty.log)
       lw.d    <- c(lw.d, lwd.log)
@@ -347,14 +389,15 @@ valProbggplot <- function(p, y, logit, group,
           res.BT  = replicate(2000, BT.samples(y, p, to.pred))
           CL.BT   = apply(res.BT, 1, quantile, c(0.025, 0.975))
           colnames(CL.BT) = to.pred
-          dfCL    = data.frame(x = to.pred, ymin = CL.BT[1, ], ymax = CL.BT[2, ])
+          dfCL    = data.frame(x = to.pred, y = apply(res.BT, 1, quantile, 0.5), ymin = CL.BT[1, ], ymax = CL.BT[2, ])
+          rownames(dfCL) = NULL
         } else {
           cl.loess = predict(SmFit, type = "fitted", se = TRUE)
           dfCL     = data.frame(x = p, ymin = with(cl.loess, fit - qnorm(1 - a / 2) * se.fit), ymax = with(cl.loess, fit + qnorm(1 - a / 2) * se.fit))
         }
+        dfCL[dfCL$ymax < 0, "ymax"] <- dfCL[dfCL$ymin < 0, "ymin"] <- 0
+        dfCL[dfCL$ymax > 1, "ymax"] <- dfCL[dfCL$ymin > 1, "ymin"] <- 1
         if (CL.smooth == "fill") {
-          dfCL[dfCL$ymax < 0, "ymax"] <- dfCL[dfCL$ymin < 0, "ymin"] <- 0
-          dfCL[dfCL$ymax > 1, "ymax"] <- dfCL[dfCL$ymin > 1, "ymin"] <- 1
           gg = gg + geom_ribbon(data = dfCL, aes(x = x, ymin = ymin, ymax = ymax),
                                 fill = rgb(177, 177, 177, 177, maxColorValue = 255))
         } else{
@@ -369,8 +412,25 @@ valProbggplot <- function(p, y, logit, group,
           marks   <- c(marks, NA)
         }
       }
+      if(any(Sm$y < 0)) {
+        sel = which(Sm$y < 0)
+        sel = c(sel[length(sel)], sel[length(sel)] + 1)
+        tmp = Sm[sel, ]
+        Sm    = Sm[Sm$y >= 0 & Sm$y <= 1, ]
+        Sm  = rbind.data.frame(
+          data.frame(x = predict(lm(x ~ y, data = tmp), data.frame(y = 0)), y = 0),
+          Sm
+        )
+      }
+      colnames(Sm) = c("x", "y")
+      if(exists("dfCL", envir = environment())) {
+        flexCal = if("CL.BT" %in% names(call) && call$CL.BT) list(loessFit = Sm, BootstrapConfidenceLimits = dfCL) else merge(Sm, dfCL, by = "x")
+      } else {
+        flexCal = Sm
+      }
+      calCurves$FlexibleCalibration = flexCal
 
-      cal.smooth <- approx(Sm.01, xout = p)$y
+      cal.smooth <- approx(Sm.01, xout = p, ties = "ordered")$y
       eavg       <- mean(abs(p - cal.smooth))
       ECI        <- mean((p - cal.smooth) ^ 2) * 100
     } else if (smooth == "rcs") {
@@ -397,8 +457,9 @@ valProbggplot <- function(p, y, logit, group,
           }
         )
       }
-      rcsFit = nkDecrease(argzRCS)
-      rcsDf  = as.data.frame(rcsFit)
+      rcsFit        = nkDecrease(argzRCS)
+      rcsDf         = as.data.frame(rcsFit)
+      calCurves$RCS = rcsDf
       gg = gg +
         geom_line(data = rcsDf, aes(x = x, y = xbeta, color = "Flexible calibration (RCS)"), linetype = lty.smooth, linewidth = lwd.smooth) +
         geom_line(data = rcsDf, aes(x = x, y = lower, color = "CL flexible"), linetype = 2, linewidth = 1) +
@@ -449,7 +510,6 @@ valProbggplot <- function(p, y, logit, group,
         lw.d <- c(lw.d, 0)
       }
       legCol = c(legCol, "Grouped observations" = "black")
-      all.col <- c(all.col, col.smooth)
       marks   <- c(marks, 2)
     }
   }
@@ -604,7 +664,9 @@ valProbggplot <- function(p, y, logit, group,
         ),
         Cindex = c("Point estimate" = unname(stats["C (ROC)"]),
                    "Lower confidence limit" = cl.auc[2],
-                   "Upper confidence limit" = cl.auc[3])
+                   "Upper confidence limit" = cl.auc[3]),
+        warningMessages = wmess,
+        CalibrationCurves = calCurves
       ), class = "ggplotCalibrationCurve"
     )
   return(Results)
