@@ -585,7 +585,7 @@ valProbggplot <- function(p, y, logit, group,
                          sprintf(paste("%.", roundstats, "f", sep = ""), cl.auc[2]), " to ",
                          sprintf(paste("%.", roundstats, "f", sep = ""), cl.auc[3]), ")"
                          , sep = '')
-        gg = gg + annotate("text", x = statloc[1], y = statloc[2], label = stats.2, hjust = 0)
+        gg = gg + annotate("text", x = statloc[1], y = statloc[2], label = stats.2, hjust = 0, size = size)
       } else {
         dostats <- dostats
         leg <- format(names(stats)[dostats])	#constant length
@@ -593,7 +593,9 @@ valProbggplot <- function(p, y, logit, group,
         if(!is.list(statloc))
           statloc <- list(x = statloc[1], y = statloc[2])
         gg =
-          gg + annotate("text", x = statloc$x, y = statloc$y, label = paste(format(names(stats[dostats])), collapse = "\n"), hjust = 0, size = size) +
+          gg +
+          annotate("text", x = statloc$x, y = statloc$y, label = paste(format(names(stats[dostats])), collapse = "\n"),
+                        hjust = 0, size = size) +
           annotate("text", x = statloc$x + (xlim[2] - xlim[1])/3, y = statloc$y, label = paste(format(round(stats[dostats], digits = roundstats)), collapse = "\n"),
                    hjust = 0, size = size)
       }
