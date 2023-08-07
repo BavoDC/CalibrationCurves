@@ -1,7 +1,7 @@
 Package: CalibrationCurves
 Type: Package
 Title: Calibration Performance
-Version: 1.0.1
+Version: 1.0.2
 Date: 2023-05-02
 Authors@R: c(person("De Cock", "Bavo", role = c("aut", "cre"),
 		     email = "bavo.decock@kuleuven.be"),
@@ -18,3 +18,4 @@ Suggests: knitr, rmarkdown
 RoxygenNote: 7.2.3
 Encoding: UTF-8
 VignetteBuilder: knitr
+URL: https://bavodc.github.io/websiteCalibrationCurves/

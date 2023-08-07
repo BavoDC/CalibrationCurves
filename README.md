@@ -18,11 +18,15 @@ library("devtools"); install_github("BavoDC/CalibrationCurves", dependencies = T
 (This requires `devtools` >= 1.6.1, and installs the "master" (development) branch.)
 This approach builds the package from source, i.e. `make` and compilers must be installed on your system -- see the R FAQ for your operating system; you may also need to install dependencies manually.
 
+## Documentation
+The basic functionality of the package is explained and demonstrated on the [homepage](https://bavodc.github.io/websiteCalibrationCurves/articles/CalibrationCurves.html) of the package. I am currently working on an upgrade of the package, which will contain a tutorial and a more comprehensive documentation of the methods covered (as well as various other improvements) in the package.
+
+
 ## Contact
 If you have questions, remarks or suggestions regarding the package, you can contact me at [bavo.decock@kuleuven.be](mailto:bavo.decock@kuleuven.be) or [bavo.campo@kuleuven.be](mailto:bavo.campo@kuleuven.be).
 
 ## Citation
 If you use this package, please cite:
 
-- De Cock, B., Nieboer, D., Van Calster, B., Steyerberg, E.W., Vergouwe, Y. (2023). _The CalibrationCurves package: validating predicted probabilities against binary events_. R package version 1.0.1, [https://cran.r-project.org/package=CalibrationCurves](https://cran.r-project.org/package=CalibrationCurves)
+- De Cock, B., Nieboer, D., Van Calster, B., Steyerberg, E.W., Vergouwe, Y. (2023). _The CalibrationCurves package: validating predicted probabilities against binary events_. R package version 1.0.2, [https://cran.r-project.org/package=CalibrationCurves](https://cran.r-project.org/package=CalibrationCurves)
 - Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina, M.J., Steyerberg, E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. _Journal of Clinical Epidemiology_, __74__, pp. 167-176
