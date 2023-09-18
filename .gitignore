@@ -21,6 +21,7 @@
 .Rproj.user/
 .Rproj
 *.Rproj
+.RDataTmp
 
 # produced vignettes
 vignettes/*.html
@@ -59,4 +60,4 @@ docs
 /Meta/
 
 # vignettes
-/vignettes/
+#/vignettes/
