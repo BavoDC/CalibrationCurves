@@ -72,6 +72,7 @@
 #' @param allowPerfectPredictions Logical, indicates whether perfect predictions (i.e. values of either 0 or 1) are allowed. Default is \code{FALSE}, since we transform
 #' the predictions using the logit transformation to calculate the calibration measures. In case of 0 and 1, this results in minus infinity and infinity, respectively. if
 #' \code{allowPerfectPredictions = TRUE}, 0 and 1 are replaced by 1e-8 and 1 - 1e-8, respectively.
+#' @param argzLoess a list with arguments passed to the \code{\link{loess}} function
 #'
 #' @return An object of type \code{ggplotCalibrationCurve} with the following slots:
 #' @return \item{call}{the matched call.}
@@ -141,7 +142,7 @@ valProbggplot <- function(p, y, logit, group,
                           roundstats = 2, riskdist = "predicted", size = 3, size.leg = 5, connect.group = FALSE, connect.smooth = TRUE,
                           g.group = 4, evaluate = 100, nmin = 0, d0lab = "0", d1lab = "1", size.d01 = 5,
                           dist.label = 0.01, line.bins = -.05, dist.label2 = .04, cutoff, length.seg = 0.85,
-                          lty.ideal = 1, col.ideal = "red", lwd.ideal = 1, allowPerfectPredictions = FALSE)
+                          lty.ideal = 1, col.ideal = "red", lwd.ideal = 1, allowPerfectPredictions = FALSE, argzLoess = alist(degree = 2))
 {
   call   = match.call()
   smooth = match.arg(smooth)
@@ -353,7 +354,8 @@ valProbggplot <- function(p, y, logit, group,
       marks   <- c(marks, NA)
     }
     if (smooth == "loess") {
-      SmFit = loess(y ~ p, degree = 2)
+      argzLoess$formula = y ~ p
+      SmFit = do.call("loess", argzLoess)
       Sm    = data.frame(x = unname(SmFit$x), y = SmFit$fitted)
       Sm.01 = Sm
 

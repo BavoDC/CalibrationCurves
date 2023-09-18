@@ -37,7 +37,7 @@
 
 \item{y}{a numeric response. For binary logistic regression, \code{y} should be either 0 or 1.}
 
-\item{model}{\code{"logistic"} or \code{"cox"}. For \code{"cox"}, uses the \code{coxph.fit} function with \code{method="efron"} arguement set.}
+\item{model}{\code{"logistic"} or \code{"cox"}. For \code{"cox"}, uses the \code{coxph.fit} function with \code{method="efron"} argument set.}
 
 \item{xrange}{range for evaluating \code{x}, default is \eqn{f} and \eqn{1 - f} quantiles of \code{x},
 where \eqn{f = \frac{10}{\max{(n, 200)}}}{f = 10/max(\code{n}, 200)} and \eqn{n} the number of observations}

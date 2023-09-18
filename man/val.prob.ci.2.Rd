@@ -59,6 +59,7 @@ val.prob.ci.2(
   col.ideal = "red",
   lwd.ideal = 1,
   allowPerfectPredictions = FALSE,
+  argzLoess = alist(degree = 2),
   ...
 )
 }
@@ -246,6 +247,8 @@ Defaults are \code{d1lab="1"} for events and \code{d0lab="0"} for non-events.}
 \item{allowPerfectPredictions}{Logical, indicates whether perfect predictions (i.e. values of either 0 or 1) are allowed. Default is \code{FALSE}, since we transform
 the predictions using the logit transformation to calculate the calibration measures. In case of 0 and 1, this results in minus infinity and infinity, respectively. if
 \code{allowPerfectPredictions = TRUE}, 0 and 1 are replaced by 1e-8 and 1 - 1e-8, respectively.}
+
+\item{argzLoess}{a list with arguments passed to the \code{\link{loess}} function}
 
 \item{...}{arguments to be passed to \code{\link{plot}}, see \code{\link{par}}}
 }

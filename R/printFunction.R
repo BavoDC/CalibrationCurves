@@ -54,3 +54,32 @@ print.ggplotCalibrationCurve <- function(x, ...) {
       warning(paste0(w, "\n"), immediate. = TRUE)
   invisible(x)
 }
+
+
+#' Print function for a GeneralizedCalibrationCurve object
+#'
+#' Prints the call, confidence level and values for the performance measures.
+#'
+#' @param x an object of type GeneralizedCalibrationCurve, resulting from \code{\link{genCalCurve}}.
+#' @param ... arguments passed to \code{\link{print}}
+#'
+#' @seealso \code{\link{genCalCurve}}
+#' @return The original \code{GeneralizedCalibrationCurve} object is returned.
+print.GeneralizedCalibrationCurve <- function(x, ...) {
+  cat("Call:\n",
+      paste(deparse(x$call), sep = "\n", collapse = "\n"),
+      "\n\n", sep = "")
+  cat(
+    paste(
+      "A ",
+      x$cl.level * 100,
+      "% confidence interval is given for the calibration intercept and calibration slope. \n\n",
+      sep = ""
+    )
+  )
+  print(x$stats, ...)
+  if(!is.null(x$warningMessages))
+    for(w in x$warningMessages)
+      warning(paste0(w, "\n"), immediate. = TRUE)
+  invisible(x)
+}

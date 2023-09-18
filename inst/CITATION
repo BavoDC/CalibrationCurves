@@ -21,19 +21,31 @@ citEntry(entry   = "Article",
 
 
 citEntry(entry = "Manual",
-         title = "The CalibrationCurves package: validating predicted probabilities against binary events.",
+         title = "The CalibrationCurves package: assessing the agreement between observed outcomes and predictions.",
          author  = personList(c(person(given = "Bavo", family = "De Cock"),
                                 person(given = "Daan", family = "Nieboer"),
                                 person(given = "Ben", family = "Van Calster"),
                                 person(given = "Ewout W.", family = "Steyerberg"),
                                 person(given = "Yvonne", family = "Vergouwe"))),
          year = "2023",
-         note = "R package version 1.0.1",
+         note = "R package version 2.0.0",
          url = "https://cran.r-project.org/package=CalibrationCurves",
          textVersion  =
            paste("De Cock, B., Nieboer, D., Van Calster, B., Steyerberg, E.W., Vergouwe, Y. (2023).",
-                 "The CalibrationCurves package: validating predicted probabilities against binary events. R package version 1.0.1,",
+                 "The CalibrationCurves package: assessing the agreement between observed outcomes and predictions. R package version 2.0.0,",
                  "https://cran.r-project.org/package=CalibrationCurves")
+)
+
+citEntry(entry = "Article",
+  title = "Towards reliable predictive analytics: a generalized calibration framework",
+  author = "Bavo {De Cock Campo}",
+  journal = "arXiv",
+  year = "2023",
+  pages = "2309.08559",
+  url = "https://arxiv.org/abs/2309.08559",
+  textVersion = paste("De Cock Campo, B. (2023).",
+    "Towards reliable predictive analytics: a generalized calibration framework.",
+    "arXiv: 2309.08559, available at https://arxiv.org/abs/2309.08559")
 )
 
 

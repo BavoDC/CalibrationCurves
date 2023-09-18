@@ -16,9 +16,9 @@
   \describe{
     \item{\code{y}}{the binary outcome variable}
     \item{\code{x1}}{covariate 1}
-    \item{\code{x1}}{covariate 2}
-    \item{\code{x1}}{covariate 3}
-    \item{\code{x1}}{covariate 4}
+    \item{\code{x2}}{covariate 2}
+    \item{\code{x3}}{covariate 3}
+    \item{\code{x4}}{covariate 4}
   }
 }
 

@@ -5,7 +5,7 @@
 #'
 #' @param x a numeric predictor
 #' @param y a numeric response. For binary logistic regression, \code{y} should be either 0 or 1.
-#' @param model \code{"logistic"} or \code{"cox"}. For \code{"cox"}, uses the \code{coxph.fit} function with \code{method="efron"} arguement set.
+#' @param model \code{"logistic"} or \code{"cox"}. For \code{"cox"}, uses the \code{coxph.fit} function with \code{method="efron"} argument set.
 #' @param xrange range for evaluating \code{x}, default is \eqn{f} and \eqn{1 - f} quantiles of \code{x},
 #' where \eqn{f = \frac{10}{\max{(n, 200)}}}{f = 10/max(\code{n}, 200)} and \eqn{n} the number of observations
 #' @param event event/censoring indicator if \code{model="cox"}. If \code{event} is present, \code{model} is assumed to be \code{"cox"}

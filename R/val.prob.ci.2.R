@@ -69,6 +69,7 @@
 #' @param allowPerfectPredictions Logical, indicates whether perfect predictions (i.e. values of either 0 or 1) are allowed. Default is \code{FALSE}, since we transform
 #' the predictions using the logit transformation to calculate the calibration measures. In case of 0 and 1, this results in minus infinity and infinity, respectively. if
 #' \code{allowPerfectPredictions = TRUE}, 0 and 1 are replaced by 1e-8 and 1 - 1e-8, respectively.
+#' @param argzLoess a list with arguments passed to the \code{\link{loess}} function
 #'
 #' @param cl.level if \code{dostats=TRUE}, the confidence level for the calculation of the confidence intervals of the calibration intercept,
 #'  calibration slope and c-statistic. Default is \code{0.95}.
@@ -144,7 +145,8 @@ val.prob.ci.2 <- function(p, y, logit, group,
                           roundstats = 2, riskdist = "predicted", cex = 0.75, cex.leg = 0.75, connect.group = FALSE, connect.smooth = TRUE,
                           g.group = 4, evaluate = 100, nmin = 0, d0lab = "0", d1lab = "1", cex.d01 = 0.7,
                           dist.label = 0.04, line.bins = -.05, dist.label2 = .03, cutoff, las = 1, length.seg = 1,
-                          y.intersp = 1, lty.ideal = 1, col.ideal = "red", lwd.ideal = 1, allowPerfectPredictions = FALSE, ...)
+                          y.intersp = 1, lty.ideal = 1, col.ideal = "red", lwd.ideal = 1, allowPerfectPredictions = FALSE,
+                          argzLoess = alist(degree = 2), ...)
 {
   call   = match.call()
   oldpar = par(no.readonly = TRUE)
@@ -339,7 +341,8 @@ val.prob.ci.2 <- function(p, y, logit, group,
     }
     if (smooth == "loess") {
       #Sm <- lowess(p,y,iter=0)
-      Sm <- loess(y ~ p, degree = 2)
+      argzLoess$formula = y ~ p
+      Sm <- do.call("loess", argzLoess)
       Sm <- data.frame(Sm$x, Sm$fitted)
       Sm.01 <- Sm
 

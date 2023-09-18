@@ -1,9 +1,22 @@
 \name{CalibrationCurves}
-\alias{CalibrationCurves}
+\alias{CalibrationCurves-package}
 \docType{package}
-\title{General information on package and val.prob.ci.2 function
+\title{General information on the package and its functions
 }
 \description{
+ Using this package, you can assess the calibration performance of your prediction model. That is, to which extent the predictions and correspond with what we observe empirically.
+ To assess the calibration of model with a binary outcome, you can use the \code{\link{val.prob.ci.2}} or the \code{\link{valProbggplot}} function. If the outcome of your prediction model
+ is not binary but follows a different distribution of the exponential family, you can employ the \code{\link{genCalCurve}} function.
+
+ If you are not familiar with the theory and/or application of calibration, you can consult the vignette of the package. This vignette provides a comprehensive overview of the theory and
+ contains a tutorial with some practical examples. Further, we suggest the reader to consult the \href{https://arxiv.org/abs/2309.08559}{paper} on generalized calibration curves on arXiv.
+ In this paper, we provide the theoretical background on the generalized calibration framework and illustrate its applicability with some prototypical examples of both statistical and
+ machine learning prediction models that are well-calibrated, overfit and underfit.
+
+ Originally, the package only contained functions to assess the calibration of prediction models with a binary outcome. The details section provides some background information on the
+ history of the package's development.
+}
+\details{
 Some years ago, Yvonne Vergouwe and Ewout Steyerberg adapted the function \code{\link{val.prob}} from the rms-package (\url{https://cran.r-project.org/package=rms}) into \code{val.prob.ci} and added the following functions to \code{val.prob}:
 
 \itemize{
@@ -45,14 +58,19 @@ this to \code{\link{val.prob.ci.2}}:
   }
 
 
-Since then, several new features have been added and are still being added. The most current version of this package can always be found on
-\url{https://github.com/BavoDC} and can easily be installed using the following code:
-\code{
-install.packages("devtools") # if not yet installed}
-\code{require(devtools)}
-\code{install_git("https://github.com/BavoDC/CalibrationCurves")}
+In 2023, Bavo De Cock (Campo) published a \href{https://arxiv.org/abs/2309.08559}{paper} that introduces the generalized calibration framework. This framework is an extension of the logistic calibration framework to prediction models where the outcome's distribution is a member of the exponential family. As such, we are able to assess the calibration of a wider range of prediction models. The methods in this paper are implemented
+in the CalibrationCurves package.
+
+
+The most current version of this package can always be found on
+\url{https://github.com/BavoDC} and can easily be installed using the following code: \cr
+\code{install.packages("devtools") # if not yet installed} \cr
+\code{require(devtools)} \cr
+\code{install_github("BavoDC/CalibrationCurves", dependencies = TRUE, build_vignettes = TRUE)} \cr
 }
 \references{
+De Cock Campo, B. (2023). Towards reliable predictive analytics: a generalized calibration framework. arXiv:2309.08559, available at \url{https://arxiv.org/abs/2309.08559}.
+
 Steyerberg, E.W.Van Calster, B., Pencina, M.J. (2011). Performance measures for prediction models and markers : evaluation of predictions and classifications. \emph{Revista Espanola de Cardiologia}, \bold{64(9)}, pp. 788-794
 
 Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina M., Steyerberg E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. \emph{Journal of Clinical Epidemiology}, \bold{74}, pp. 167-176
