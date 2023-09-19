@@ -8,6 +8,7 @@ output:
     rmarkdown::html_vignette:
       fig_caption: yes
 bibliography: references.bib
+csl: taylor-and-francis-apa.csl
 latex_engine: xelatex
 vignette: >
   %\VignetteIndexEntry{CalibrationCurves}
@@ -31,7 +32,7 @@ knitr::include_graphics("./CalibrationCurves.png")
 ```
 </div>
 <br clear="right">
-In this document, we give you a brief overview of the basic functionality of the `CalibrationCurves` package. We advise you to also consult the help-pages of the functions to get an exhaustive overview of the functionality. 
+In this document, we give you a brief overview of the basic functionality of the `CalibrationCurves` package. In addition, we present the theoretical framework behind calibration and provide some illustrative examples to give the reader a better insight into the calibration assessment of a predictive model. We advise you to also consult the help-pages of the functions to get an exhaustive overview of the functionality. 
 
 We tried to tailor the explanation of the concepts to professionals with different backgrounds. Please, do contact me if you feel that something is unclear so that I can adjust (and hopefully improve) it. In addition, don't hesitate to send any suggestions you might have and bug reports to the package author.
 
@@ -69,16 +70,21 @@ To assess how well the model is able to predict (the probability of) the outcome
 a) *discrimination*;
 b) *calibration*. 
 
-With *discrimination*, we refer to the model's ability to differentiate between observations that have the event and observations that have not. In this context, this translates to giving higher risk estimates for patients with the event than patients without the event. We commonly assess this using the area under the receiver operating characteristic curve. However, discrimination performance does not tell us how accurate the predictions are. The estimated risk may result in good discrimination and can be inaccurate at the same time. We refer to the accuracy of the predictions as the *calibration*. Hence, hereby we assess the agreement between the estimated and observed number of events [@VanCalster2016]. We say that a prediction model is calibrated if the predicted risks correspond to the observations proportions of the event.
+With *discrimination*, we refer to the model's ability to differentiate between observations that have the event and observations that have not. In this context, this translates to giving higher risk estimates for patients with the event than patients without the event. We commonly assess this using the area under the receiver operating characteristic curve. However, discrimination performance does not tell us how accurate the predictions are. The estimated risk may result in good discrimination and can be inaccurate at the same time. We refer to the accuracy of the predictions as the *calibration*. Hence, hereby we assess the agreement between the estimated and observed number of events [@VanCalster2016]. We say that a prediction model is calibrated if the predicted risks correspond to the observed proportions of the event. 
 
-## How do we assess calibration performance?
-One way to examine the calibration of risk predictions, is by using calibration curves. A calibration curve visualizes the correspondence between the model's predicted risks and the observed proportion. When we have a perfect agreement between the observed and predicted proportion the calibration curve coincides with the ideal curve (a diagonal line). This scenario is visualized in Figure \@ref(fig:PerfectCalibration).
+## Assessing the calibration performance of a risk prediction model
+
+### A mathematical perspective
+One way to examine the calibration of risk predictions, is by using calibration curves [@VanCalster2016;@VanCalster2019;@ClinicalPredictionModels;@Campo2023GCF]. A calibration curve maps the predicted probabilities $f(\boldsymbol{x}_i)$ to the actual event probabilities $P(y_i = 1| f(\boldsymbol{x}_i))$ and visualizes the correspondence between the model's predicted risks and the true probabilities. For perfectly calibrated predictions, the calibration curve equals the diagonal, i.e. $P(y_i = 1 | f(\boldsymbol{x}_i)) = f(\boldsymbol{x}_i) \ \forall \ i$ where $\forall \ i$ denotes for all $i$.
+
+### A practical perspective
+In practice, we typically assess the model's calibration on a validation set. In this setting, a calibration curve visualizes the correspondence between the model's predicted risks and the observed proportion. When we have a perfect agreement between the observed and predicted proportion the calibration curve coincides with the ideal curve (a diagonal line). This scenario is visualized in Figure \@ref(fig:PerfectCalibration).
 
 ```{r PerfectCalibration, fig.align = 'center', fig.cap = "Example of a perfectly calibrated model", fig.topcaption = TRUE, echo = FALSE, out.width="100%"}
 knitr::include_graphics("PerfectCalibration.png")
 ```
 
-We therefore assess the calibration performance of a predictive model on a data set other than the training set. Hereby, we obtain an indication of how well our risk prediction is able to generalize to other data sets and how accurate its out-of-sample predictions are. In general, the prediction model will show some miscalibration and the calibration curve gives us a visual depiction of how badly the model is miscalibrated. The further from the diagonal line, the worse the calibration. Figure \@ref(fig:Overfitted) depicts an example of a model that is miscalibrated and is a typical example of a model that is overfitted to the training data. This particular model has predictions that are too extreme: high risks are overestimated and low risks are underestimated.
+By assessing the calibration performance on a data set other than the training set, we obtain an indication of how well our risk prediction is able to generalize to other data sets and how accurate its out-of-sample predictions are. In general, the prediction model will show some miscalibration and the calibration curve gives us a visual depiction of how badly the model is miscalibrated. The further from the diagonal line, the worse the calibration. Figure \@ref(fig:Overfitted) depicts an example of a model that is miscalibrated and is a typical example of a model that is overfitted to the training data. This particular model has predictions that are too extreme: high risks are overestimated and low risks are underestimated.
 
 ```{r Overfitted, fig.align = 'center', fig.cap = "Example of a miscalibrated model due to overfitting", fig.topcaption = TRUE, echo = FALSE, out.width="100%"}
 knitr::include_graphics("Overfitted.png")
@@ -110,7 +116,7 @@ as a general notation to denote the predicted probability of the risk prediction
 
 One way to compute the calibration curve, is by using a logistic regression model
 \begin{align*}
-  \text{logit}(P({}_{*} y_i = 1| {}_{*} \widehat{\pi}_i)) &= \alpha + \zeta {}_{*} \text{logit}({}_{*} \widehat{\pi}_i)
+  \text{logit}(P({}_{*} y_i = 1| {}_{*} \widehat{\pi}_i)) &= \alpha + \zeta \ \text{logit}({}_{*} \widehat{\pi}_i)
   (\#eq:logcal)
 \end{align*}
 where we estimate the observed proportions as a function of the predicted probabilities. This model fit yields a logistic calibration curve. Note that $\text{logit}({}_{*} \widehat{\pi}_i) = {}_{*} \widehat{\eta}_i$ when ${}_{*} \widehat{\pi}_i$ is estimated using a logistic regression model (see \@ref(eq:logcal)).
@@ -230,7 +236,7 @@ valProbggplot(pHat, yTest)
 
 
 # Assessing the performance of other types of prediction models
-In my recent paper, I propose an extension of the logistic calibration framework to distributions that belong to the exponential family with probability density function (pdf)
+In my recent paper [@Campo2023GCF], I propose an extension of the logistic calibration framework to distributions that belong to the exponential family with probability density function (pdf)
 \begin{align*}
 		f(y_i; \theta_i, \phi, w_i) = \exp\left( \frac{y_i \theta_i - b(\theta_i)}{\phi} w_i  + c(y_i, \phi, w_i)\right).
 \end{align*}
@@ -268,9 +274,9 @@ Hereby, we assess to which extent the observed empirical average equals the aver
 
 ## Illustration of the generalized calibration framework
 ### Training the model 
-To illustrate the functionality, the package has two example data sets with a poisson distributed variable as outcome: `poissontraindata` and `poissontestdata`. These are two synthetically generated data sets (using the same underlying process/settings to generate the data) to illustrate the functionality of the `CalibrationCurves` package. 
+To illustrate the functionality, the package has two example data sets with a poisson distributed outcome variable: `poissontraindata` and `poissontestdata`. These are two synthetically generated data sets (using the same underlying process/settings to generate the data) to illustrate the functionality of the `CalibrationCurves` package. 
 
-The `poissontraindata` data frame represents the data that we will use to develop our prediction model
+The `poissontraindata` data frame represents the data that we will use to develop our prediction model.
 ```{r}
 data("poissontraindata")
 ```
@@ -322,7 +328,7 @@ abline(0, 1, lty = 1)
 ## Why is the calibration intercept different in the rms package?
 To construct the logistic calibration curve (see [How do we construct a calibration curve?]), we fit the model
 \begin{align*}
-\text{logit}(E[{}_{*} y_i | {}_{*} \widehat{\pi}_i]) = \alpha + \zeta {}_{*} \text{logit}({}_{*} \widehat{\pi}_i)
+\text{logit}(E[{}_{*} y_i | {}_{*} \widehat{\pi}_i]) = \alpha + \zeta \ \text{logit}({}_{*} \widehat{\pi}_i)
 \end{align*}
 Here, $\zeta$ corresponds to the calibration slope. The calibration intercept from the `val.prob` function from the `rms` package corresponds to $\alpha \neq \alpha_c$.
 
