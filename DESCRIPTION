@@ -13,7 +13,7 @@ Description: Plots calibration curves and computes statistics for assessing cali
 License: GPL (>= 3)
 LazyData: TRUE
 Depends: R (>= 3.5.0), rms, ggplot2
-Imports: grDevices, graphics, methods, stats, utils, survival, Hmisc
+Imports: grDevices, graphics, methods, stats, utils, survival, Hmisc, bookdown
 Suggests: knitr, rmarkdown, mgcv, MASS, magrittr, Matrix
 RoxygenNote: 7.2.3
 Encoding: UTF-8

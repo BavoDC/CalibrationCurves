@@ -450,7 +450,7 @@ valProbggplot <- function(p, y, logit, group,
         tryCatch(
           do.call(".rcspline.plot", Argz),
           error = function(e) {
-            nk = Argz$nk
+            nk = eval(Argz$nk)
             warning(paste0("The number of knots led to estimation problems, nk will be set to ", nk), immediate. = TRUE)
             if(nk < 3)
               stop("Nk = 3 led to estimation problems.")

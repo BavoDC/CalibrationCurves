@@ -8,7 +8,7 @@ output:
     rmarkdown::html_vignette:
       fig_caption: yes
 bibliography: references.bib
-csl: taylor-and-francis-apa.csl
+biblio-style: authoryear
 latex_engine: xelatex
 vignette: >
   %\VignetteIndexEntry{CalibrationCurves}

@@ -9,6 +9,7 @@ importFrom("stats", "approx", "confint", "loess", "na.omit", "pchisq",
 importFrom("utils", "getFromNamespace")
 importFrom("Hmisc", "cut2", "groupn", "label", "rcspline.eval")
 importFrom("survival", "coxph.control")
+importFrom("bookdown", "html_document2")
 import(rms)
 import(ggplot2)
 export(val.prob.ci.2)
