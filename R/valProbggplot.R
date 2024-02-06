@@ -323,7 +323,6 @@ valProbggplot <- function(p, y, logit, group,
   emax <- max(abs(predprob - calp))
   if (pl) {
     gg = ggplot(data.frame()) +
-      xlim(xlim) + ylim(ylim) +
       geom_line(data = data.frame(x = 0:1, y = 0:1), aes(x = x, y = y, colour = "Ideal"), linewidth = lwd.ideal, show.legend = TRUE) +
       labs(x = xlab, y = ylab)
 
@@ -395,7 +394,8 @@ valProbggplot <- function(p, y, logit, group,
           rownames(dfCL) = NULL
         } else {
           cl.loess = predict(SmFit, type = "fitted", se = TRUE)
-          dfCL     = data.frame(x = p, ymin = with(cl.loess, fit - qnorm(1 - a / 2) * se.fit), ymax = with(cl.loess, fit + qnorm(1 - a / 2) * se.fit))
+          dfCL     = data.frame(x = p, ymin = with(cl.loess, fit - qnorm(1 - a / 2) * se.fit),
+                                ymax = with(cl.loess, fit + qnorm(1 - a / 2) * se.fit))
         }
         dfCL[dfCL$ymax < 0, "ymax"] <- dfCL[dfCL$ymin < 0, "ymin"] <- 0
         dfCL[dfCL$ymax > 1, "ymax"] <- dfCL[dfCL$ymin > 1, "ymin"] <- 1
@@ -651,6 +651,8 @@ valProbggplot <- function(p, y, logit, group,
           axis.text = element_text(size = 12),
           axis.title = element_text(size = 14),
           plot.margin = margin(11, 11, 5.5, 5.5, "points"), legend.position = "bottom")
+  gg =
+    gg + coord_cartesian(xlim = xlim, ylim = ylim)
   Results =
     structure(
       list(
