@@ -19,3 +19,4 @@ RoxygenNote: 7.2.3
 Encoding: UTF-8
 VignetteBuilder: knitr
 URL: https://bavodc.github.io/websiteCalibrationCurves/
+BugReports: https://github.com/BavoDC/CalibrationCurves/issues
