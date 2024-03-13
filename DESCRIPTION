@@ -1,8 +1,7 @@
 Package: CalibrationCurves
 Type: Package
 Title: Calibration Performance
-Version: 2.0.0
-Date: 2023-09-18
+Version: 2.0.1
 Authors@R: c(person("De Cock", "Bavo", role = c("aut", "cre"),
 		     email = "bavo.decock@kuleuven.be"),
 	      person("Nieboer", "Daan", role = "aut"),

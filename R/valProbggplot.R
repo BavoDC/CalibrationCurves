@@ -144,7 +144,7 @@ valProbggplot <- function(p, y, logit, group,
                           dist.label = 0.01, line.bins = -.05, dist.label2 = .04, cutoff, length.seg = 0.85,
                           lty.ideal = 1, col.ideal = "red", lwd.ideal = 1, allowPerfectPredictions = FALSE, argzLoess = alist(degree = 2))
 {
-  call   = match.call()
+  callFn   = match.call()
   smooth = match.arg(smooth)
   if (smooth == "none")
     smooth <- "F"
@@ -245,8 +245,18 @@ valProbggplot <- function(p, y, logit, group,
 
 
   if (length(p) > 5000 & smooth == "loess") {
-    warning("Number of observations > 5000, RCS is recommended.",
-            immediate. = TRUE)
+    warning("Number of observations > 5000, RCS is recommended. Will perform a preliminary fit to see if any errors occur.", immediate. = TRUE)
+    argzLoess$formula = y ~ p
+    tmpFit = tryCatch({
+      SmFit    = do.call("loess", argzLoess)
+      cl.loess = predict(SmFit, type = "fitted", se = TRUE)
+    }, error = function(e) TRUE, warning = function(w) TRUE)
+    if(is.logical(tmpFit)) {
+      tmpmess = "Estimating the flexible calibration curve and its CI with loess resulted in errors. Smooth is set to RCS and the calibration curve is estimated using RCS."
+      warning(tmpmess, immediate. = TRUE)
+      smooth = "rcs"
+      wmess = c(wmess, tmpmess)
+    }
   }
   if (length(p) > 1000 & CL.BT == TRUE) {
     warning("Number of observations is > 1000, this could take a while...",
@@ -275,7 +285,7 @@ valProbggplot <- function(p, y, logit, group,
     Results =
       structure(
         list(
-          call = call,
+          call = callFn,
           stats = stats,
           cl.level = cl.level,
           Calibration = list(
@@ -354,7 +364,8 @@ valProbggplot <- function(p, y, logit, group,
     }
     if (smooth == "loess") {
       argzLoess$formula = y ~ p
-      SmFit = do.call("loess", argzLoess)
+      if(!exists("SmFit"))
+        SmFit = do.call("loess", argzLoess)
       Sm    = data.frame(x = unname(SmFit$x), y = SmFit$fitted)
       Sm.01 = Sm
 
@@ -393,7 +404,8 @@ valProbggplot <- function(p, y, logit, group,
           dfCL    = data.frame(x = to.pred, y = apply(res.BT, 1, quantile, 0.5), ymin = CL.BT[1, ], ymax = CL.BT[2, ])
           rownames(dfCL) = NULL
         } else {
-          cl.loess = predict(SmFit, type = "fitted", se = TRUE)
+          if(!exists("cl.loess"))
+            cl.loess = predict(SmFit, type = "fitted", se = TRUE)
           dfCL     = data.frame(x = p, ymin = with(cl.loess, fit - qnorm(1 - a / 2) * se.fit),
                                 ymax = with(cl.loess, fit + qnorm(1 - a / 2) * se.fit))
         }
@@ -426,7 +438,7 @@ valProbggplot <- function(p, y, logit, group,
       }
       colnames(Sm) = c("x", "y")
       if(exists("dfCL", envir = environment())) {
-        flexCal = if("CL.BT" %in% names(call) && call$CL.BT) list(loessFit = Sm, BootstrapConfidenceLimits = dfCL) else merge(Sm, dfCL, by = "x")
+        flexCal = if("CL.BT" %in% names(callFn) && callFn$CL.BT) list(loessFit = Sm, BootstrapConfidenceLimits = dfCL) else merge(Sm, dfCL, by = "x")
       } else {
         flexCal = Sm
       }
@@ -656,7 +668,7 @@ valProbggplot <- function(p, y, logit, group,
   Results =
     structure(
       list(
-        call   = call,
+        call   = callFn,
         ggPlot = gg,
         stats  = stats,
         cl.level = cl.level,

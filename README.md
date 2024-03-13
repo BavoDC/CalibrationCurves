@@ -35,5 +35,5 @@ forwarded to this one).
 ## Citation
 If you use this package, please cite: <br />
 - De Cock Campo, B. (2023). Towards reliable predictive analytics: a generalized calibration framework. arXiv:2309.08559, available at [https://arxiv.org/abs/2309.08559](https://arxiv.org/abs/2309.08559). <br />
-- De Cock, B., Nieboer, D., Van Calster, B., Steyerberg, E.W., Vergouwe, Y. (2023). _The CalibrationCurves package: assessing the agreement between observed outcomes and predictions_. R package version 2.0.0, [https://cran.r-project.org/package=CalibrationCurves](https://cran.r-project.org/package=CalibrationCurves) <br />
+- De Cock, B., Nieboer, D., Van Calster, B., Steyerberg, E.W., Vergouwe, Y. (2023). _The CalibrationCurves package: assessing the agreement between observed outcomes and predictions_. R package version 2.0.1, [https://cran.r-project.org/package=CalibrationCurves](https://cran.r-project.org/package=CalibrationCurves) <br />
 - Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina, M.J., Steyerberg, E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. _Journal of Clinical Epidemiology_, __74__, pp. 167-176 <br />
