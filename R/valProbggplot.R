@@ -195,9 +195,9 @@ valProbggplot <- function(p, y, logit, group,
   a = 1 - cl.level
 
   if (missing(p))
-    p <- 1 / (1 + exp(-logit))
+    p <- binomial()$linkinv(logit)
   else
-    logit <- log(p / (1 - p))
+    logit <- binomial()$linkfun(p)
   if (!all(y %in% 0:1)) {
     stop("The vector with the binary outcome can only contain the values 0 and 1.")
   }
