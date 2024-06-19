@@ -95,7 +95,7 @@ set to \code{TRUE} to make \code{weights} sum to the number of non-missing obser
 but statistics will still be computed and outputted.}
 
 \item{smooth}{\code{"loess"} generates a flexible calibration curve based on \code{\link{loess}},
-\code{"rcs"} generates a calibration curves based on restricted cubic splines (see \code{\link{rcs}} and
+\code{"rcs"} generates a calibration curves based on restricted cubic splines (see \code{\link[rms]{rcs}} and
 \code{\link[Hmisc]{rcspline.plot}}), \code{"none"} suppresses the flexible curve. We recommend to use loess unless N is large,
  for example N>5000. Default is \code{"loess"}.}
 
@@ -163,7 +163,7 @@ the curve legends.}
  \code{FALSE} suppresses the presentation of statistics in the figure. A \code{c()} list of specific stats shows the specified
  stats. The key stats which are also mentioned in this paper are \code{"C (ROC)"} for the c statistic, \code{"Intercept"} for the
  calibration intercept, \code{"Slope"} for the calibration slope, and \code{"ECI"} for the estimated calibration index
- (Van Hoorde et al, 2015). The full list of possible statistics is taken from \code{\link{val.prob}}
+ (Van Hoorde et al, 2015). The full list of possible statistics is taken from \code{\link[rms]{val.prob}}
  and augmented with the estimated calibration index: \code{"Dxy", "C (ROC)", "R2", "D", "D:Chi-sq", "D:p", "U", "U:Chi-sq",
   "U:p", "Q", "Brier", "Intercept", "Slope", "Emax", "Brier scaled", "Eavg", "ECI"}. These statistics are always returned by the function.}
 
@@ -270,9 +270,9 @@ An object of type \code{CalibrationCurve} with the following slots:
 \item{CalibrationCurves}{The coordinates for plotting the calibration curves. }
 }
 \description{
-The function \code{val.prob.ci.2} is an adaptation of \code{\link{val.prob}} from Frank Harrell's rms package,
+The function \code{val.prob.ci.2} is an adaptation of \code{\link[rms]{val.prob}} from Frank Harrell's rms package,
 \url{https://cran.r-project.org/package=rms}. Hence, the description of some of the functions of \code{val.prob.ci.2}
-come from the the original \code{\link{val.prob}}.
+come from the the original \code{\link[rms]{val.prob}}.
 \cr \cr The key feature of \code{val.prob.ci.2} is the generation of logistic and flexible calibration curves and related statistics.
 When using this code, please cite: Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina, M.J., Steyerberg,
 E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. \emph{Journal of Clinical Epidemiology},
