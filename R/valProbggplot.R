@@ -438,7 +438,7 @@ valProbggplot <- function(p, y, logit, group,
       }
       colnames(Sm) = c("x", "y")
       if(exists("dfCL", envir = environment())) {
-        flexCal = if("CL.BT" %in% names(callFn) && callFn$CL.BT) list(loessFit = Sm, BootstrapConfidenceLimits = dfCL) else merge(Sm, dfCL, by = "x")
+        flexCal = if("CL.BT" %in% names(callFn) && as.logical(as.character(callFn$CL.BT))) list(loessFit = Sm, BootstrapConfidenceLimits = dfCL) else merge(Sm, dfCL, by = "x")
       } else {
         flexCal = Sm
       }
