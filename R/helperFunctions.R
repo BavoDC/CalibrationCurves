@@ -37,7 +37,7 @@
 #'
 #' @details
 #' You can use this infix operator in two different ways. Either you set the left-hand side to \code{NULL} or you use the syntax
-#' `` `%{}%` ``\code{({BlockOfCode})}
+#' \code{`\%{}\%`  ({BlockOfCode})}
 #'
 #' @examples
 #' # Can only be executed in Rstudio
