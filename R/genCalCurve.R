@@ -85,7 +85,7 @@ genCalCurve <- function(y, yHat, family, plot = TRUE, Smooth = FALSE, GLMCal = T
                         Title = "Calibration plot",
                         xlab = "Predicted value", ylab = "Empirical average",
                         EmpiricalDistribution = TRUE, length.seg = 1, ...) {
-  bootSamples <- NULL
+  bootSamples <- BT.samples
   call   = match.call()
   if (is.character(family))
     family <- get(family, mode = "function", envir = parent.frame())
