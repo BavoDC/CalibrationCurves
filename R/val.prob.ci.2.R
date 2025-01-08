@@ -1,8 +1,8 @@
 #' Calibration performance
 #'
-#' The function \code{val.prob.ci.2} is an adaptation of \code{\link{val.prob}} from Frank Harrell's rms package,
+#' The function \code{val.prob.ci.2} is an adaptation of \code{\link[rms]{val.prob}} from Frank Harrell's rms package,
 #' \url{https://cran.r-project.org/package=rms}. Hence, the description of some of the functions of \code{val.prob.ci.2}
-#' come from the the original \code{\link{val.prob}}.
+#' come from the the original \code{\link[rms]{val.prob}}.
 #' \cr \cr The key feature of \code{val.prob.ci.2} is the generation of logistic and flexible calibration curves and related statistics.
 #' When using this code, please cite: Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina, M.J., Steyerberg,
 #' E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. \emph{Journal of Clinical Epidemiology},
@@ -10,7 +10,7 @@
 #'
 #' @inheritParams rms::val.prob
 #' @param smooth \code{"loess"} generates a flexible calibration curve based on \code{\link{loess}},
-#'  \code{"rcs"} generates a calibration curves based on restricted cubic splines (see \code{\link{rcs}} and
+#'  \code{"rcs"} generates a calibration curves based on restricted cubic splines (see \code{\link[rms]{rcs}} and
 #'  \code{\link[Hmisc]{rcspline.plot}}), \code{"none"} suppresses the flexible curve. We recommend to use loess unless N is large,
 #'   for example N>5000. Default is \code{"loess"}.
 #' @param CL.smooth \code{"fill"} shows pointwise 95\% confidence limits for the flexible calibration curve with a gray
@@ -27,7 +27,7 @@
 #'  \code{FALSE} suppresses the presentation of statistics in the figure. A \code{c()} list of specific stats shows the specified
 #'  stats. The key stats which are also mentioned in this paper are \code{"C (ROC)"} for the c statistic, \code{"Intercept"} for the
 #'  calibration intercept, \code{"Slope"} for the calibration slope, and \code{"ECI"} for the estimated calibration index
-#'  (Van Hoorde et al, 2015). The full list of possible statistics is taken from \code{\link{val.prob}}
+#'  (Van Hoorde et al, 2015). The full list of possible statistics is taken from \code{\link[rms]{val.prob}}
 #'  and augmented with the estimated calibration index: \code{"Dxy", "C (ROC)", "R2", "D", "D:Chi-sq", "D:p", "U", "U:Chi-sq",
 #'   "U:p", "Q", "Brier", "Intercept", "Slope", "Emax", "Brier scaled", "Eavg", "ECI"}. These statistics are always returned by the function.
 #' @param xlim,ylim numeric vectors of length 2, giving the x and y coordinates ranges (see \code{\link{plot.window}})
@@ -148,7 +148,7 @@ val.prob.ci.2 <- function(p, y, logit, group,
                           y.intersp = 1, lty.ideal = 1, col.ideal = "red", lwd.ideal = 1, allowPerfectPredictions = FALSE,
                           argzLoess = alist(degree = 2), ...)
 {
-  call   = match.call()
+  callFn   = match.call()
   oldpar = par(no.readonly = TRUE)
   on.exit(par(oldpar))
   smooth <- match.arg(smooth)
@@ -190,9 +190,9 @@ val.prob.ci.2 <- function(p, y, logit, group,
   a = 1 - cl.level
 
   if (missing(p))
-    p <- 1 / (1 + exp(-logit))
+    p <- binomial()$linkinv(logit)
   else
-    logit <- log(p / (1 - p))
+    logit <- binomial()$linkfun(p)
   if (!all(y %in% 0:1)) {
     stop("The vector with the binary outcome can only contain the values 0 and 1.")
   }
@@ -241,8 +241,18 @@ val.prob.ci.2 <- function(p, y, logit, group,
 
 
   if (length(p) > 5000 & smooth == "loess") {
-    warning("Number of observations > 5000, RCS is recommended.",
-            immediate. = TRUE)
+    warning("Number of observations > 5000, RCS is recommended. Will perform a preliminary fit to see if any errors occur.", immediate. = TRUE)
+    argzLoess$formula = y ~ p
+    tmpFit = tryCatch({
+      SmFit    = do.call("loess", argzLoess)
+      cl.loess = predict(SmFit, type = "fitted", se = TRUE)
+      }, error = function(e) TRUE, warning = function(w) TRUE)
+    if(is.logical(tmpFit)) {
+      tmpmess = "Estimating the flexible calibration curve and its CI with loess resulted in errors. Smooth is set to RCS and the calibration curve is estimated using RCS."
+      warning(tmpmess, immediate. = TRUE)
+      smooth = "rcs"
+      wmess = c(wmess, tmpmess)
+    }
   }
   if (length(p) > 1000 & CL.BT == TRUE) {
     warning("Number of observations is > 1000, this could take a while...",
@@ -271,7 +281,7 @@ val.prob.ci.2 <- function(p, y, logit, group,
     Results =
       structure(
         list(
-          call = call,
+          call = callFn,
           stats = stats,
           cl.level = cl.level,
           Calibration = list(
@@ -342,9 +352,10 @@ val.prob.ci.2 <- function(p, y, logit, group,
     if (smooth == "loess") {
       #Sm <- lowess(p,y,iter=0)
       argzLoess$formula = y ~ p
-      Sm <- do.call("loess", argzLoess)
-      Sm <- data.frame(Sm$x, Sm$fitted)
-      Sm.01 <- Sm
+      if(!exists("SmFit"))
+        SmFit <- do.call("loess", argzLoess)
+      Sm    = data.frame(x = unname(SmFit$x), y = SmFit$fitted)
+      Sm.01 = Sm
 
       if (connect.smooth == TRUE & CL.smooth != "fill") {
         clip(0, 1, 0, 1)
@@ -398,7 +409,7 @@ val.prob.ci.2 <- function(p, y, logit, group,
             }
             do.call("clip", as.list(par()$usr))
             leg <- c(leg, "Flexible calibration (Loess)")
-          } else{
+          } else {
             clip(0, 1, 0, 1)
             lines(to.pred,
                   CL.BT[1, ],
@@ -420,15 +431,15 @@ val.prob.ci.2 <- function(p, y, logit, group,
             marks <- c(marks, -1)
           }
 
-        } else{
-          Sm.0     = loess(y ~ p, degree = 2)
-          cl.loess = predict(Sm.0, type = "fitted", se = TRUE)
+        } else {
+          if(!exists("cl.loess"))
+            cl.loess = predict(SmFit, type = "fitted", se = TRUE)
           dfCL     = data.frame(x = p, ymin = with(cl.loess, fit - qnorm(1 - a / 2) * se.fit), ymax = with(cl.loess, fit + qnorm(1 - a / 2) * se.fit))
 
           clip(0, 1, 0, 1)
           if (CL.smooth == "fill") {
             polygon(
-              x = c(Sm.0$x, rev(Sm.0$x)),
+              x = c(Sm.01$x, rev(Sm.01$x)),
               y = c(
                 dfCL$ymax,
                 rev(dfCL$ymin)
@@ -454,14 +465,14 @@ val.prob.ci.2 <- function(p, y, logit, group,
             leg <- c(leg, "Flexible calibration (Loess)")
           } else{
             lines(
-              Sm.0$x,
+              Sm.01$x,
               dfCL$ymax,
               lty = 2,
               lwd = 1,
               col = col.smooth
             )
             lines(
-              Sm.0$x,
+              Sm.01$x,
               dfCL$ymin,
               lty = 2,
               lwd = 1,
@@ -498,7 +509,7 @@ val.prob.ci.2 <- function(p, y, logit, group,
       }
       colnames(Sm) = c("x", "y")
       if(exists("dfCL", envir = environment())) {
-        flexCal = if("CL.BT" %in% names(call) && call$CL.BT) list(loessFit = Sm, BootstrapConfidenceLimits = dfCL) else merge(Sm, dfCL, by = "x")
+        flexCal = if("CL.BT" %in% names(callFn) && as.logical(as.character(callFn$CL.BT))) list(loessFit = Sm, BootstrapConfidenceLimits = dfCL) else merge(Sm, dfCL, by = "x")
       } else {
         flexCal = Sm
       }
@@ -752,7 +763,7 @@ val.prob.ci.2 <- function(p, y, logit, group,
   Results =
     structure(
       list(
-        call = call,
+        call = callFn,
         stats = stats,
         cl.level = cl.level,
         Calibration = list(

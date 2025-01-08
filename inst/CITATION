@@ -28,17 +28,18 @@ bibentry(bibtype = "Manual",
                      person(given = "Ewout W.", family = "Steyerberg"),
                      person(given = "Yvonne", family = "Vergouwe")),
          year = "2023",
-         note = "R package version 2.0.0",
+         note = "R package version 2.0.3",
+         doi = "10.32614/CRAN.package.CalibrationCurves",
          url = "https://cran.r-project.org/package=CalibrationCurves",
          textVersion  =
            paste("De Cock, B., Nieboer, D., Van Calster, B., Steyerberg, E.W., Vergouwe, Y. (2023).",
-                 "The CalibrationCurves package: assessing the agreement between observed outcomes and predictions. R package version 2.0.0,",
-                 "https://cran.r-project.org/package=CalibrationCurves")
+                 "The CalibrationCurves package: assessing the agreement between observed outcomes and predictions. R package version 2.0.3,",
+                 "doi: 10.32614/CRAN.package.CalibrationCurves, available at https://cran.r-project.org/package=CalibrationCurves")
 )
 
 bibentry(bibtype = "Article",
   title = "Towards reliable predictive analytics: a generalized calibration framework",
-  author = c(person(given = "Bavo", family = " De Cock Campo")),
+  author = c(person(given = "Bavo", family = "De Cock Campo")),
   journal = "arXiv",
   year = "2023",
   pages = "2309.08559",

@@ -17,7 +17,7 @@
  history of the package's development.
 }
 \details{
-Some years ago, Yvonne Vergouwe and Ewout Steyerberg adapted the function \code{\link{val.prob}} from the rms-package (\url{https://cran.r-project.org/package=rms}) into \code{val.prob.ci} and added the following functions to \code{val.prob}:
+Some years ago, Yvonne Vergouwe and Ewout Steyerberg adapted the function \code{\link[rms]{val.prob}} from the rms-package (\url{https://cran.r-project.org/package=rms}) into \code{val.prob.ci} and added the following functions to \code{\link[rms]{val.prob}}:
 
 \itemize{
   \item Scaled Brier score by relating to max for average calibrated Null model
@@ -40,7 +40,7 @@ this to \code{\link{val.prob.ci.2}}:
   \item RCS: 3 to 5 knots can be used
     \itemize{
       \item the knot locations will be estimated using default quantiles of
-         x (by \code{\link[=rms]{rcspline.eval}}, see \code{\link[=rms]{rcspline.plot}} and \code{\link[=rms]{rcspline.eval}})
+         x (by \code{\link[Hmisc]{rcspline.eval}}, see \code{\link[Hmisc]{rcspline.plot}} and \code{\link[Hmisc]{rcspline.eval}})
       \item if estimation problems occur at the specified number of knots
          (nr.knots, default is 5), the analysis is repeated with
           nr.knots-1 until the problem has disappeared and the function stops if there is still an estimation problem with 3 knots
