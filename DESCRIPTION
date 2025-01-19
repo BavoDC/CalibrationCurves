@@ -11,7 +11,7 @@ Authors@R: c(person("De Cock", "Bavo", role = c("aut", "cre"),
 Description: Plots calibration curves and computes statistics for assessing calibration performance. See De Cock Campo (2023) <doi:10.48550/arXiv.2309.08559> and Van Calster et al. (2016) <doi:10.1016/j.jclinepi.2015.12.005>.
 License: GPL (>= 3)
 LazyData: TRUE
-Depends: R (>= 3.5.0), rms, ggplot2
+Depends: R (>= 3.5.0), rms (>= 7.0-0), ggplot2
 Imports: grDevices, graphics, methods, stats, utils, survival, Hmisc, bookdown, rstudioapi
 Suggests: knitr, rmarkdown, mgcv, MASS, magrittr, Matrix
 RoxygenNote: 7.3.1
