@@ -160,22 +160,23 @@ valProbSurvival <- function(fit, valdata, alpha = 0.05, timeHorizon = 5, nk = 3,
   # Calibration plot ----------------------------------
   #valdata$pred.cll <- predictCox(fit, times = timeHorizon, newdata = valdata, type = "lp")
 
-
+  calFormula = update(fit$formula, ~ - . + LP)
   # Estimate actual risk
-  calCox = cph(Surv(ryear, rfs) ~ LP,
+  calCox = cph(calFormula,
              x    = TRUE,
              y    = TRUE,
              surv = TRUE,
              data = valdata
     )
 
-  vcal <- eval(substitute(
-    cph(Surv(ryear, rfs) ~ rcs(LP, nk),
-                   x    = TRUE,
-                   y    = TRUE,
-                   surv = TRUE,
-                   data = valdata
-  ), list(nk = nk)))
+  calRCSFormula = eval(substitute(update(fit$formula, ~ - . + rcs(LP, nk)), list(nk = nk)))
+  vcal = cph(
+    calRCSFormula,
+    x    = TRUE,
+    y    = TRUE,
+    surv = TRUE,
+    data = valdata
+  )
 
   datCox <- cbind.data.frame(
     "obs" = 1 - survest(calCox, times = timeHorizon, newdata = valdata)$surv,
@@ -208,7 +209,7 @@ valProbSurvival <- function(fit, valdata, alpha = 0.05, timeHorizon = 5, nk = 3,
   )
 
   # calibration slope (fixed time point)-------------------------------------
-  gval <- coxph(Surv(ryear, rfs) ~ LP, data = valdata)
+  gval <- coxph(calFormula, data = valdata)
 
   stats$Calibration$Slope <- c(
     "calibration slope" = unname(gval$coef),
