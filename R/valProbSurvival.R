@@ -63,6 +63,10 @@ valProbSurvival <- function(fit, valdata, alpha = 0.05, timeHorizon = 5, nk = 3,
                             legendloc =  c(0.50 , 0.27)) {
   callFn = match.call()
 
+  # Fix 'No visible global binding for global variable' note
+  # https://stackoverflow.com/questions/9439256/how-can-i-handle-r-cmd-check-no-visible-binding-for-global-variable-notes-when
+  pred <- obs <- lower <- upper <- xend <- yend <- NULL
+
   ### Validation of the original model -----------------------
   # Discrimination ---------------------------------------
   if(!inherits(fit, "coxph"))
