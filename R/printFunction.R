@@ -83,3 +83,42 @@ print.GeneralizedCalibrationCurve <- function(x, ...) {
       warning(paste0(w, "\n"), immediate. = TRUE)
   invisible(x)
 }
+
+
+#' Print function for a SurvivalCalibrationCurve object
+#'
+#' @param x an object of type SurvivalCalibrationCurve, resulting from \code{\link{valProbSurvival}}.
+#' @param ... arguments passed to \code{\link{print}}
+#'
+#' @seealso \code{\link{valProbSurvival}}
+#' @return The original \code{SurvivalCalibrationCurve} object is returned.
+print.SurvivalCalibrationCurve <- function(x, ...) {
+  cat("Call:\n",
+      paste(deparse(x$call), sep = "\n", collapse = "\n"),
+      "\n\n", sep = "")
+  cat(
+    paste(
+      "A ",
+      (1 - x$alpha) * 100,
+      "% confidence interval is given for the statistics. \n\n",
+      sep = ""
+    )
+  )
+  cat("Calibration performance:\n")
+  cat("------------------------\n\n")
+  cat("In the large\n\n")
+  print(x$stats$Calibration$InTheLarge, ...)
+  cat("\nSlope\n\n")
+  print(x$stats$Calibration$Slope, ...)
+  cat("\nAdditional statistics\n\n")
+  print(x$stats$Calibration$Statistics, ...)
+  print(x$stats$Calibration$BrierScore, ...)
+
+  cat("\n\nDiscrimination performance:\n")
+  cat("-------------------------------\n\n")
+  cat("Concordance statistic\n\n")
+  print(x$stats$Concordance, ...)
+  cat("\n\nTime-dependent AUC\n\n")
+  print(x$stats$TimeDependentAUC)
+  invisible(x)
+}

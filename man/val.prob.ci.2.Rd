@@ -132,7 +132,7 @@ Default is \code{FALSE}.}
 \item{xlim, ylim}{numeric vectors of length 2, giving the x and y coordinates ranges (see \code{\link{plot.window}})}
 
 \item{m}{
-If grouped proportions are desired, average no. observations per group
+If grouped proportions are desired, minimum no. observations per group
 }
 
 \item{g}{
