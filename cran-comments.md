@@ -1,2 +1,2 @@
 ## Update
-Fixed text in help-file grapes-open-curly-close-grapes.Rd. Didn't render properly previously due to misplaced backslashes.
+Updated vignette (resulted in error on fedora-clang and fedora-gcc)
