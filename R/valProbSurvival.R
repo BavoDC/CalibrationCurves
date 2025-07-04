@@ -449,6 +449,7 @@ valProbSurvival <- function(fit, valdata, alpha = 0.05, timeHorizon = 5, nk = 3,
               plot.margin      = margin(11, 11, 5.5, 5.5, "points"), legend.position = "bottom")
       gg =
         gg + coord_cartesian(xlim = xlim, ylim = ylim)
+      print(gg)
   }
   }
   Results = structure(

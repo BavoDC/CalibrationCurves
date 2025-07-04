@@ -242,6 +242,46 @@ The ggplot version (i.e.`valProbggplot`) uses virtually the same arguments. Henc
 valProbggplot(pHat, yTest)
 ```
 
+# Assessing the performance of survival models
+
+## Cox Proportional hazards model
+The Cox proportional hazards model is a widely used method for analyzing survival data. It estimates the hazard function, which represents the instantaneous risk of an event occurring at time \( t \), given that the subject has survived up to \( t \). For patient \( i \) with covariate vector \( \boldsymbol{x}_i \), the hazard function is given by:
+
+
+\begin{align*}
+  h(t | \boldsymbol{x}_i) &= h_0(t) \exp(\boldsymbol{x}_i^\top \beta)\\
+  &= h_0(t) \exp(\eta_i)
+\end{align*}
+
+where
+
+ - \( h(t | \boldsymbol{x}_i) \) is the hazard function at time \( t \) for subject \( i \),
+ - \( h_0(t) \) is the baseline hazard function at time $t$, which is shared by all individuals.
+
+
+In this model, the survival probability for an individual \( i \) at time \( t \) is given by
+
+\[
+S_i(t) = \exp\left(-H_i(t)\right)
+\]
+
+where \( H_i(t) \) is the cumulative hazard function:
+
+\[
+H_i(t) = H_0(t) \exp( \eta_i)
+\]
+
+where \( H_0(t) \) is the **baseline cumulative hazard function**.
+
+### Calibration Curve
+We can estimate the calibration curve in this scenario by entering the linear predictor $\eta_i$ as a covariate   
+\begin{align*}
+  h(t | {}_{*} \eta_i) &= h_0(t) \exp(\zeta {}_{*} \eta_i)\\
+\end{align*}
+where $\zeta$ is the calibration slope that quantifies the relationship between the predicted and observed hazards. Similarly to \@ref(eq:logcal), $\zeta$ indicates whether the model is over- ($\zeta < 1$) or underfitted ($\zeta >1$). Note that we do not have a calibration intercept in this model. This is because the baseline hazard function $h_0(t)$ is not estimated in the Cox model, and the model is only identified up to a proportionality constant. As a result, any intercept term would be absorbed into the baseline hazard function, and would not be separately identifiable.
+
+We do not explicitly specify the time point $t$, as calibration can be assessed either across all follow-up time points or at a specific time point of interest. To estimate this model, we can fit a Cox proportional hazards model. 
+
 
 # Assessing the performance of other types of prediction models
 In my recent paper [@Campo2023GCF], I propose an extension of the logistic calibration framework to distributions that belong to the exponential family with probability density function (pdf)
