@@ -282,6 +282,23 @@ where $\zeta$ is the calibration slope that quantifies the relationship between 
 
 We do not explicitly specify the time point $t$, as calibration can be assessed either across all follow-up time points or at a specific time point of interest. To estimate this model, we can fit a Cox proportional hazards model. 
 
+Below is a short example how you can assess the calibration performance using the package.
+
+```{r}
+library(survival)
+data(trainDataSurvival)
+data(testDataSurvival)
+sFit = coxph(Surv(ryear, rfs) ~ csize + cnode + grade3, data = trainDataSurvival,
+             x = TRUE, y = TRUE)
+calPerf = valProbSurvival(sFit, testDataSurvival, plotCal = "ggplot", nk = 5)
+```
+
+
+Next to the plot, you also get a range of statistics regarding the calibration performance.
+```{r}
+calPerf
+```
+
 
 # Assessing the performance of other types of prediction models
 In my recent paper [@Campo2023GCF], I propose an extension of the logistic calibration framework to distributions that belong to the exponential family with probability density function (pdf)
@@ -304,22 +321,7 @@ To estimate \@ref(eq:PredModel), we can use a generalized linear model
 \end{align*}
 where $g(\cdot)$ denotes the link function. Alternatively, we can estimate \@ref(eq:PredModel) using machine learning methods. Using the model fit, we obtain the predictions $\widehat{\mu}_i = \widehat{f}(\boldsymbol{x}_i)$.
 
-Below is a short example how you can assess the calibration performance using the package.
 
-```{r}
-library(survival)
-data(trainDataSurvival)
-data(testDataSurvival)
-sFit = coxph(Surv(ryear, rfs) ~ csize + cnode + grade3, data = trainDataSurvival,
-             x = TRUE, y = TRUE)
-calPerf = valProbSurvival(sFit, testDataSurvival, plotCal = "ggplot", nk = 5)
-```
-
-
-Next to the plot, you also get a range of statistics regarding the calibration performance.
-```{r}
-calPerf
-```
 
 ## Generalized calibration curves
 To examine the calibration of prediction models where the outcome is a member of the exponential family, we redefine the framework in more general terms. In this context, a calibration curve maps the predicted values $f(\boldsymbol{x}_i)$ to $E[y_i| f(\boldsymbol{x}_i)]$, the actual conditional mean of $y_i$ given $f(\boldsymbol{x}_i)$. As before, a model is perfectly calibrated if the calibration curve equals the diagonal, i.e. $E[y_i | f(\boldsymbol{x}_i)] = f(\boldsymbol{x}_i) \ \forall \ i$. Hence, in this context, the calibration curve captures the correspondence between the predicted values and the conditional mean. 
