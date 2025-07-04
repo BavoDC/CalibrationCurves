@@ -282,7 +282,7 @@ where $\zeta$ is the calibration slope that quantifies the relationship between 
 
 We do not explicitly specify the time point $t$, as calibration can be assessed either across all follow-up time points or at a specific time point of interest. To estimate this model, we can fit a Cox proportional hazards model. 
 
-Below is a short example how you can assess the calibration performance using the package.
+Below is a short example illustrating how you can assess the calibration performance of a Cox proportional hazards model using the package. Here, we first fit the model using `coxph` from the `survival` package. to assess the calibration performance, we pass the object containing the model fit along with the external validation data set to the `valProbSurvival` function.
 
 ```{r}
 library(survival)
@@ -294,7 +294,7 @@ calPerf = valProbSurvival(sFit, testDataSurvival, plotCal = "ggplot", nk = 5)
 ```
 
 
-Next to the plot, you also get a range of statistics regarding the calibration performance.
+Next to the plot, you also get a range of statistics that assess the calibration performance.
 ```{r}
 calPerf
 ```
