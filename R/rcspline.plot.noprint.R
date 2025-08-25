@@ -118,9 +118,9 @@
 
   df1 <- nk-2
   if(model == "logistic") {
-    b <- rms::lrm.fit(cbind(x, xx, adj),  y)
+    b    <- rms::lrm.fit(cbind(x, xx, adj),  y)
     beta <- b$coef
-    cov <- b$var
+    cov  <- vcov(b)
     model.lr <- b$stats["Model L.R."]
     offset <- 1 	#to skip over intercept parameter
     ylabl <-
@@ -151,12 +151,12 @@
       print(b$loglik)
     }
 
-    beta <- b$coef
-    cov <- b$var
-    model.lr<-2*(b$loglik[2]-b$loglik[1])
-    offset <- 0
-    ylabl <- "log Relative Hazard"
-    sampled <- paste("Cox Regression Model, n=",n," events=",sum(event),
+    beta     <- b$coef
+    cov      <- vcov(b)
+    model.lr <- 2*(b$loglik[2]-b$loglik[1])
+    offset   <- 0
+    ylabl    <- "log Relative Hazard"
+    sampled  <- paste("Cox Regression Model, n=",n," events=",sum(event),
                      sep="")
   }
 
