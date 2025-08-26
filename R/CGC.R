@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # New name
 CGC_old <- function(data = NULL, preds, y, cluster, ntiles = 10, cluster_curves = F, plot = TRUE, size = 1, linewidth = 0.4, univariate = FALSE, method = "grouped") {
   #' Clustered grouped Calibration Curve (CGC)
@@ -245,6 +246,8 @@ CGC_old <- function(data = NULL, preds, y, cluster, ntiles = 10, cluster_curves 
   return(data)
 }
 
+=======
+>>>>>>> Stashed changes
 #' Clustered Grouped Calibration Curve (CGC)
 #'
 #' Generates a flexible calibration curve using predicted values, observed outcomes,

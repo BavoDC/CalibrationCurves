@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 MIXC_old <- function(data = NULL, preds, y, cluster, grid_length = 100, method = "slope", plot = TRUE, cluster_curves = FALSE, nsims_pi = 10000, CI = TRUE, CI_method = "") {
   #' Generate Calibration Plots for Mixed-Effects Models
   #'
@@ -191,6 +192,8 @@ MIXC_old <- function(data = NULL, preds, y, cluster, grid_length = 100, method =
 }
 
 
+=======
+>>>>>>> Stashed changes
 #' Mixed-Effects Model Calibration Curve (MIXC)
 #'
 #' Generates calibration plots for mixed-effects models, assessing the agreement between
