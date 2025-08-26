@@ -149,7 +149,7 @@ valProbCluster <- function(data = NULL, p, y, cluster,
     #   "MIXC" = "slope"
     # ),
     grid = grid,
-    ggplot = if ("ggplot" %in% names(results)) results$ggplot else NULL,
+    ggplot = if ("plot" %in% names(results)) results$plot else NULL,
     results = results,
     labels = list(xlab = xlab, ylab = ylab)
   )

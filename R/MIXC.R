@@ -161,7 +161,9 @@ MIXC <- function(data = NULL,
     }
 
     mm <- model.matrix(~ rcs(logit_preds, 3), avg_cal_data)
-    pvar1 <- diag(mm %*% Matrix::tcrossprod(vcov(fit_model), mm))
+    # pvar1 <- diag(mm %*% Matrix::tcrossprod(vcov(fit_model), mm))
+    V <- vcov(fit_model) # dense
+    pvar1 <- rowSums((mm %*% V) * mm)
 
     if (CI_method == "delta") {
       tvar1 <- pvar1 + as.numeric(lme4::VarCorr(fit_model)$cluster[1])
