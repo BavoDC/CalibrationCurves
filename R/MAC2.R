@@ -1,4 +1,5 @@
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 MAC2_old <- function(data = NULL, preds, y, cluster, grid_length = 100, methods = c("log", "loess", "splines", "kde"),
                      plot = TRUE, cluster_curves = FALSE,
                      span = 4, knots = 3, transf = "logit", method_choice = "splines",
@@ -241,6 +242,8 @@ MAC2_old <- function(data = NULL, preds, y, cluster, grid_length = 100, methods 
   return(list(cluster_data = data_all_lp, plot_data = curve, plot = p))
 }
 
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 #' Meta-Analytical Calibration Curve (MAC2)
