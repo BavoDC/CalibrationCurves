@@ -95,7 +95,6 @@ valProbCluster <- function(data = NULL, p, y, cluster,
     y <- as.integer(data[[deparse(substitute(y))]])
     cluster <- data[[deparse(substitute(cluster))]]
   }
-
   # Validations
   if (length(unique(cluster)) == 1) {
     stop("The cluster variable should have at least two unique values.")
@@ -107,6 +106,28 @@ valProbCluster <- function(data = NULL, p, y, cluster,
     stop("More than 1 approach selected. Please select only one approach.")
   }
 
+  # Inform user about the chosen approach
+  message(
+    "You are using approach '", approach,
+    "'. Please see the documentation of ", approach,
+    "() for details about additional arguments. After running check warnings"
+  )
+  # Remove clusters that don’t have both 0 and 1 in y
+  tab <- table(cluster, y)
+  valid_clusters <- rownames(tab)[rowSums(tab > 0) == 2]
+
+  removed_clusters <- setdiff(unique(cluster), valid_clusters)
+  if (length(removed_clusters) > 0) {
+    warning(
+      "The following clusters were removed because they did not contain both outcomes (y=0 and y=1): ",
+      paste(removed_clusters, collapse = ", ")
+    )
+
+    keep <- cluster %in% valid_clusters
+    p <- p[keep]
+    y <- y[keep]
+    cluster <- cluster[keep]
+  }
   # Collect extra args
   extraArgs <- list(...)
 

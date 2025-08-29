@@ -80,7 +80,8 @@ MAC2 <- function(data = NULL,
                  sm = "PLOGIT",
                  hakn = FALSE,
                  linewidth = 1,
-                 method.predict = "HTS") {
+                 method.predict = "HTS",
+                 verbose = F) {
   # --- Extract from data if provided ---
   if (!is.null(data)) {
     preds <- data[[deparse(substitute(preds))]]
@@ -144,11 +145,15 @@ MAC2 <- function(data = NULL,
             se = TRUE
           )
 
+
+
+          # Handle NA values in loess predictions
           if (any(is.na(loess_data$fit)) || any(is.na(loess_data$se.fit))) {
             loess_data$fit <- zoo::na.approx(loess_data$fit, rule = 2)
             loess_data$se.fit <- zoo::na.approx(loess_data$se.fit, rule = 2)
           }
-
+          loess_data$fit <- ifelse(loess_data$fit >= 1, 0.999, loess_data$fit)
+          loess_data$fit <- ifelse(loess_data$fit <= 0, 0.001, loess_data$fit)
           loess_data <- data.frame(
             loess = transform_function(loess_data$fit),
             loess_se = abs(loess_data$se.fit / (loess_data$fit * (1 - loess_data$fit)))
@@ -224,7 +229,9 @@ MAC2 <- function(data = NULL,
         knots_used = knots_sub
       )
       observed_grid <- cbind(observed_grid, splines_data)
-      message("Spline model for cluster ", subcluster, " fitted with ", knots_sub, " knots.")
+      if (verbose) {
+        message("Spline model for cluster ", subcluster, " fitted with ", knots_sub, " knots.")
+      }
     }
 
     # --- KDE method ---
