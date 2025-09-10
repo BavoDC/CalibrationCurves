@@ -9,15 +9,15 @@ Package to generate (generalized) calibration curves and related statistics. The
 ## Installation
 
 ### On current R (>= 3.0.0)
-* Development version from Github:
+* You can install the latest development version from Github using the code below
 
 ```
 library("devtools")
-install_github("BavoDC/CalibrationCurves", dependencies = TRUE, build_vignettes = TRUE)
+install_github("BavoDC/CalibrationCurves", dependencies = TRUE, build_vignettes = TRUE, ref = "master")
 ```
 
-(This requires `devtools` >= 1.6.1, and installs the "master" (development) branch.)
-This approach builds the package from source, i.e. `make` and compilers must be installed on your system -- see the R FAQ for your operating system; you may also need to install dependencies manually.
+This requires `devtools` >= 1.6.1, and installs the "master" branch. This approach builds the package from source, 
+i.e. `make` and compilers must be installed on your system -- see the R FAQ for your operating system.
 
 ## Documentation
 The basic functionality of the package is explained and demonstrated in the vignette, which you can access using
