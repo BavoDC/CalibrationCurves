@@ -22,7 +22,8 @@ MAC2(
   sm = "PLOGIT",
   hakn = FALSE,
   linewidth = 1,
-  method.predict = "HTS"
+  method.predict = "HTS",
+  verbose = F
 )
 }
 \arguments{
