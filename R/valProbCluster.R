@@ -17,6 +17,7 @@
 #'   the column in \code{data}.
 #' @param pl Logical. If \code{TRUE}, a plot will be produced by the chosen
 #'   subfunction.
+#' @param cl.level the confidence level for the calculation of the confidence interval. Default is \code{0.95}.
 #' @param approach Character string specifying the calibration method to use.
 #'   Must be one of:
 #'   \itemize{
@@ -49,6 +50,7 @@
 #' \itemize{
 #'   \item \code{call}: The matched call.
 #'   \item \code{approach}: The chosen approach.
+#'   \item \code{cl.level}: the confidence level used.
 #'   \item \code{grid}: Probability grid used for plotting.
 #'   \item \code{ggplot}: A \code{ggplot} object if returned by the subfunction,
 #'         otherwise \code{NULL}.
@@ -78,33 +80,41 @@
 #'
 #' @export
 valProbCluster <- function(data = NULL, p, y, cluster,
-                           pl = TRUE, approach = "MIXC",
+                           pl = TRUE, approach = c("MIXC", "CGC", "MAC2"),
+                           cl.level = 0.95,
                            xlab = "Predicted probability",
                            ylab = "Observed proportion", grid_l = 100,
                            ...) {
   # Capture call
-  callFn <- match.call()
+  callFn   = match.call()
+  approach = match.arg(approach)
 
   # grid for plotting if needed
-  grid <- seq(0.01, 0.99, length.out = grid_l)
+  grid = seq(0.01, 0.99, length.out = grid_l)
 
   # Handle case where user passes a data frame
   if (!is.null(data)) {
-    p <- data[[deparse(substitute(p))]]
-    logit <- qlogis(p)
-    y <- as.integer(data[[deparse(substitute(y))]])
-    cluster <- data[[deparse(substitute(cluster))]]
+    if(!all(sapply(c("p", "y", "cluster"), function(a) as.character(callFn[a])) %in% colnames(data)))
+      stop(paste("Variables", paste0(
+        callFn[c("p", "y", "cluster")], collapse = ", "
+      ), "were not found in the data.frame."))
+    p       = eval(callFn$p, data)
+    logit   = qlogis(p)
+    y       = eval(callFn$y, data)
+    cluster = eval(callFn$cluster, data)
   }
-  # Validations
+
+  # Data checks
   if (length(unique(cluster)) == 1) {
     stop("The cluster variable should have at least two unique values.")
   }
   if (length(unique(y)) != 2) {
     stop("The outcome variable should have two unique values.")
   }
-  if (length(approach) > 1) {
-    stop("More than 1 approach selected. Please select only one approach.")
+  if (!all(y %in% 0:1)) {
+    stop("The vector with the binary outcome can only contain the values 0 and 1.")
   }
+
 
   # Inform user about the chosen approach
   message(
@@ -113,68 +123,57 @@ valProbCluster <- function(data = NULL, p, y, cluster,
     "() for details about additional arguments. After running check warnings"
   )
   # Remove clusters that don’t have both 0 and 1 in y
-  tab <- table(cluster, y)
-  valid_clusters <- rownames(tab)[rowSums(tab > 0) == 2]
+  tab              = table(cluster, y)
+  valid_clusters   = rownames(tab)[rowSums(tab > 0) == 2]
+  removed_clusters = setdiff(unique(cluster), valid_clusters)
 
-  removed_clusters <- setdiff(unique(cluster), valid_clusters)
   if (length(removed_clusters) > 0) {
     warning(
       "The following clusters were removed because they did not contain both outcomes (y=0 and y=1): ",
-      paste(removed_clusters, collapse = ", ")
+      paste(removed_clusters, collapse = ", "), immediate. = TRUE
     )
 
-    keep <- cluster %in% valid_clusters
-    p <- p[keep]
-    y <- y[keep]
-    cluster <- cluster[keep]
+    keep    = cluster %in% valid_clusters
+    p       = p[keep]
+    y       = y[keep]
+    cluster = cluster[keep]
   }
   # Collect extra args
-  extraArgs <- list(...)
+  extraArgs = list(...)
 
   # Call the right subfunction with do.call
   if (approach == "CGC") {
     results <- do.call(CGC, c(
-      list(
-        preds = p, y = y, cluster = cluster,
-        plot = pl
-      ),
-      extraArgs
+      list(preds = p, y = y, cluster = cluster,plot = pl), extraArgs
     ))
   } else if (approach == "MAC2") {
     results <- do.call(MAC2, c(
-      list(
-        preds = p, y = y, cluster = cluster,
-        plot = pl, grid_length = grid_l
-      ),
-      extraArgs
+      list(preds = p, y = y, cluster = cluster, plot = pl, grid_length = grid_l), extraArgs
     ))
   } else if (approach == "MIXC") {
     results <- do.call(MIXC, c(
-      list(
-        preds = p, y = y, cluster = cluster,
-        plot = pl, CI = TRUE, grid_length = grid_l
-      ),
-      extraArgs
+      list(preds = p, y = y, cluster = cluster, plot = pl, CI = TRUE, grid_length = grid_l), extraArgs
     ))
-  } else {
-    stop("The approach should be one of 'CGC', 'MAC2' or 'MIXC'.")
   }
 
   # Wrap results in a structured list
-  out <- list(
-    call = callFn,
-    approach = approach,
-    # submethod = switch(method,
-    #   "CGC"  = submethod_CGC,
-    #   "MAC2" = submethod_2MAC,
-    #   "MIXC" = "slope"
-    # ),
-    grid = grid,
-    ggplot = if ("plot" %in% names(results)) results$plot else NULL,
-    results = results,
-    labels = list(xlab = xlab, ylab = ylab)
+  Results = structure(
+    list(
+      call = callFn,
+      approach = approach,
+      cl.level = cl.level,
+      # submethod = switch(method,
+      #   "CGC"  = submethod_CGC,
+      #   "MAC2" = submethod_2MAC,
+      #   "MIXC" = "slope"
+      # ),
+      grid = grid,
+      ggPlot = if ("plot" %in% names(results)) results$plot else NULL,
+      results = results,
+      labels = list(xlab = xlab, ylab = ylab)
+    ),
+    class = "ClusteredCalibrationCurve"
   )
 
-  class(out) <- "valProbCluster"
-  return(out)
+  return(Results)
 }

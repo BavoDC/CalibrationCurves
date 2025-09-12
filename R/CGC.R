@@ -1,4 +1,4 @@
-#' Clustered Grouped Calibration Curve (CGC)
+#' Internal function for the Clustered Grouped Calibration Curve (CGC)
 #'
 #' Generates a flexible calibration curve using predicted values, observed outcomes,
 #' and clustering/grouping information. The function supports two grouping methods:
@@ -37,19 +37,11 @@
 #'   \item{plot}{A `ggplot2` object if `plot = TRUE`, otherwise `NULL`.}
 #' }
 #'
-#' @examples
-#' set.seed(123)
-#' preds <- runif(1000)
-#' y <- rbinom(1000, 1, preds)
-#' cluster <- rep(1:10, each = 100)
-#' res <- CGC(preds = preds, y = y, cluster = cluster, ntiles = 10, plot = TRUE)
-#' res$plot
 #'
 #' @importFrom dplyr group_by summarise ungroup mutate ntile
 #' @importFrom meta metaprop
 #' @importFrom metafor escalc rma.mv
 #' @importFrom ggplot2 ggplot geom_ribbon geom_point geom_line xlab ylab theme_classic theme coord_cartesian scale_x_continuous scale_y_continuous scale_fill_manual scale_color_manual geom_abline geom_errorbar
-#' @importFrom plotrix std.error
 #' @importFrom ggnewscale new_scale_color
 #'
 #' @export
@@ -65,10 +57,16 @@ CGC <- function(data = NULL,
                 univariate = FALSE,
                 method = "grouped") {
   # --- Extract from data if provided ---
+  callFn   = match.call()
   if (!is.null(data)) {
-    preds <- data[[deparse(substitute(preds))]]
-    y <- data[[deparse(substitute(y))]]
-    cluster <- data[[deparse(substitute(cluster))]]
+    if(!all(sapply(c("preds", "y", "cluster"), function(a) as.character(callFn[a])) %in% colnames(data)))
+      stop(paste("Variables", paste0(
+        callFn[c("preds", "y", "cluster")], collapse = ", "
+      ), "were not found in the data.frame."))
+    preds   = eval(callFn$preds, data)
+    logit   = Logit(preds)
+    y       = eval(callFn$y, data)
+    cluster = eval(callFn$cluster, data)
   }
 
   # --- Base dataframe ---
@@ -113,8 +111,8 @@ CGC <- function(data = NULL,
     mutate(decile_group = if (method == "grouped") ntile(preds, ntiles) else cut(preds, breaks = seq(0, 1, length.out = ntiles + 1))) %>%
     group_by(decile_group) %>%
     summarise(
-      std_error_y = plotrix::std.error(y),
-      std_error_x = plotrix::std.error(preds),
+      std_error_y = sd(y) / sqrt(length(y)),
+      std_error_x = sd(preds) / sqrt(length(preds)),
       var_x = var(preds),
       var_y = var(y),
       preds = mean(preds),
@@ -140,12 +138,12 @@ CGC <- function(data = NULL,
     data_meta <- var_150_cluster_decile %>% filter(decile_group == i)
 
     if (univariate) {
-      x_meta <- meta::metaprop(
+      x_meta <- metaprop(
         data = data_meta, event = preds_150 * ntile_150,
         n = ntile_150, studlab = cluster,
         method = "Inverse", backtransf = TRUE
       )
-      y_meta <- meta::metaprop(
+      y_meta <- metaprop(
         data = data_meta, event = y_150 * ntile_150,
         n = ntile_150, studlab = cluster,
         method = "Inverse", backtransf = TRUE
@@ -158,19 +156,19 @@ CGC <- function(data = NULL,
         decile_group = i, ntile_plot = sum(data_meta$ntile_150)
       )
     } else {
-      preds_escalc <- metafor::escalc(
+      preds_escalc <- escalc(
         measure = "PLO", xi = preds_150 * ntile_150,
         ni = ntile_150, data = data_meta
       )
       preds_escalc$group <- "preds"
-      y_escalc <- metafor::escalc(
+      y_escalc <- escalc(
         measure = "PLO", xi = y_150 * ntile_150,
         ni = ntile_150, data = data_meta
       )
       y_escalc$group <- "y"
       dat <- rbind(preds_escalc, y_escalc)
 
-      res <- try(metafor::rma.mv(yi, vi,
+      res <- try(rma.mv(yi, vi,
         mods = ~ group - 1,
         random = ~ group | cluster,
         struct = "UN", data = dat,
@@ -197,7 +195,7 @@ CGC <- function(data = NULL,
     data_all <- rbind(data_all, data_meta_curve)
   }
 
-  data_all <- data_all %>% mutate(across(-c(decile_group, ntile_plot), plogis))
+  data_all <- data_all %>% mutate(across(-c(decile_group, ntile_plot), Ilogit))
 
   # --- Plotting ---
   curve <- NULL

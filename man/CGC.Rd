@@ -2,7 +2,7 @@
 % Please edit documentation in R/CGC.R
 \name{CGC}
 \alias{CGC}
-\title{Clustered Grouped Calibration Curve (CGC)}
+\title{Internal function for the Clustered Grouped Calibration Curve (CGC)}
 \usage{
 CGC(
   data = NULL,
@@ -67,13 +67,4 @@ Optionally, a calibration plot can be produced with cluster-specific curves.
 
 The function performs meta-analysis within each group, with optional univariate
 analysis. Results are aggregated and plotted as calibration curves.
-}
-\examples{
-set.seed(123)
-preds <- runif(1000)
-y <- rbinom(1000, 1, preds)
-cluster <- rep(1:10, each = 100)
-res <- CGC(preds = preds, y = y, cluster = cluster, ntiles = 10, plot = TRUE)
-res$plot
-
 }

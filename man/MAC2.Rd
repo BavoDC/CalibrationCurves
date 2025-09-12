@@ -2,7 +2,7 @@
 % Please edit documentation in R/MAC2.R
 \name{MAC2}
 \alias{MAC2}
-\title{Meta-Analytical Calibration Curve (MAC2)}
+\title{Internal function for the Meta-Analytical Calibration Curve (MAC2)}
 \usage{
 MAC2(
   data = NULL,
@@ -23,7 +23,7 @@ MAC2(
   hakn = FALSE,
   linewidth = 1,
   method.predict = "HTS",
-  verbose = F
+  verbose = FALSE
 )
 }
 \arguments{
@@ -66,6 +66,8 @@ Default is `NULL`.}
 \item{linewidth}{Numeric; line width for the meta-curve. Default is `1`.}
 
 \item{method.predict}{Character; method for prediction intervals. Default is `"HTS"`.}
+
+\item{verbose}{logical, indicates whether progress has to be printed in the console.}
 }
 \value{
 A list containing:
@@ -84,18 +86,4 @@ to generate aggregated calibration curves with confidence and prediction interva
 This function calculates calibration curves for multiple methods and aggregates them
 using meta-analysis. The `method_choice` argument determines which method is used
 for the meta-analytical aggregation.
-}
-\examples{
-set.seed(123)
-data <- data.frame(
-  preds = runif(100),
-  y = rbinom(100, 1, 0.5),
-  cluster = sample(1:5, 100, replace = TRUE)
-)
-result <- MAC2(
-  data = data, preds = preds, y = y, cluster = cluster,
-  methods = c("log", "splines"), method_choice = "splines"
-)
-result$plot
-
 }

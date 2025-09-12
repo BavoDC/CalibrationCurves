@@ -1,4 +1,4 @@
-#' Meta-Analytical Calibration Curve (MAC2)
+#' Internal function for the Meta-Analytical Calibration Curve (MAC2)
 #'
 #' Computes meta-analytical calibration curves using multiple methods (logistic regression,
 #' loess, splines, or kernel density estimation) and performs meta-analysis across clusters
@@ -26,6 +26,7 @@
 #' @param hakn Logical; whether to use Hartung-Knapp adjustment. Default is `FALSE`.
 #' @param linewidth Numeric; line width for the meta-curve. Default is `1`.
 #' @param method.predict Character; method for prediction intervals. Default is `"HTS"`.
+#' @param verbose logical, indicates whether progress has to be printed in the console.
 #'
 #' @details
 #' This function calculates calibration curves for multiple methods and aggregates them
@@ -39,30 +40,7 @@
 #'   \item{plot}{A `ggplot2` object if `plot = TRUE`, otherwise `NULL`}
 #' }
 #'
-#' @examples
-#' set.seed(123)
-#' data <- data.frame(
-#'   preds = runif(100),
-#'   y = rbinom(100, 1, 0.5),
-#'   cluster = sample(1:5, 100, replace = TRUE)
-#' )
-#' result <- MAC2(
-#'   data = data, preds = preds, y = y, cluster = cluster,
-#'   methods = c("log", "splines"), method_choice = "splines"
-#' )
-#' result$plot
 #'
-#' @importFrom dplyr filter mutate group_by ungroup
-#' @importFrom meta metagen
-#' @importFrom ggplot2 ggplot geom_abline geom_ribbon geom_line xlab ylab theme_classic
-#' @importFrom ggplot2 scale_x_continuous scale_y_continuous scale_alpha_manual
-#' @importFrom ggplot2 scale_fill_manual coord_cartesian theme unit
-#' @importFrom rms lrm rcs
-#' @importFrom fANCOVA loess.as
-#' @importFrom zoo na.approx
-#' @importFrom stats plogis qlogis
-#'
-#' @export
 MAC2 <- function(data = NULL,
                  preds,
                  y,
@@ -81,12 +59,18 @@ MAC2 <- function(data = NULL,
                  hakn = FALSE,
                  linewidth = 1,
                  method.predict = "HTS",
-                 verbose = F) {
+                 verbose = FALSE) {
   # --- Extract from data if provided ---
+  callFn   = match.call()
   if (!is.null(data)) {
-    preds <- data[[deparse(substitute(preds))]]
-    y <- data[[deparse(substitute(y))]]
-    cluster <- data[[deparse(substitute(cluster))]]
+    if(!all(sapply(c("preds", "y", "cluster"), function(a) as.character(callFn[a])) %in% colnames(data)))
+      stop(paste("Variables", paste0(
+        callFn[c("preds", "y", "cluster")], collapse = ", "
+      ), "were not found in the data.frame."))
+    preds   = eval(callFn$preds, data)
+    logit   = Logit(preds)
+    y       = eval(callFn$y, data)
+    cluster = eval(callFn$cluster, data)
   }
 
   # --- Base dataframe ---
@@ -98,7 +82,7 @@ MAC2 <- function(data = NULL,
 
   # --- Grid computation ---
   grid <- seq(0.01, 0.99, length.out = grid_length)
-  transform_function <- if (transf == "logit") qlogis else identity
+  transform_function <- if (transf == "logit") Logit else identity
   data_all_lp <- data.frame()
 
   # --- Process each cluster ---
@@ -114,7 +98,7 @@ MAC2 <- function(data = NULL,
 
     # --- Logistic regression method ---
     if ("log" %in% methods) {
-      log_model <- rms::lrm(data = risk_cluster, outcome ~ transf_preds)
+      log_model <- lrm(data = risk_cluster, outcome ~ transf_preds)
       log_data <- predict(log_model,
         newdata = data.frame(transf_preds = transform_function(grid)),
         type = "lp",
@@ -131,7 +115,7 @@ MAC2 <- function(data = NULL,
     if ("loess" %in% methods) {
       tryCatch(
         {
-          loess_model <- fANCOVA::loess.as(
+          loess_model <- loess.as(
             x = risk_cluster$transf_preds,
             y = risk_cluster$outcome,
             degree = 2,
@@ -148,9 +132,10 @@ MAC2 <- function(data = NULL,
 
 
           # Handle NA values in loess predictions
+          # To-do: why do these result in NA?!
           if (any(is.na(loess_data$fit)) || any(is.na(loess_data$se.fit))) {
-            loess_data$fit <- zoo::na.approx(loess_data$fit, rule = 2)
-            loess_data$se.fit <- zoo::na.approx(loess_data$se.fit, rule = 2)
+            loess_data$fit    = na.approx(loess_data$fit, rule = 2)
+            loess_data$se.fit = na.approx(loess_data$se.fit, rule = 2)
           }
           loess_data$fit <- ifelse(loess_data$fit >= 1, 0.999, loess_data$fit)
           loess_data$fit <- ifelse(loess_data$fit <= 0, 0.001, loess_data$fit)
@@ -170,30 +155,30 @@ MAC2 <- function(data = NULL,
     if ("splines" %in% methods) {
       knots_sub <- knots
       splines_model <- suppressWarnings(
-        rms::lrm(data = risk_cluster, outcome ~ rcs(transf_preds, knots_sub))
+        lrm(data = risk_cluster, outcome ~ rcs(transf_preds, knots_sub))
       )
 
       # --- Model selection logic ---
       while (splines_model$fail && knots_sub != 3) {
         knots_sub <- knots_sub - 1
         splines_model <- suppressWarnings(
-          rms::lrm(data = risk_cluster, outcome ~ rcs(transf_preds, knots_sub))
+          lrm(data = risk_cluster, outcome ~ rcs(transf_preds, knots_sub))
         )
       }
 
       if (knots_sub > 3) {
         splines_model3 <- suppressWarnings(
-          rms::lrm(data = risk_cluster, outcome ~ rcs(transf_preds, 3))
+          lrm(data = risk_cluster, outcome ~ rcs(transf_preds, 3))
         )
-        test <- rms::lrtest(splines_model3, splines_model)
+        test <- lrtest(splines_model3, splines_model)
 
         if (test$stats["P"] > 0.05) {
           if (knots_sub > 4) {
             splines_model4 <- suppressWarnings(
-              rms::lrm(data = risk_cluster, outcome ~ rcs(transf_preds, 4))
+              lrm(data = risk_cluster, outcome ~ rcs(transf_preds, 4))
             )
             if (!splines_model4$fail) {
-              test <- rms::lrtest(splines_model4, splines_model3)
+              test <- lrtest(splines_model4, splines_model3)
             } else {
               test$stats["P"] <- 0
             }
@@ -212,7 +197,7 @@ MAC2 <- function(data = NULL,
         }
       } else {
         splines_model <- suppressWarnings(
-          rms::lrm(data = risk_cluster, outcome ~ transf_preds)
+          lrm(data = risk_cluster, outcome ~ transf_preds)
         )
         knots_sub <- 1 # effectively no spline
       }
@@ -224,7 +209,7 @@ MAC2 <- function(data = NULL,
       )
 
       splines_data <- data.frame(
-        splines = splines_data$linear.predictors,
+        splines    = splines_data$linear.predictors,
         splines_se = splines_data$se.fit,
         knots_used = knots_sub
       )
@@ -266,7 +251,7 @@ MAC2 <- function(data = NULL,
       stop("Invalid method choice: ", method_choice)
     )
 
-    meta <- meta::metagen(
+    meta <- metagen(
       TE = meta_inputs$TE,
       seTE = meta_inputs$seTE,
       studlab = data_v$cluster,
@@ -280,11 +265,11 @@ MAC2 <- function(data = NULL,
     )
 
     data_v_b <- data.frame(
-      y = plogis(meta$TE.random),
-      upper = plogis(meta$upper.random),
-      lower = plogis(meta$lower.random),
-      up_pre = plogis(meta$upper.predict),
-      low_pre = plogis(meta$lower.predict),
+      y = Ilogit(meta$TE.random),
+      upper = Ilogit(meta$upper.random),
+      lower = Ilogit(meta$lower.random),
+      up_pre = Ilogit(meta$upper.predict),
+      low_pre = Ilogit(meta$lower.predict),
       tau = meta$tau2,
       x = value
     )
@@ -328,7 +313,7 @@ MAC2 <- function(data = NULL,
       plot_obj <- plot_obj +
         geom_line(
           data = data_all_lp,
-          aes(x = x, y = plogis(data_all_lp[, method_choice]), group = cluster),
+          aes(x = x, y = Ilogit(data_all_lp[, method_choice]), group = cluster),
           linewidth = linewidth / 2,
           show.legend = FALSE,
           linetype = "solid"

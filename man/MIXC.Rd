@@ -2,7 +2,7 @@
 % Please edit documentation in R/MIXC.R
 \name{MIXC}
 \alias{MIXC}
-\title{Mixed-Effects Model Calibration Curve (MIXC)}
+\title{Internal function for the Mixed-Effects Model Calibration Curve (MIXC)}
 \usage{
 MIXC(
   data = NULL,
@@ -64,18 +64,4 @@ Supports random intercept and random slope models with confidence and prediction
 \details{
 This function fits mixed-effects logistic regression models to account for clustering
 and generates calibration curves with optional confidence and prediction intervals.
-}
-\examples{
-set.seed(123)
-data <- data.frame(
-  preds = runif(100),
-  y = rbinom(100, 1, 0.5),
-  cluster = rep(1:10, each = 10)
-)
-result <- MIXC(
-  data = data, preds = preds, y = y, cluster = cluster,
-  method = "slope", CI = TRUE
-)
-result$plot
-
 }

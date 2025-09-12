@@ -10,7 +10,8 @@ valProbCluster(
   y,
   cluster,
   pl = TRUE,
-  approach = "MIXC",
+  approach = c("MIXC", "CGC", "MAC2"),
+  cl.level = 0.95,
   xlab = "Predicted probability",
   ylab = "Observed proportion",
   grid_l = 100,
@@ -43,6 +44,8 @@ Must be one of:
 }
 Defaults to \code{"MIXC"}.}
 
+\item{cl.level}{the confidence level for the calculation of the confidence interval. Default is \code{0.95}.}
+
 \item{xlab}{Label for the x-axis of the plot (default: \code{"Predicted probability"}).}
 
 \item{ylab}{Label for the y-axis of the plot (default: \code{"Observed proportion"}).}
@@ -58,6 +61,7 @@ An object of class \code{"valProbCluster"} containing:
 \itemize{
   \item \code{call}: The matched call.
   \item \code{approach}: The chosen approach.
+  \item \code{cl.level}: the confidence level used.
   \item \code{grid}: Probability grid used for plotting.
   \item \code{ggplot}: A \code{ggplot} object if returned by the subfunction,
         otherwise \code{NULL}.

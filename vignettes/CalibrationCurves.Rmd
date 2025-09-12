@@ -301,14 +301,20 @@ calPerf
 # Assesing the calibration of prediction models in clustered datasets
 In many applications, data have a hierarchical structure. For example, patients (level 1) are nested within hospitals (level 2). In such cases, the observations within the same cluster (e.g., hospital) may be more similar to each other than to those in different clusters.
 
-Barreñada and colleagues (@citepaper) propose three approaches to obtain calibration curves
+@ClusteredCalibration propose three approaches to obtain calibration curves
 accounting for clustering when the outcome is binary. These approaches are implemented in the `CalibrationCurves` package through the `valProbCluster` function.
 
 We will illustrate the methods using a clustered dataset
 
-```{r}
-library(dplyr)
-data("ClusteredData")
+```{r clusteredData}
+library(lme4)
+data("clustertraindata")
+data("clustertestdata")
+mFit           = glmer(y ~ x1 + x2 + x3 + (1 | cluster), data = clustertraindata, family = "binomial")
+preds          = predict(mFit, clustertestdata, type = "response")
+y              = clustertestdata$y
+cluster        = clustertestdata$cluster
+valClusterData = data.frame(y = y, preds = preds, center = cluster)
 ```
 
 ## Clustered Group Calibration (CG-C)
@@ -343,33 +349,26 @@ Detailed methodological overview can be found in the published [article](https:/
    - Perform **bivariate random-effects meta-analysis** of logit(π̄_{qj}) and logit(ȳ_{qj}) using an unstructured variance–covariance matrix and random intercepts for clusters.
 
 
-```{r}
+```{r CGC}
 res_cgcg <- valProbCluster(
-  data = data_test_cluster,
-  p = preds, y = y, cluster = center, pl = T,
-  approach = "CGC",
-  method = "grouped"
+  data = valClusterData,
+  p = preds, y = y, cluster = center, pl = TRUE,
+  approach = "CGC", method = "grouped"
 )
-
-res_cgcg$ggplot
-
-
+res_cgcg$ggPlot
 ```
 
 
 #### CG-C (Interval)
 Same algorithm, except Step 1 uses equally spaced probability intervals instead of quantiles.
 
-```{r}
+```{r CGCinterval}
 res_cgci <- valProbCluster(
-  data = data_test_cluster,
-  p = preds, y = y, cluster = center, pl = T,
-  approach = "CGC",
-  method = "interval"
+  data = valClusterData,
+  p = preds, y = y, cluster = center, pl = TRUE,
+  approach = "CGC", method = "interval"
 )
-
-res_cgci$ggplot
-
+res_cgci$ggPlot
 ```
 
 
@@ -435,21 +434,22 @@ Other supported methods for prediction intervals include:
  **Standard Normal Quantile**.
 Detailed methodological overview can be found in the published [article](https://doi.org/10.48550/arXiv.2503.08389).
 
-```{r}
+```{r MAC2, warning = FALSE}
 res_mac2_spl <- valProbCluster(
-  data = data_test_cluster,
+  data = valClusterData,
   p = preds, y = y, cluster = center, pl = T,
   approach = "MAC2", knots = 3, grid_l = 100,
   method_choice = "splines", methods = "splines"
 )
-res_mac2_spl$ggplot
+res_mac2_spl$ggPlot
 res_mac2_loess <- valProbCluster(
-  data = data_test_cluster,
+  data = valClusterData,
   p = preds, y = y, cluster = center, pl = T,
   approach = "MAC2", grid_l = 100,
-  method_choice = "loess", methods = "loess",
+  method_choice = "loess", 
+  methods = "loess"
 )
-res_mac2_loess$ggplot
+res_mac2_loess$ggPlot
 ```
 
 ### Interpretation
@@ -504,20 +504,18 @@ In this method:
 Detailed methodological overview can be found in the published [article](https://doi.org/10.48550/arXiv.2503.08389).
 
 ```{r}
-library(merTools)
 res_mixc_itc <- valProbCluster(
-  p = data_test_cluster$preds, y = data_test_cluster$y, cluster = data_test_cluster$center,
-  pl = T,
+  p = valClusterData$preds, y = valClusterData$y, cluster = valClusterData$center,
+  pl = TRUE,
   approach = "MIXC", method = "intercept", grid_l = 100
 )
-res_mixc_itc$ggplot
+res_mixc_itc$ggPlot
 res_mixc_slo <- valProbCluster(
-  p = data_test_cluster$preds, y = data_test_cluster$y, cluster = data_test_cluster$center,
-  pl = T,
+  p = valClusterData$preds, y = valClusterData$y, cluster = valClusterData$center,
+  pl = TRUE,
   approach = "MIXC", method = "slope", grid_l = 100
 )
-res_mixc_slo$ggplot
-
+res_mixc_slo$ggPlot
 ```
 
 ### Interpretation

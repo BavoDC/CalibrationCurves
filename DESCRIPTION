@@ -1,9 +1,10 @@
 Package: CalibrationCurves
 Type: Package
 Title: Calibration Performance
-Version: 2.0.7
+Version: 3.0.0
 Authors@R: c(person("De Cock", "Bavo", role = c("aut", "cre"),
 		     email = "bavo.decock@kuleuven.be"),
+		    person("Barrenada", "Lasai", role = "aut"),
 	      person("Nieboer", "Daan", role = "aut"),
 	      person("Van Calster", "Ben", role = "aut"),
 	      person("Steyerberg", "Ewout",role="aut"),
@@ -12,8 +13,9 @@ Description: Plots calibration curves and computes statistics for assessing cali
 License: GPL (>= 3)
 LazyData: TRUE
 Depends: R (>= 3.5.0), rms (>= 7.0-0), ggplot2
-Imports: grDevices, graphics, methods, stats, utils, survival, Hmisc, bookdown, rstudioapi, timeROC, riskRegression
-Suggests: knitr, rmarkdown, mgcv, MASS, magrittr, Matrix
+Imports: grDevices, graphics, methods, stats, utils, survival, Hmisc, bookdown, rstudioapi, timeROC, riskRegression, meta, metafor,
+         zoo, lme4, merTools, dplyr, magrittr
+Suggests: knitr, rmarkdown, mgcv, MASS, Matrix
 RoxygenNote: 7.3.1
 Encoding: UTF-8
 VignetteBuilder: knitr
