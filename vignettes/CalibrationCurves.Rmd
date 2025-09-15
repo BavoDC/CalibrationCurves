@@ -299,7 +299,7 @@ Next to the plot, you also get a range of statistics that assess the calibration
 calPerf
 ```
 # Assesing the calibration of prediction models in clustered datasets
-In many applications, data have a hierarchical structure. For example, patients (level 1) are nested within hospitals (level 2). In such cases, the observations within the same cluster (e.g., hospital) may be more similar to each other than to those in different clusters.
+In certain scenarios, we have hierarchically structured data. Due to this structure, there will be heterogeneity between clusters and dependency among observations belonging to the same cluster. It is of utmost importance that this is accurately reflected in our predictive mode. A prime example is when patients (level 1) are nested within hospitals (level 2). In these cases, the observations within the same cluster (e.g., hospital) may be more similar to each other than to those belonging to different clusters.
 
 @ClusteredCalibration propose three approaches to obtain calibration curves
 accounting for clustering when the outcome is binary. These approaches are implemented in the `CalibrationCurves` package through the `valProbCluster` function.
@@ -310,8 +310,8 @@ We will illustrate the methods using a clustered dataset
 library(lme4)
 data("clustertraindata")
 data("clustertestdata")
-mFit           = glmer(y ~ x1 + x2 + x3 + (1 | cluster), data = clustertraindata, family = "binomial")
-preds          = predict(mFit, clustertestdata, type = "response")
+mFit           = glmer(y ~ x1 + x2 + x3 + x5 + (1 | cluster), data = clustertraindata, family = "binomial")
+preds          = predict(mFit, clustertestdata, type = "response", re.form = NA)
 y              = clustertestdata$y
 cluster        = clustertestdata$cluster
 valClusterData = data.frame(y = y, preds = preds, center = cluster)

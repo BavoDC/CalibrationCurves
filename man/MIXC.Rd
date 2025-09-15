@@ -10,7 +10,7 @@ MIXC(
   y,
   cluster,
   grid_length = 100,
-  method = "slope",
+  method = c("slope", "intercept"),
   plot = TRUE,
   cluster_curves = FALSE,
   nsims_pi = 10000,

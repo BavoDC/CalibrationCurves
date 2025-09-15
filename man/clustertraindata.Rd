@@ -48,10 +48,12 @@
   colnames(Dt) \%<>\% tolower
 
   clustertraindata = Dt \%>\%
+    filter(cluster \%in\% 1:5) \%>\%
     group_by(cluster) \%>\%
     sample_n(size = nSample) \%>\%
     as.data.frame
   clustertestdata = Dt \%>\%
+    filter(cluster \%in\% 6:10) \%>\%
     group_by(cluster) \%>\%
     sample_n(size = nTest) \%>\%
     as.data.frame
