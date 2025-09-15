@@ -445,7 +445,7 @@ res_mac2_spl$ggPlot
 res_mac2_loess <- valProbCluster(
   data = valClusterData,
   p = preds, y = y, cluster = center, pl = T,
-  approach = "MAC2", grid_l = 100,
+  approach = "MAC2", grid_l = 20,
   method_choice = "loess", 
   methods = "loess"
 )
