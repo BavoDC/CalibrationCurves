@@ -298,13 +298,35 @@ Next to the plot, you also get a range of statistics that assess the calibration
 ```{r}
 calPerf
 ```
+
 # Assesing the calibration of prediction models in clustered datasets
-In certain scenarios, we have hierarchically structured data. Due to this structure, there will be heterogeneity between clusters and dependency among observations belonging to the same cluster. It is of utmost importance that this is accurately reflected in our predictive mode. A prime example is when patients (level 1) are nested within hospitals (level 2). In these cases, the observations within the same cluster (e.g., hospital) may be more similar to each other than to those belonging to different clusters.
+In certain scenarios, we have hierarchically structured data. Here, we have heterogeneity between clusters and dependency among observations belonging to the same cluster. It is of utmost importance that this hierarchical structure is taken into account when assessing the calibration of a predictive model. A prime example of this hierarchical structure is when patients (level 1) are nested within hospitals (level 2). In these cases, the observations within the same cluster may be more similar to each other than to those belonging to different clusters.
 
-@ClusteredCalibration propose three approaches to obtain calibration curves
-accounting for clustering when the outcome is binary. These approaches are implemented in the `CalibrationCurves` package through the `valProbCluster` function.
+We assume that the validation data set has a total of $J$ clusters and use $j = (1, \dots, J)$ to index the clusters. In each cluster, we have $n_j$ patients and we index the patients using $i = (1, \dots, n_j)$. The total sample size is $N = \sum_{j = 1}^J n_j$. We use $y_{ij} \in (0,1)$ to denote the outcome of patient $i$ in cluster $j$, which takes on the value 0 in case of a non-event and 1 in case of an event. We assume that $y_{ij}$ follows a Bernouilli distribution $y_{ij} \sim \text{Bern}(\pi_{ij})$, where $\pi_{ij}$ denotes the probability of experiencing the event. Similar to before, we express $\pi_{ij}$ as a function of a set of risk characteristics
 
-We will illustrate the methods using a clustered dataset
+$$
+ P(y_{ij} = 1 | \boldsymbol{x}_{ij}) = \pi(\boldsymbol{x}_{ij}).
+$$
+
+In a simple logistic regression model, we have that
+$$
+ \pi(\boldsymbol{x}_{ij}) = \frac{1}{1 + e^{-\boldsymbol{x}_{ij}^\top \boldsymbol{\beta}}}.
+$$
+
+We have a perfectly calibrated model when $P(y_{ij} = 1 | \pi(\boldsymbol{x}_{ij})) = \pi(\boldsymbol{x}_{ij})$ for all $i$ and $j$. To estimate the calibration, we could extend \@ref(eq:logcal) to
+
+$$
+  \text{logit}(P({}_{*} y_{ij} = 1| {}_{*} \widehat{\pi}_{ij})) = \alpha + \zeta \ \text{logit}({}_{*} \widehat{\pi}_{ij}).
+$$
+
+However, with this approach, we ignore the clustering and do not obtain any information on the performance in the different clusters. Since there is no commonly accepted way to estimate the calibration curves in this scenario, @ClusteredCalibration propose three approaches to obtain calibration curves:
+
+ 1. [Clustered Group Calibration (CG-C)](#CGC): a bivariate random effects meta-analysis model;
+ 2. [Two-stage Neta-Analysis Calibration (2MA-C)](#2MAC): a two-stage univariate random effect meta-analytical approach;
+ 3. [Mixed model Calibration (MIX-C)](#MIXC): a one-step approach using a random-effects model.
+
+
+All three approaches are implemented in this `CalibrationCurves` package and you can access them through the `valProbCluster` function. To illustrate the methods, we use a clustered training and validation data set.
 
 ```{r clusteredData}
 library(lme4)
@@ -317,38 +339,102 @@ cluster        = clustertestdata$cluster
 valClusterData = data.frame(y = y, preds = preds, center = cluster)
 ```
 
-## Clustered Group Calibration (CG-C)
+## Clustered Group Calibration (CG-C) {#CGC}
+The CG-C method is an extension of the traditional grouped calibration method (binning calibration) to data sets with a clustered structure. In the traditional grouped calibration:
 
-CG-C is an extension of traditional *grouped calibration* (binning calibration) for datasets with **clustered structure** — for example, multi-center studies or hierarchical data.
+ - all data is pooled;
+ - observations are divided into equal-sized groups based on the predicted risks;
+ - for each group, the observed event rate is plotted against the mean predicted risk.
 
-In traditional grouped calibration:
-- All data is pooled.
-- Observations are divided into equal-sized groups based on predicted risks.
-- For each group, the observed event rate is plotted against the mean predicted risk.
+Conversely, in CG-C:
 
-In CG-C:
-- Grouping is performed **within each cluster first**.
-- Cluster-level results are combined across clusters via **bivariate random-effects meta-analysis**, capturing:
-  - **Between-cluster heterogeneity**
-  - **Within-cluster sampling error**
+ - grouping is performed within each cluster first;
+ - cluster-level results are combined across clusters via a bivariate random-effects meta-analysis, capturing between-cluster heterogeneity and within-cluster sampling error.
 
-Two grouping strategies are available:
-- `"grouped"`: Equal-sized quantile groups within each cluster
-- `"interval"`: Fixed-width intervals in (0, 1) within each cluster
+In the package, two grouping strategies are available:
+ 
+ - `"grouped"`: equal-sized quantile groups within each cluster;
+ - `"interval"`: fixed-width intervals in (0, 1) within each cluster.
+ 
+### Mathematical details
+The CG-C method proceeds as follows:
+ 
+ 1. Per cluster $j$, we split the predicted probabilities into $Q$ groups;
+ 2. Within each group $q$ and for each cluster $j$, we compute the mean observed outcome ($\hat{y}_{qj}$) and mean predicted probability ($\hat{\bar{\pi}}_{qj}$).
+ 3. Per group $q$, we perform a bivariate random-effects meta-analysis. We include $\text{logit}(\hat{y}_{qj})$ and $\text{logit}(\hat{\bar{\pi}}_{qj})$ as the response variables and we capture the cluster-specific deviation by including a random intercept. When fitting the model, we use an unstructured variance–covariance matrix.
+ 
+ 
+The equation of this model is given by 
+$$
+\begin{bmatrix}
+\text{logit}(\bar{y}_{qj}) \\
+\text{logit}(\hat{\bar{\pi}}_{qj})
+\end{bmatrix}
+=
+\begin{bmatrix}
+{}_{\bar{y}} \mu_q + u_{qj} + \varepsilon_{qj} \\
+{}_{\hat{\bar{\pi}}} \mu_q + \nu_{qj} + \epsilon_{qj}
+\end{bmatrix}
+\tag{2}
+$$
 
-Detailed methodological overview can be found in the published [article](https://doi.org/10.48550/arXiv.2503.08389).
-
-### Method Overview
-
-#### CG-C (Grouped)
-1. **Per cluster j**:
-   - Split predicted probabilities into Q quantiles.
-2. **For each cluster and quantile**:
-   - Compute mean observed outcome (ȳ_{qj}), mean predicted probability (π̄_{qj}), and sample size.
-3. **Per quantile q**:
-   - Perform **bivariate random-effects meta-analysis** of logit(π̄_{qj}) and logit(ȳ_{qj}) using an unstructured variance–covariance matrix and random intercepts for clusters.
+Where $\bar{y}_{qj}$ denotes the prevalence of cluster $j$ within quantile $q$, and $\hat{\bar{\pi}}_{qj}$ the average estimated risk in cluster $j$ within quantile $q$. We use the subscript $q$ in the quantities to indicate that this refers to quantile $q$. $u_{qj}$ and $\nu_{qj}$ represent the random intercepts for cluster $j$, capturing the between-cluster heterogeneity, whereas $\varepsilon_{qj}$ and $\epsilon_{qj}$ account for the within-cluster error. In this model, we assume that ${}_{\bar{y}} \mu_q + u_{qj}$ and ${}_{\hat{\bar{\pi}}} \mu_q + \nu_{qj}$ are randomly drawn from a distribution with mean (or pooled) ${}_{\bar{y}} \mu_q$ and ${}_{\hat{\bar{\pi}}} \mu_q$, respectively.
 
 
+$$
+\begin{bmatrix}
+u_{qj} \\
+\nu_{qj}
+\end{bmatrix}
+\sim \mathcal{N}
+\left(
+\begin{bmatrix}
+0 \\
+0
+\end{bmatrix},
+\Omega_q
+\right)
+\quad \text{and} \quad
+\begin{bmatrix}
+\varepsilon_{qj} \\
+\epsilon_{qj}
+\end{bmatrix}
+\sim \mathcal{N}
+\left(
+\begin{bmatrix}
+0 \\
+0
+\end{bmatrix},
+\Sigma_{qj}
+\right)
+$$
+
+Where $\Omega_q$ and $\Sigma_{qj}$ represent the between-cluster and within-cluster covariance matrices within quantile $q$, respectively.
+
+$$
+\Omega_q =
+\begin{bmatrix}
+{}_{\bar{y}} \tau_q^2 & {}_{b} \rho_q \ \ \ {}_{\bar{y}} \tau_q^2 \ \ {}_{\bar{\hat{\pi}}} \tau_q^2 \\
+{}_{b} \rho_q \ \ \ {}_{\bar{y}} \tau_q^2 \ \ {}_{\bar{\hat{\pi}}} \tau_q^2 & {}_{\bar{\hat{\pi}}} \tau_q^2
+\end{bmatrix}
+$$
+
+
+$$
+\Sigma_{qj} =
+\begin{bmatrix}
+{}_{\bar{y}} \sigma_{qj}^2 & {}_{w} \rho_q \ \ {}_{\bar{y}} \sigma_{qj}^2 \ \ {}_{\bar{\hat{\pi}}} \sigma_{qj}^2 \\
+{}_{w} \rho_q \ \ {}_{\bar{y}} \sigma_{qj}^2 \ \ {}_{\bar{\hat{\pi}}} \sigma_{qj}^2 & {}_{\bar{\hat{\pi}}} \sigma_{qj}^2
+\end{bmatrix}
+$$
+
+We use ${}_{\bar{y}} \sigma_{qj}^2$ and ${}_{\bar{\hat{\pi}}} \sigma_{qj}^2$ to denote the variance of $\bar{y}_{qj}$ and $\hat{\bar{\pi}}_{qj}$, respectively. ${}_{w} \rho_q$ represents the within-cluster correlation and ${}_{b} \rho_q$ the between-cluster correlation in quantile $q$. The between-study variance is denoted as ${}_{\bar{\hat{\pi}}} \tau_q^2$ and ${}_{\bar{\hat{\pi}}} \tau_q^2$.
+
+For each quantile $q$, we use a bivariate meta-analysis model to account for the strong dependence between the average estimated risk and observed proportion. The calibration plot is then created by plotting the $Q$ values of ${}_{\bar{\hat{\pi}}} \mu_q$ on the x-axis and ${}_{\bar{y}} \mu_q$ on the y-axis.
+
+### Illustration
+
+The following code gives an example of the CG-C (Grouped).
 ```{r CGC}
 res_cgcg <- valProbCluster(
   data = valClusterData,
@@ -358,9 +444,7 @@ res_cgcg <- valProbCluster(
 res_cgcg$ggPlot
 ```
 
-
-#### CG-C (Interval)
-Same algorithm, except Step 1 uses equally spaced probability intervals instead of quantiles.
+You can employ the CG-C (Interval) using the following code. This follows the same steps as the Grouped method, except for Step 1 where it uses equally spaced probability intervals instead of quantiles.
 
 ```{r CGCinterval}
 res_cgci <- valProbCluster(
@@ -372,7 +456,7 @@ res_cgci$ggPlot
 ```
 
 
-### Interpretation
+We interpret the plot as follows:
 
 - **Black**: Traditional grouped calibration curve (pooled data)
 - **Gold**: CG-C pooled curve across clusters
@@ -383,56 +467,73 @@ res_cgci$ggPlot
 CG-C provides calibration estimates that account for cluster-level variability, making it more representative of model performance in new or unseen clusters.
 
 
-## Two stage meta-analysis calibration (2MA-C)
+## Two stage meta-analysis calibration (2MA-C) {#2MAC}
+For the second approach, we use a two-stage random effects meta-analysis to estimate the calibration plot. First, we fit a flexible curve per cluster with a smoother of choice. Currently, the user can choose between restricted cubic splines and LOESS. When employing restricted cubic splines, the number of knots per cluster is selected by performing a likelihood ratio test between all combinations of models with 3, 4, and 5 knots, selecting the model with the least knots that provides the best fit. When you opt for LOESS, the span parameter with the lowest bias-corrected AIC is selected in each cluster. 
 
-This approach first fits a calibration model per cluster and then it meta-analyses the
-performance of each cluster to obtain the overall calibration curve. 
-
-### Method Overview
-
-**Stage 1**
-
-Fit a model per center and estimate observed proportion for a grid of values (e.g., 100 values from 0.001 to 0.999):
-
-$$ \text{logit}(y_{ji}) = \alpha_j + \beta_j \cdot \eta_{ji}$$
-
----
-
-**Stage 2**
-
-Pool observed proportion per grid value $g$ using a random effects model:
+### Mathematical details
+We train a flexible curve per cluster and estimate the observed proportion for a fixed grid of estimated risks from 0.01 to 0.99 ($G$, default is 100 points). Hereafter, we use a random effects meta-analysis model per point in the grid to combine the logit-transformed predictions across clusters, fitting the following univariate model per point $g$ in the grid:
 
 $$
-\hat{y}_{gj} = y_g + u_{gj} + \epsilon_{gj}, \quad \epsilon_j \sim N(0, \sigma_{gj}^2), \quad u_j \sim N(0, \tau_g^2)
+\text{logit}({}_{s} \hat{\pi}_{gj}) = {}_{\hat{\pi}} \mu_g + \nu_{gj} + \epsilon_{gj}
 $$
 
-Where:
-$\hat{y}_{gj}$ is the estimated observed proportion from model $j$ for value $g$ in the grid.
-$u_j$ is the random effect for center $k$.
-$\(\epsilon_j\)$ is the sampling error or within-study variance.
+${}_{s} \hat{\pi}_{gj}$ denotes the predicted proportion of point $g$ for cluster $j$, ${}_{\hat{\pi}} \mu_g$ the overall mean for point $g$, $\nu_{gj}$ the cluster-specific deviation, and $\epsilon_{gj}$ the error.
 
-Here:
-$\tau_g^2$ is the between-study variability or heterogeneity, estimated using REML.
-$s_j^2$ is the within-study variability.
-
-Confidence intervals can be calculated using:
-
- **Default Method**: $\hat{y}_g \pm z_{1 - \alpha/2} \cdot SE(\hat{y}_g)$
+We assume that $\nu_{gj} \sim \mathcal{N}(0, {}_{\hat{\pi}} \tau_g^2)$ and $\epsilon_{gj} \sim \mathcal{N}(0, {}_{\hat{\pi}} \sigma_{gj}^2)$. Further, we include the inverse of the variance of $\text{logit}({}_{s} \hat{\pi}_{gj})$ as weight and hereby take both the cluster-specific (${}_{\hat{\pi}} \sigma_{gj}^2$) and between-cluster variability (${}_{\hat{\pi}} \tau_g^2$) into account.
 
 
- **HKSJ Method**: $\hat{y}_g \pm t_{(J-2)} \sqrt{\frac{\sum w_j (\hat{y}_{gj} - \hat{y}_g)^2}{N-1} + SE(\hat{y}_g)^2}$ (recommended for a small number of studies)
 
 
-Where: $SE(\hat{y}_g) = \sqrt{\frac{s^2}{n_{gj}} + \frac{\tau_{gj}^2}{N}}$
+<!-- ### Method Overview -->
 
-Prediction intervals are based on the \(t\)-distribution, as explained in Higgins et al (2009): $\hat{y}_g \pm t_{(J-2)} \sqrt{\tau^2 + SE(\hat{y}_g)^2}$
+<!-- **Stage 1** -->
 
-Other supported methods for prediction intervals include:
- **Hartung-Knapp**, 
- **Kenward-Roger**,
- **Bootstrap Approach**, or 
- **Standard Normal Quantile**.
-Detailed methodological overview can be found in the published [article](https://doi.org/10.48550/arXiv.2503.08389).
+<!-- Fit a model per center and estimate observed proportion for a grid of values (e.g., 100 values from 0.001 to 0.999): -->
+
+<!-- $$ \text{logit}(y_{ji}) = \alpha_j + \beta_j \cdot \eta_{ji}$$ -->
+
+<!-- --- -->
+
+<!-- **Stage 2** -->
+
+<!-- Pool observed proportion per grid value $g$ using a random effects model: -->
+
+<!-- $$ -->
+<!-- \hat{y}_{gj} = y_g + u_{gj} + \epsilon_{gj}, \quad \epsilon_j \sim N(0, \sigma_{gj}^2), \quad u_j \sim N(0, \tau_g^2) -->
+<!-- $$ -->
+
+<!-- Where: -->
+<!-- $\hat{y}_{gj}$ is the estimated observed proportion from model $j$ for value $g$ in the grid. -->
+<!-- $u_j$ is the random effect for center $k$. -->
+<!-- $\(\epsilon_j\)$ is the sampling error or within-study variance. -->
+
+<!-- Here: -->
+<!-- $\tau_g^2$ is the between-study variability or heterogeneity, estimated using REML. -->
+<!-- $s_j^2$ is the within-study variability. -->
+
+<!-- Confidence intervals can be calculated using: -->
+
+<!--  **Default Method**: $\hat{y}_g \pm z_{1 - \alpha/2} \cdot SE(\hat{y}_g)$ -->
+
+
+<!--  **HKSJ Method**: $\hat{y}_g \pm t_{(J-2)} \sqrt{\frac{\sum w_j (\hat{y}_{gj} - \hat{y}_g)^2}{N-1} + SE(\hat{y}_g)^2}$ (recommended for a small number of studies) -->
+
+
+<!-- Where: $SE(\hat{y}_g) = \sqrt{\frac{s^2}{n_{gj}} + \frac{\tau_{gj}^2}{N}}$ -->
+
+<!-- Prediction intervals are based on the \(t\)-distribution, as explained in Higgins et al (2009): $\hat{y}_g \pm t_{(J-2)} \sqrt{\tau^2 + SE(\hat{y}_g)^2}$ -->
+
+<!-- Other supported methods for prediction intervals include: -->
+<!--  **Hartung-Knapp**,  -->
+<!--  **Kenward-Roger**, -->
+<!--  **Bootstrap Approach**, or  -->
+<!--  **Standard Normal Quantile**. -->
+<!-- Detailed methodological overview can be found in the published [article](https://doi.org/10.48550/arXiv.2503.08389). -->
+
+
+
+### Illustration
+The code below shows how to estimate the calibration curves using the MAC2 method, using splines and LOESS in the first step.
 
 ```{r MAC2, warning = FALSE}
 res_mac2_spl <- valProbCluster(
@@ -452,7 +553,7 @@ res_mac2_loess <- valProbCluster(
 res_mac2_loess$ggPlot
 ```
 
-### Interpretation
+We interpret the plot as follows:
 
 - **Black (dashed)**: 2MA-C pooled curve across clusters
 - **Black (solid)**: Center specific curves (if `center_curves = TRUE`)
@@ -461,38 +562,41 @@ res_mac2_loess$ggPlot
   - Dark red = 95% Confidence Interval (expected calibration of the pooled curve)
 
 
+The 2MA-C method provides calibration estimates that account for cluster-level variability, making it more representative of model performance in new or unseen clusters and at the same time calculate center specific calibration curves. Note that in this example the clustering is based on normally distributed random effect, which might not be the case in real life scenarios. Due to this, the splines model seems to fit better than the loess model. However if the random effects follows a more complex structure, the loess model might be more appropriate.
 
-2MA-C provides calibration estimates that account for cluster-level variability, making it more representative of model performance in new or unseen clusters and at the same time calculate center specific calibration curves. Note that in this example the clustering is based on normally distributed random effect, which might not be the case in real life scenarios. Due to this, the splines model seems to fit better than the loess model. However if the random effects follows a more complex structure, the loess model might be more appropriate.
-
-## Mixed model calibration (MIX-C)
-
-In this approach we fit a mixed effects logistic regression model with random intercept and slope to account for the clustered structure of the data. 
-
-### Method Overview
-
-In this approach, we estimate the observed proportion as
+## Mixed model calibration (MIX-C) {#MIXC}
+In the third approach, we employ a one-stage logistic generalized linear mixed model (GLMM) to model the outcome as a function of the logit-transformed predictions. To allow for a non-linear effect, we employ restricted cubic splines with three knots for both the fixed and random effects
 
 $$
-\hat{p}^{(o)}_{ij} = \text{logit}^{-1} \left[ \hat{s}\left( \text{logit}(\hat{\pi}(x_{ij})) \right) + \tilde{s}_j \, \hat{\left( \text{logit}(\hat{\pi}(x_{ij})) \right)} \right]
+\text{logit}\left(P(y_{ij} = 1 \mid \widehat{\pi}(\boldsymbol{x}_{ij}), \widetilde{s}_j)\right) = s\left(\text{logit}\left(\widehat{\pi}(\boldsymbol{x}_{ij})\right)\right) + \tilde{s}_j \left(\text{logit}\left(\widehat{\pi}(\boldsymbol{x}_{ij})\right)\right).
 $$
 
-where $\hat{s}$ and $\tilde{s}_j$ denote the estimated smooth effects.  
-We take the variance of both the fixed and random components into account when calculating the variance of the linear predictor, and we approximate the standard error of $\hat{p}^{(o)}_{ij}$ using the delta method.
+Here, $s$ denotes a smooth effect and $\tilde{s}_j$ denotes the smooth random effect for cluster $j$. The model is fit using the \code{lme4} package, and splines are added with the \code{rms} package. This approach estimates the calibration per cluster and the variance of the random effects in a single step.
 
-To keep the confidence interval within $[0, 1]$, we construct the interval as:
+### Mathematical details
 
-$$
-\min \left( 1, \max\left( 0, \hat{p}^{(o)}_{ij} \mp z_{1-\alpha/2} \, \text{se}\left( \hat{p}^{(o)}_{ij} \right) \right) \right)
-$$
+<!-- In this approach, we estimate the observed proportion as -->
 
-where $z_{1-\alpha/2}$ denotes the quantile of the standard normal distribution that corresponds to the cumulative probability of $1 - \alpha/2$ (i.e., $1.96$ for a 95% CI).
+<!-- $$ -->
+<!-- \hat{p}^{(o)}_{ij} = \text{logit}^{-1} \left[ \hat{s}\left( \text{logit}(\hat{\pi}(x_{ij})) \right) + \tilde{s}_j \, \hat{\left( \text{logit}(\hat{\pi}(x_{ij})) \right)} \right] -->
+<!-- $$ -->
 
-Prediction intervals are calculated using the `predictInterval` function in **R** with 10,000 samples (simulation-based).  
-This function takes into account:
+<!-- where $\hat{s}$ and $\tilde{s}_j$ denote the estimated smooth effects.   -->
+<!-- We take the variance of both the fixed and random components into account when calculating the variance of the linear predictor, and we approximate the standard error of $\hat{p}^{(o)}_{ij}$ using the delta method. -->
 
-- The uncertainty at the observation level (residual variance)
-- The fixed coefficients
-- The random effects
+<!-- To keep the confidence interval within $[0, 1]$, we construct the interval as: -->
+
+<!-- $$ -->
+<!-- \min \left( 1, \max\left( 0, \hat{p}^{(o)}_{ij} \mp z_{1-\alpha/2} \, \text{se}\left( \hat{p}^{(o)}_{ij} \right) \right) \right) -->
+<!-- $$ -->
+
+<!-- where $z_{1-\alpha/2}$ denotes the quantile of the standard normal distribution that corresponds to the cumulative probability of $1 - \alpha/2$ (i.e., $1.96$ for a 95% CI). -->
+
+The prediction intervals are calculated using the `predictInterval` function in **R** with 10,000 samples (simulation-based). This function takes the following into account:
+
+- the uncertainty at the observation level (residual variance);
+- the fixed coefficients;
+- the random effects.
 
 In this method:
 
@@ -503,13 +607,9 @@ In this method:
 
 Detailed methodological overview can be found in the published [article](https://doi.org/10.48550/arXiv.2503.08389).
 
+### Illustration
+Using the code as shown below, we can estimate the calibration curve using the MIX-C method.
 ```{r}
-res_mixc_itc <- valProbCluster(
-  p = valClusterData$preds, y = valClusterData$y, cluster = valClusterData$center,
-  pl = TRUE,
-  approach = "MIXC", method = "intercept", grid_l = 100
-)
-res_mixc_itc$ggPlot
 res_mixc_slo <- valProbCluster(
   p = valClusterData$preds, y = valClusterData$y, cluster = valClusterData$center,
   pl = TRUE,
@@ -518,7 +618,7 @@ res_mixc_slo <- valProbCluster(
 res_mixc_slo$ggPlot
 ```
 
-### Interpretation
+We interpret the plot as follows:
 
 - **Black (dashed)**: MIX-C pooled curve across clusters
 - **Black (solid)**: Center specific curves (if `center_curves = TRUE`)
