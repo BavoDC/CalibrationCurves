@@ -2,9 +2,8 @@
 #'
 #' This function evaluates calibration performance of predicted probabilities
 #' while accounting for clustering. It supports multiple approaches
-#' (`"CGC"`, `"MAC2"`, `"MIXC"`) and returns both results and a `ggplot` object
-#' . Additional arguments can be passed flexibly to the chosen
-#' subfunction.
+#' (`"CGC"`, `"MAC2"`, `"MIXC"`) and returns both results and a `ggplot` object.
+#' Additional arguments can be passed flexibly to the chosen subfunction.
 #'
 #' @param data Optional data frame containing the variables \code{p}, \code{y},
 #'   and \code{cluster}. If supplied, variable names should be given without
@@ -15,7 +14,7 @@
 #'   column in \code{data}.
 #' @param cluster Cluster identifier (factor, character, or integer) or name of
 #'   the column in \code{data}.
-#' @param pl Logical. If \code{TRUE}, a plot will be produced by the chosen
+#' @param plot Logical. If \code{TRUE}, a plot will be produced by the chosen
 #'   subfunction.
 #' @param cl.level the confidence level for the calculation of the confidence interval. Default is \code{0.95}.
 #' @param approach Character string specifying the calibration method to use.
@@ -30,15 +29,18 @@
 #' @param ylab Label for the y-axis of the plot (default: \code{"Observed proportion"}).
 #' @param grid_l Integer. Number of points in the probability grid for plotting
 #'   (default: \code{100}).
+#' @param rangeGrid the range of the grid. Default is \code{range(p)}.
 #' @param ... Additional arguments passed to the selected subfunction
-#'   (\code{CGC}, \code{MAC2}, or \code{MIXC}).
+#'   (\code{\link{CGC}}, \code{\link{MAC2}} and \code{\link{MIXC}}).
+#'
+#' @seealso \code{\link{CGC}}, \code{\link{MAC2}} and \code{\link{MIXC}}
 #'
 #' @details
 #' The function internally calls one of the following subfunctions:
 #' \itemize{
 #'   \item \code{CGC(preds, y, cluster, plot, ...)}
-#'   \item \code{MAC2(preds, y, cluster, plot, grid_length, ...)}
-#'   \item \code{MIXC(preds, y, cluster, plot, CI, grid_length, ...)}
+#'   \item \code{MAC2(preds, y, cluster, plot, grid, ...)}
+#'   \item \code{MIXC(preds, y, cluster, plot, CI, grid, ...)}
 #' }
 #'
 #' Extra arguments supplied via \code{...} are passed directly to these
@@ -59,38 +61,47 @@
 #' }
 #'
 #' @examples
-#' \dontrun{
-#' # Example with simulated data
-#' set.seed(123)
-#' dat <- data.frame(
-#'   p = runif(200),
-#'   y = rbinom(200, 1, 0.5),
-#'   cluster = rep(1:20, each = 10)
-#' )
+#' library(lme4)
+#' data("clustertraindata")
+#' data("clustertestdata")
+#' mFit           = glmer(y ~ x1 + x2 + x3 + x5 + (1 | cluster), data = clustertraindata, family = "binomial")
+#' preds          = predict(mFit, clustertestdata, type = "response", re.form = NA)
+#' y              = clustertestdata$y
+#' cluster        = clustertestdata$cluster
+#' valClusterData = data.frame(y = y, preds = preds, center = cluster)
 #'
-#' # Run mixed-effects calibration with plotting
-#' res <- valProbCluster(
-#'   data = dat, p = p, y = y, cluster = cluster,
-#'   approach = "MIXC", pl = TRUE
+#' # Assess calibration performance
+#' Results  = valProbCluster(
+#' p = valClusterData$preds, y = valClusterData$y, cluster = valClusterData$center,
+#' plot = TRUE,
+#' approach = "MIXC", method = "slope", grid_l = 100
 #' )
-#'
-#' # Access ggplot
-#' res$ggplot
-#' }
+#' Results
 #'
 #' @export
 valProbCluster <- function(data = NULL, p, y, cluster,
-                           pl = TRUE, approach = c("MIXC", "CGC", "MAC2"),
+                           plot = TRUE, approach = c("MIXC", "CGC", "MAC2"),
                            cl.level = 0.95,
                            xlab = "Predicted probability",
-                           ylab = "Observed proportion", grid_l = 100,
+                           ylab = "Observed proportion",
+                           grid_l = 100,
+                           rangeGrid = range(p),
                            ...) {
   # Capture call
   callFn   = match.call()
   approach = match.arg(approach)
 
   # grid for plotting if needed
-  grid = seq(0.01, 0.99, length.out = grid_l)
+  rangeGrid = sort(rangeGrid)
+  if(rangeGrid[1] <= 0) {
+    warning("Minimum of the grid is smaller than or equal to 0. Will be set to 0.01.", immediate. = TRUE)
+    rangeGrid[1] = 0.01
+  }
+  if(rangeGrid[2] >= 1) {
+    warning("Maximum of the grid is smaller than or equal to 0. Will be set to 0.99.", immediate. = TRUE)
+    rangeGrid[2] = 0.99
+  }
+  grid = seq(rangeGrid[1], rangeGrid[2], length.out = grid_l)
 
   # Handle case where user passes a data frame
   if (!is.null(data)) {
@@ -117,11 +128,11 @@ valProbCluster <- function(data = NULL, p, y, cluster,
 
 
   # Inform user about the chosen approach
-  message(
-    "You are using approach '", approach,
-    "'. Please see the documentation of ", approach,
-    "() for details about additional arguments. After running check warnings"
-  )
+  # message(
+  #   "You are using approach '", approach,
+  #   "'. Please see the documentation of ", approach,
+  #   "() for details about additional arguments. After running check warnings"
+  # )
   # Remove clusters that don’t have both 0 and 1 in y
   tab              = table(cluster, y)
   valid_clusters   = rownames(tab)[rowSums(tab > 0) == 2]
@@ -142,19 +153,20 @@ valProbCluster <- function(data = NULL, p, y, cluster,
   extraArgs = list(...)
 
   # Call the right subfunction with do.call
-  if (approach == "CGC") {
-    results <- do.call(CGC, c(
-      list(preds = p, y = y, cluster = cluster,plot = pl), extraArgs
-    ))
-  } else if (approach == "MAC2") {
-    results <- do.call(MAC2, c(
-      list(preds = p, y = y, cluster = cluster, plot = pl, grid_length = grid_l), extraArgs
-    ))
-  } else if (approach == "MIXC") {
-    results <- do.call(MIXC, c(
-      list(preds = p, y = y, cluster = cluster, plot = pl, CI = TRUE, grid_length = grid_l), extraArgs
-    ))
-  }
+  results =
+    if (approach == "CGC") {
+      do.call(CGC, c(
+        list(preds = p, y = y, cluster = cluster, plot = plot, cl.level = 0.95), extraArgs
+      ))
+    } else if (approach == "MAC2") {
+      do.call(MAC2, c(
+        list(preds = p, y = y, cluster = cluster, plot = plot, grid = grid, cl.level = 0.95), extraArgs
+      ))
+    } else if (approach == "MIXC") {
+      do.call(MIXC, c(
+        list(preds = p, y = y, cluster = cluster, plot = plot, CI = TRUE, grid = grid, cl.level = 0.95), extraArgs
+      ))
+    }
 
   # Wrap results in a structured list
   Results = structure(

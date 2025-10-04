@@ -9,7 +9,7 @@ MAC2(
   preds,
   y,
   cluster,
-  grid_length = 100,
+  grid,
   methods = c("log", "loess", "splines", "kde"),
   plot = TRUE,
   cluster_curves = FALSE,
@@ -37,7 +37,7 @@ Default is `NULL`.}
 
 \item{cluster}{A factor or character vector identifying cluster memberships.}
 
-\item{grid_length}{Integer; length of the grid for calibration curve evaluation. Default is `100`.}
+\item{grid}{the grid for the calibration curve evaluation}
 
 \item{methods}{Character vector; methods to use for calibration. Options are:
 `"log"` (logistic regression), `"loess"`, `"splines"`, and `"kde"` (kernel density estimation).}

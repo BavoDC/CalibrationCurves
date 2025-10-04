@@ -20,6 +20,7 @@
 #' @param univariate Logical; whether to use univariate meta-analysis. Default is `FALSE`.
 #' @param method Character; grouping method: `"grouped"` (equal-sized groups) or
 #'   `"interval"` (interval-based). Default is `"grouped"`.
+#' @param cl.level the confidence level for the calculation of the confidence interval. Default is \code{0.95}.
 #'
 #' @details
 #' - `"grouped"`: predictions are divided into equal-sized bins using quantiles.
@@ -49,6 +50,7 @@ CGC <- function(data = NULL,
                 preds,
                 y,
                 cluster,
+                cl.level = 0.95,
                 ntiles = 10,
                 cluster_curves = FALSE,
                 plot = TRUE,

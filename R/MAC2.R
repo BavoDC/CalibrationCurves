@@ -10,7 +10,7 @@
 #' @param preds A numeric vector of predicted probabilities.
 #' @param y A numeric vector of binary outcomes (0 or 1).
 #' @param cluster A factor or character vector identifying cluster memberships.
-#' @param grid_length Integer; length of the grid for calibration curve evaluation. Default is `100`.
+#' @param grid the grid for the calibration curve evaluation
 #' @param methods Character vector; methods to use for calibration. Options are:
 #'   `"log"` (logistic regression), `"loess"`, `"splines"`, and `"kde"` (kernel density estimation).
 #' @param plot Logical; whether to plot the calibration curves. Default is `TRUE`.
@@ -27,6 +27,7 @@
 #' @param linewidth Numeric; line width for the meta-curve. Default is `1`.
 #' @param method.predict Character; method for prediction intervals. Default is `"HTS"`.
 #' @param verbose logical, indicates whether progress has to be printed in the console.
+#' @param cl.level the confidence level for the calculation of the confidence interval. Default is \code{0.95}.
 #'
 #' @details
 #' This function calculates calibration curves for multiple methods and aggregates them
@@ -45,8 +46,9 @@ MAC2 <- function(data = NULL,
                  preds,
                  y,
                  cluster,
-                 grid_length = 100,
+                 grid,
                  methods = c("log", "loess", "splines", "kde"),
+                 cl.level = 0.95,
                  plot = TRUE,
                  cluster_curves = FALSE,
                  knots = 3,
@@ -81,7 +83,6 @@ MAC2 <- function(data = NULL,
   )
 
   # --- Grid computation ---
-  grid <- seq(0.01, 0.99, length.out = grid_length)
   transform_function <- if (transf == "logit") Logit else identity
   data_all_lp <- data.frame()
 

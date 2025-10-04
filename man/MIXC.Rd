@@ -9,7 +9,7 @@ MIXC(
   preds,
   y,
   cluster,
-  grid_length = 100,
+  grid,
   method = c("slope", "intercept"),
   plot = TRUE,
   cluster_curves = FALSE,
@@ -29,8 +29,6 @@ Default is `NULL`.}
 
 \item{cluster}{A factor or character vector of cluster identifiers.}
 
-\item{grid_length}{Integer; number of points for the prediction grid. Default is `100`.}
-
 \item{method}{Character; type of mixed-effects model: `"intercept"` (random intercept)
 or `"slope"` (random slope). Default is `"slope"`.}
 
@@ -45,6 +43,8 @@ Default is `FALSE`.}
 
 \item{CI_method}{Character; method for confidence intervals: `"delta"` or empty string.
 Default is `""`.}
+
+\item{grid_length}{Integer; number of points for the prediction grid. Default is `100`.}
 }
 \value{
 A list containing:

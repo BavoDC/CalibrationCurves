@@ -9,12 +9,13 @@ valProbCluster(
   p,
   y,
   cluster,
-  pl = TRUE,
+  plot = TRUE,
   approach = c("MIXC", "CGC", "MAC2"),
   cl.level = 0.95,
   xlab = "Predicted probability",
   ylab = "Observed proportion",
   grid_l = 100,
+  rangeGrid = range(p),
   ...
 )
 }
@@ -32,7 +33,7 @@ column in \code{data}.}
 \item{cluster}{Cluster identifier (factor, character, or integer) or name of
 the column in \code{data}.}
 
-\item{pl}{Logical. If \code{TRUE}, a plot will be produced by the chosen
+\item{plot}{Logical. If \code{TRUE}, a plot will be produced by the chosen
 subfunction.}
 
 \item{approach}{Character string specifying the calibration method to use.
@@ -53,8 +54,10 @@ Defaults to \code{"MIXC"}.}
 \item{grid_l}{Integer. Number of points in the probability grid for plotting
 (default: \code{100}).}
 
+\item{rangeGrid}{the range of the grid. Default is \code{range(p)}.}
+
 \item{...}{Additional arguments passed to the selected subfunction
-(\code{CGC}, \code{MAC2}, or \code{MIXC}).}
+(\code{\link{CGC}}, \code{\link{MAC2}} and \code{\link{MIXC}}).}
 }
 \value{
 An object of class \code{"valProbCluster"} containing:
@@ -72,16 +75,15 @@ An object of class \code{"valProbCluster"} containing:
 \description{
 This function evaluates calibration performance of predicted probabilities
 while accounting for clustering. It supports multiple approaches
-(`"CGC"`, `"MAC2"`, `"MIXC"`) and returns both results and a `ggplot` object
-. Additional arguments can be passed flexibly to the chosen
-subfunction.
+(`"CGC"`, `"MAC2"`, `"MIXC"`) and returns both results and a `ggplot` object.
+Additional arguments can be passed flexibly to the chosen subfunction.
 }
 \details{
 The function internally calls one of the following subfunctions:
 \itemize{
   \item \code{CGC(preds, y, cluster, plot, ...)}
-  \item \code{MAC2(preds, y, cluster, plot, grid_length, ...)}
-  \item \code{MIXC(preds, y, cluster, plot, CI, grid_length, ...)}
+  \item \code{MAC2(preds, y, cluster, plot, grid, ...)}
+  \item \code{MIXC(preds, y, cluster, plot, CI, grid, ...)}
 }
 
 Extra arguments supplied via \code{...} are passed directly to these
@@ -90,23 +92,24 @@ of available arguments for each subfunction, refer to their respective
 documentation.
 }
 \examples{
-\dontrun{
-# Example with simulated data
-set.seed(123)
-dat <- data.frame(
-  p = runif(200),
-  y = rbinom(200, 1, 0.5),
-  cluster = rep(1:20, each = 10)
-)
+library(lme4)
+data("clustertraindata")
+data("clustertestdata")
+mFit           = glmer(y ~ x1 + x2 + x3 + x5 + (1 | cluster), data = clustertraindata, family = "binomial")
+preds          = predict(mFit, clustertestdata, type = "response", re.form = NA)
+y              = clustertestdata$y
+cluster        = clustertestdata$cluster
+valClusterData = data.frame(y = y, preds = preds, center = cluster)
 
-# Run mixed-effects calibration with plotting
-res <- valProbCluster(
-  data = dat, p = p, y = y, cluster = cluster,
-  approach = "MIXC", pl = TRUE
+# Assess calibration performance
+Results  = valProbCluster(
+p = valClusterData$preds, y = valClusterData$y, cluster = valClusterData$center,
+plot = TRUE,
+approach = "MIXC", method = "slope", grid_l = 100
 )
+Results
 
-# Access ggplot
-res$ggplot
 }
-
+\seealso{
+\code{\link{CGC}}, \code{\link{MAC2}} and \code{\link{MIXC}}
 }
