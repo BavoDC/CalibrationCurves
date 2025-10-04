@@ -190,7 +190,7 @@ MIXC <- function(data = NULL,
     PI <- suppressWarnings(predictInterval(
       merMod  = fit_model,
       newdata = avg_cal_data,
-      level   = 0.95,
+      level   = cl.level,
       n.sims  = nsims_pi,
       stat    = "median",
       type    = "probability",
