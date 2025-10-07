@@ -9,6 +9,7 @@ CGC(
   preds,
   y,
   cluster,
+  cl.level = 0.95,
   ntiles = 10,
   cluster_curves = FALSE,
   plot = TRUE,
@@ -28,6 +29,8 @@ Default is `NULL`.}
 \item{y}{A numeric vector of observed outcomes, or a column in `data`.}
 
 \item{cluster}{A factor/character vector of cluster identifiers, or a column in `data`.}
+
+\item{cl.level}{the confidence level for the calculation of the confidence interval. Default is \code{0.95}.}
 
 \item{ntiles}{Integer; number of groups (tiles) for calibration. Default is `10`.}
 

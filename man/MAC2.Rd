@@ -10,12 +10,14 @@ MAC2(
   y,
   cluster,
   grid,
-  methods = c("log", "loess", "splines", "kde"),
+  methods = c("log", "loess", "splines"),
+  cl.level = 0.95,
+  alpha.lr = 0.05/3,
   plot = TRUE,
   cluster_curves = FALSE,
   knots = 3,
   transf = "logit",
-  method_choice = "splines",
+  method_choice = c("splines", "log", "loess"),
   method.tau = "REML",
   prediction = TRUE,
   random = TRUE,
@@ -40,7 +42,12 @@ Default is `NULL`.}
 \item{grid}{the grid for the calibration curve evaluation}
 
 \item{methods}{Character vector; methods to use for calibration. Options are:
-`"log"` (logistic regression), `"loess"`, `"splines"`, and `"kde"` (kernel density estimation).}
+`"log"` (logistic regression), `"loess"` and `"splines"`.}
+
+\item{cl.level}{the confidence level for the calculation of the confidence interval. Default is \code{0.95}.}
+
+\item{alpha.lr}{the alpha-level used for the likelihood ratio test, selecting the number of knots for the
+restricted cubic splines}
 
 \item{plot}{Logical; whether to plot the calibration curves. Default is `TRUE`.}
 
@@ -51,7 +58,7 @@ Default is `NULL`.}
 \item{transf}{Character; transformation for predictions: `"logit"` or `"identity"`. Default is `"logit"`.}
 
 \item{method_choice}{Character; which method to use for meta-analysis. Options are:
-`"log"`, `"loess"`, `"splines"`, or `"kde"`. Default is `"splines"`.}
+`"log"`, `"loess"` or `"splines"`. Default is `"splines"`.}
 
 \item{method.tau}{Character; method for between-study heterogeneity estimation. Default is `"REML"`.}
 

@@ -95,7 +95,8 @@ documentation.
 library(lme4)
 data("clustertraindata")
 data("clustertestdata")
-mFit           = glmer(y ~ x1 + x2 + x3 + x5 + (1 | cluster), data = clustertraindata, family = "binomial")
+mFit = glmer(y ~ x1 + x2 + x3 + x5 + (1 | cluster),
+             data = clustertraindata, family = "binomial")
 preds          = predict(mFit, clustertestdata, type = "response", re.form = NA)
 y              = clustertestdata$y
 cluster        = clustertestdata$cluster

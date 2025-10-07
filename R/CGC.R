@@ -151,11 +151,18 @@ CGC <- function(data = NULL,
         method = "Inverse", backtransf = TRUE
       )
       data_meta_curve <- data.frame(
-        te_x = x_meta$TE.random, ci_up_x = x_meta$upper.random, ci_low_x = x_meta$lower.random,
-        pre_up_x = x_meta$upper.predict, pre_low_x = x_meta$lower.predict,
-        te_y = y_meta$TE.random, ci_up_y = y_meta$upper.random, ci_low_y = y_meta$lower.random,
-        pre_up_y = y_meta$upper.predict, pre_low_y = y_meta$lower.predict,
-        decile_group = i, ntile_plot = sum(data_meta$ntile_150)
+        te_x = x_meta$TE.random,
+        ci_up_x = x_meta$upper.random,
+        ci_low_x = x_meta$lower.random,
+        pre_up_x = x_meta$upper.predict,
+        pre_low_x = x_meta$lower.predict,
+        te_y = y_meta$TE.random,
+        ci_up_y = y_meta$upper.random,
+        ci_low_y = y_meta$lower.random,
+        pre_up_y = y_meta$upper.predict,
+        pre_low_y = y_meta$lower.predict,
+        decile_group = i,
+        ntile_plot = sum(data_meta$ntile_150)
       )
     } else {
       preds_escalc <- escalc(
@@ -186,11 +193,18 @@ CGC <- function(data = NULL,
       pred_low <- res$b - qt(0.975, df = nrow(y_escalc) - 2) * sqrt(res$tau2 + res$se^2)
 
       data_meta_curve <- data.frame(
-        te_x = res$b[1], ci_up_x = res$ci.ub[1], ci_low_x = res$ci.lb[1],
-        pre_up_x = pred_up[1], pre_low_x = pred_low[1],
-        te_y = res$b[2], ci_up_y = res$ci.ub[2], ci_low_y = res$ci.lb[2],
-        pre_up_y = pred_up[2], pre_low_y = pred_low[2],
-        decile_group = i, ntile_plot = sum(data_meta$ntile_150)
+        te_x = res$b[1],
+        ci_up_x = res$ci.ub[1],
+        ci_low_x = res$ci.lb[1],
+        pre_up_x = pred_up[1],
+        pre_low_x = pred_low[1],
+        te_y = res$b[2],
+        ci_up_y = res$ci.ub[2],
+        ci_low_y = res$ci.lb[2],
+        pre_up_y = pred_up[2],
+        pre_low_y = pred_low[2],
+        decile_group = i,
+        ntile_plot = sum(data_meta$ntile_150)
       )
     }
 

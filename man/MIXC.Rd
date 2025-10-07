@@ -15,7 +15,8 @@ MIXC(
   cluster_curves = FALSE,
   nsims_pi = 10000,
   CI = TRUE,
-  CI_method = ""
+  CI_method = c("naive", "delta"),
+  cl.level = 0.95
 )
 }
 \arguments{
@@ -29,6 +30,8 @@ Default is `NULL`.}
 
 \item{cluster}{A factor or character vector of cluster identifiers.}
 
+\item{grid}{the grid for the calibration curve evaluation}
+
 \item{method}{Character; type of mixed-effects model: `"intercept"` (random intercept)
 or `"slope"` (random slope). Default is `"slope"`.}
 
@@ -41,10 +44,9 @@ Default is `FALSE`.}
 
 \item{CI}{Logical; whether to calculate confidence intervals. Default is `TRUE`.}
 
-\item{CI_method}{Character; method for confidence intervals: `"delta"` or empty string.
-Default is `""`.}
+\item{CI_method}{Character; method for confidence intervals: `"delta"` or \code{"naive"}. Default is `"naive"`.}
 
-\item{grid_length}{Integer; number of points for the prediction grid. Default is `100`.}
+\item{cl.level}{the confidence level for the calculation of the confidence interval. Default is \code{0.95}.}
 }
 \value{
 A list containing:

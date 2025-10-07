@@ -10,7 +10,7 @@
 #' @param preds A numeric vector of predicted probabilities.
 #' @param y A numeric vector of binary outcomes (0 or 1).
 #' @param cluster A factor or character vector of cluster identifiers.
-#' @param grid_length Integer; number of points for the prediction grid. Default is `100`.
+#' @param grid the grid for the calibration curve evaluation
 #' @param method Character; type of mixed-effects model: `"intercept"` (random intercept)
 #'   or `"slope"` (random slope). Default is `"slope"`.
 #' @param plot Logical; whether to generate a calibration plot. Default is `TRUE`.
@@ -116,8 +116,8 @@ MIXC <- function(data = NULL,
   cluster_cal_data <- data.frame()
 
   for (i in seq_len(nrow(cluster_ranges))) {
-    current_cluster <- cluster_ranges$cluster[i]
-    cluster_logit_preds <- Logit(grid)
+    current_cluster     = cluster_ranges$cluster[i]
+    cluster_logit_preds = Logit(grid)
 
     temp_data <- data.frame(
       cluster = current_cluster,
@@ -187,6 +187,13 @@ MIXC <- function(data = NULL,
     avg_cal_data$cluster <- "average"
 
     # --- Prediction intervals ---
+    # Here, we suppress the following warnings:
+    # Warning messages:
+    #   1:      The following levels of cluster from newdata
+    # -- average -- are not in the model data.
+    # Currently, predictions for these values are based only on the
+    # fixed coefficients and the observation-level error.
+    # 2: executing %dopar% sequentially: no parallel backend registered
     PI <- suppressWarnings(predictInterval(
       merMod  = fit_model,
       newdata = avg_cal_data,
@@ -246,7 +253,7 @@ MIXC <- function(data = NULL,
     cluster_subset <- df %>% filter(cluster == current_cluster)
 
     temp_patient_data <- data.frame(
-      cluster = cluster_subset$cluster,
+      cluster     = cluster_subset$cluster,
       logit_preds = cluster_subset$logit_preds
     )
 
