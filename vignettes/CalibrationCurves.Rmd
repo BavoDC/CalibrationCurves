@@ -441,7 +441,7 @@ res_cgcg <- valProbCluster(
   p = preds, y = y, cluster = center, pl = TRUE,
   approach = "CGC", method = "grouped"
 )
-res_cgcg
+res_cgcg$ggPlot
 ```
 
 You can employ the CG-C (Interval) using the following code. This follows the same steps as the Grouped method, except for Step 1 where it uses equally spaced probability intervals instead of quantiles.
@@ -452,7 +452,7 @@ res_cgci <- valProbCluster(
   p = preds, y = y, cluster = center, pl = TRUE,
   approach = "CGC", method = "interval"
 )
-res_cgci
+res_cgci$ggPlot
 ```
 
 
@@ -546,11 +546,11 @@ res_mac2_spl$ggPlot
 res_mac2_loess <- valProbCluster(
   data = valClusterData,
   p = preds, y = y, cluster = center, pl = T,
-  approach = "MAC2", grid_l = 20,
+  approach = "MAC2", grid_l = 100,
   method_choice = "loess", 
   methods = "loess"
 )
-res_mac2_loess
+res_mac2_loess$ggPlot
 ```
 
 We interpret the plot as follows:
@@ -615,7 +615,7 @@ res_mixc_slo <- valProbCluster(
   pl = TRUE,
   approach = "MIXC", method = "slope", grid_l = 100
 )
-res_mixc_slo
+res_mixc_slo$ggPlot
 ```
 
 We interpret the plot as follows:
