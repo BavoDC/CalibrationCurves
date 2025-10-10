@@ -1,7 +1,7 @@
 #' Internal function for the Meta-Analytical Calibration Curve (MAC2)
 #'
 #' Computes meta-analytical calibration curves using multiple methods (logistic regression,
-#' loess, splines, or kernel density estimation) and performs meta-analysis across clusters
+#' loess or splines) and performs meta-analysis across clusters
 #' to generate aggregated calibration curves with confidence and prediction intervals.
 #'
 #' @param data Optional data frame containing the columns for `preds`, `y`, and `cluster`.
@@ -11,8 +11,6 @@
 #' @param y A numeric vector of binary outcomes (0 or 1).
 #' @param cluster A factor or character vector identifying cluster memberships.
 #' @param grid the grid for the calibration curve evaluation
-#' @param methods Character vector; methods to use for calibration. Options are:
-#'   `"log"` (logistic regression), `"loess"` and `"splines"`.
 #' @param plot Logical; whether to plot the calibration curves. Default is `TRUE`.
 #' @param cluster_curves Logical; whether to include cluster-specific curves in the plot. Default is `FALSE`.
 #' @param knots Integer; number of knots for splines. Default is `3`.
@@ -20,21 +18,28 @@
 #' @param method_choice Character; which method to use for meta-analysis. Options are:
 #'   `"log"`, `"loess"` or `"splines"`. Default is `"splines"`.
 #' @param method.tau Character; method for between-study heterogeneity estimation. Default is `"REML"`.
+#' This argument is passed to the  \code{\link[meta]{metagen}} function.
 #' @param prediction Logical; whether to compute prediction intervals. Default is `TRUE`.
+#' This argument is passed to the  \code{prediction} argument of the \code{\link[meta]{metagen}} function.
 #' @param random Logical; whether to use random-effects model. Default is `TRUE`.
+#' This argument is passed to the  \code{random} argument of the \code{\link[meta]{metagen}} function.
 #' @param sm Character; summary measure for meta-analysis. Default is `"PLOGIT"`.
+#' This argument is passed to the  \code{sm} argument of the \code{\link[meta]{metagen}} function.
 #' @param hakn Logical; whether to use Hartung-Knapp adjustment. Default is `FALSE`.
+#' This argument is passed to the  \code{method.random.ci} argument of the \code{\link[meta]{metagen}} function.
 #' @param linewidth Numeric; line width for the meta-curve. Default is `1`.
 #' @param method.predict Character; method for prediction intervals. Default is `"HTS"`.
+#' This argument is passed to the  \code{method.predict} argument of the \code{\link[meta]{metagen}} function.
 #' @param verbose logical, indicates whether progress has to be printed in the console.
 #' @param cl.level the confidence level for the calculation of the confidence interval. Default is \code{0.95}.
 #' @param alpha.lr the alpha-level used for the likelihood ratio test, selecting the number of knots for the
 #' restricted cubic splines
 #'
 #' @details
-#' This function calculates calibration curves for multiple methods and aggregates them
-#' using meta-analysis. The `method_choice` argument determines which method is used
-#' for the meta-analytical aggregation.
+#' This function estimates the center-specific calibration curves using logistic regression,
+#' loess or splines. Hereafter, it aggregates the calibration curves using meta-analytical techniques.
+#' The meta-analysis is performed using the function \code{\link[meta]{metagen}} from the \code{\link[meta]{meta}}
+#' package. The `method_choice` argument determines which method is for the meta-analytical aggregation.
 #'
 #' @return A list containing:
 #' \describe{
@@ -49,7 +54,6 @@ MAC2 <- function(data = NULL,
                  y,
                  cluster,
                  grid,
-                 methods = c("log", "loess", "splines"),
                  cl.level = 0.95,
                  alpha.lr = 0.05 / 3,
                  plot = TRUE,
@@ -68,6 +72,11 @@ MAC2 <- function(data = NULL,
   # --- Extract from data if provided ---
   callFn        = match.call()
   method_choice = match.arg(method_choice)
+
+  if(knots < 3) {
+    warning("Number of knots cannot be lower than 3. Will be set to 3.", immediate. = TRUE)
+    knots = 3
+  }
 
   if (!is.null(data)) {
     if(!all(sapply(c("preds", "y", "cluster"), function(a) as.character(callFn[a])) %in% colnames(data)))
@@ -103,131 +112,125 @@ MAC2 <- function(data = NULL,
     risk_cluster$transf_preds <- transform_function(risk_cluster$predictions)
 
     # --- Logistic regression method ---
-    if ("log" %in% methods) {
-      log_model <- lrm(data = risk_cluster, outcome ~ transf_preds)
-      log_data <- predict(log_model,
-        newdata = data.frame(transf_preds = transform_function(grid)),
-        type = "lp",
-        se.fit = TRUE
-      )
-      log_data <- data.frame(
-        log = log_data$linear.predictors,
-        log_se = log_data$se.fit
-      )
-      observed_grid <- cbind(observed_grid, log_data)
-    }
+    log_model <- lrm(data = risk_cluster, outcome ~ transf_preds)
+    log_data <- predict(log_model,
+      newdata = data.frame(transf_preds = transform_function(grid)),
+      type = "lp",
+      se.fit = TRUE
+    )
+    log_data <- data.frame(
+      log = log_data$linear.predictors,
+      log_se = log_data$se.fit
+    )
+    observed_grid <- cbind(observed_grid, log_data)
 
     # --- Loess method ---
-    if ("loess" %in% methods) {
-      tryCatch(
-        {
-          loess_model <- loess.as(
-            x = risk_cluster$transf_preds,
-            y = risk_cluster$outcome,
-            degree = 2,
-            criterion = "aicc",
-            plot = FALSE,
-            control = loess.control(surface = "direct")
-          )
+    tryCatch(
+      {
+        loess_model <- loess.as(
+          x = risk_cluster$transf_preds,
+          y = risk_cluster$outcome,
+          degree = 2,
+          criterion = "aicc",
+          plot = FALSE,
+          control = loess.control(surface = "direct")
+        )
 
-          loess_data <- predict(loess_model,
-            newdata = data.frame(x = transform_function(grid)),
-            se = TRUE
-          )
-
+        loess_data <- predict(loess_model,
+          newdata = data.frame(x = transform_function(grid)),
+          se = TRUE
+        )
 
 
-          # Handle NA values in loess predictions
-          # To-do: why do these result in NA?!
-          if (any(is.na(loess_data$fit)) || any(is.na(loess_data$se.fit))) {
-            loess_data$fit    = na.approx(loess_data$fit, rule = 2)
-            loess_data$se.fit = na.approx(loess_data$se.fit, rule = 2)
-          }
-          loess_data$fit <- ifelse(loess_data$fit >= 1, 1 - 1e-6, loess_data$fit)
-          loess_data$fit <- ifelse(loess_data$fit <= 0, 1e-6, loess_data$fit)
-          loess_data <- data.frame(
-            loess = transform_function(loess_data$fit),
-            loess_se = abs(loess_data$se.fit / (loess_data$fit * (1 - loess_data$fit)))
-          )
-          observed_grid <- cbind(observed_grid, loess_data)
-        },
-        error = function(e) {
-          message("Fitting loess resulted in the following error message: ", e$message)
+
+        # Handle NA values in loess predictions
+        # To-do: why do these result in NA?!
+        if (any(is.na(loess_data$fit)) || any(is.na(loess_data$se.fit))) {
+          loess_data$fit    = na.approx(loess_data$fit, rule = 2)
+          loess_data$se.fit = na.approx(loess_data$se.fit, rule = 2)
         }
-      )
-    }
+        loess_data$fit <- ifelse(loess_data$fit >= 1, 1 - 1e-6, loess_data$fit)
+        loess_data$fit <- ifelse(loess_data$fit <= 0, 1e-6, loess_data$fit)
+        loess_data <- data.frame(
+          loess = transform_function(loess_data$fit),
+          loess_se = abs(loess_data$se.fit / (loess_data$fit * (1 - loess_data$fit)))
+        )
+        observed_grid <- cbind(observed_grid, loess_data)
+      },
+      error = function(e) {
+        message("Fitting loess resulted in the following error message: ", e$message)
+      }
+    )
 
     # --- Splines method ---
-    if ("splines" %in% methods) {
-      nkDecrease <- function(Argz) {
-        tryCatch(
-          do.call("lrm", Argz),
-          error = function(e) {
-            nk = Argz$formula[[3]][[3]]
-            warning(paste0("The number of knots led to estimation problems, nk will be set to ", nk - 1), immediate. = TRUE)
-            nk = nk - 1
-            cat(paste("fitting with", nk, "knots"))
-            Argz = list(
-              formula = eval(substitute(outcome ~ rcs(transf_preds, k), list(k = nk))),
-              data    = risk_cluster
-            )
-            nkDecrease(Argz)
-          },
-          warning = function(w) {
-            nk = Argz$formula[[3]][[3]]
-            warning(paste0("The number of knots led to estimation problems, nk will be set to ", nk - 1), immediate. = TRUE)
-            nk = nk - 1
-            cat(paste("fitting with", nk, "knots"))
-            Argz = list(
-              formula = eval(substitute(outcome ~ rcs(transf_preds, k), list(k = nk))),
-              data    = risk_cluster
-            )
-            nkDecrease(Argz)
-          })
+    nkDecrease <- function(Argz) {
+      tryCatch(
+        do.call("lrm", Argz),
+        error = function(e) {
+          nk = Argz$formula[[3]][[3]]
+          warning(paste0("The number of knots led to estimation problems, nk will be set to ", nk - 1), immediate. = TRUE)
+          nk = nk - 1
+          cat(paste("fitting with", nk, "knots"))
+          Argz = list(
+            formula = eval(substitute(outcome ~ rcs(transf_preds, k), list(k = nk))),
+            data    = risk_cluster
+          )
+          nkDecrease(Argz)
+        },
+        warning = function(w) {
+          nk = Argz$formula[[3]][[3]]
+          warning(paste0("The number of knots led to estimation problems, nk will be set to ", nk - 1), immediate. = TRUE)
+          nk = nk - 1
+          cat(paste("fitting with", nk, "knots"))
+          Argz = list(
+            formula = eval(substitute(outcome ~ rcs(transf_preds, k), list(k = nk))),
+            data    = risk_cluster
+          )
+          nkDecrease(Argz)
+        })
+    }
+    knots_sub   = knots
+    argzSplines = list(
+      formula = eval(substitute(outcome ~ rcs(transf_preds, k), list(k = knots_sub))),
+      data    = risk_cluster
+    )
+    splines_model = nkDecrease(argzSplines)
+    knots_sub     = splines_model$sformula[[3]][[3]]
+
+    if (knots_sub > 3) {
+      splines_model3 = lrm(data = risk_cluster, outcome ~ rcs(transf_preds, 3))
+      splines_model4 = lrm(data = risk_cluster, outcome ~ rcs(transf_preds, 4))
+      splines_model5 = lrm(data = risk_cluster, outcome ~ rcs(transf_preds, 5))
+      test3          = lrtest(splines_model3, splines_model)
+      test4          = lrtest(splines_model4, splines_model)
+      test5          = lrtest(splines_model5, splines_model)
+
+      if(test3$stats["P"] > alpha.lr) {
+        splines_model = splines_model3
+        knots_sub     = 3
+      } else if(test4$stats["P"] > alpha.lr) {
+        splines_model = splines_model4
+        knots_sub     = 4
+      } else if(test5$stats["P"] > alpha.lr) {
+        splines_model = splines_model5
+        knots_sub     = 5
       }
-      knots_sub   = knots
-      argzSplines = list(
-        formula = eval(substitute(outcome ~ rcs(transf_preds, k), list(k = knots_sub))),
-        data    = risk_cluster
-      )
-      splines_model = nkDecrease(argzSplines)
-      knots_sub     = splines_model$sformula[[3]][[3]]
+    }
 
-      if (knots_sub > 3) {
-        splines_model3 = lrm(data = risk_cluster, outcome ~ rcs(transf_preds, 3))
-        splines_model4 = lrm(data = risk_cluster, outcome ~ rcs(transf_preds, 4))
-        splines_model5 = lrm(data = risk_cluster, outcome ~ rcs(transf_preds, 5))
-        test3          = lrtest(splines_model3, splines_model)
-        test4          = lrtest(splines_model4, splines_model)
-        test5          = lrtest(splines_model5, splines_model)
+    splines_data <- predict(splines_model,
+      newdata = data.frame(transf_preds = transform_function(grid)),
+      type = "lp",
+      se.fit = TRUE
+    )
 
-        if(test3$stats["P"] > alpha.lr) {
-          splines_model = splines_model3
-          knots_sub     = 3
-        } else if(test4$stats["P"] > alpha.lr) {
-          splines_model = splines_model4
-          knots_sub     = 4
-        } else if(test5$stats["P"] > alpha.lr) {
-          splines_model = splines_model5
-          knots_sub     = 5
-        }
-      }
-
-      splines_data <- predict(splines_model,
-        newdata = data.frame(transf_preds = transform_function(grid)),
-        type = "lp",
-        se.fit = TRUE
-      )
-
-      splines_data <- data.frame(
-        splines    = splines_data$linear.predictors,
-        splines_se = splines_data$se.fit,
-        knots_used = knots_sub
-      )
-      observed_grid <- cbind(observed_grid, splines_data)
-      if (verbose) {
-        message("Spline model for cluster ", subcluster, " fitted with ", knots_sub, " knots.")
-      }
+    splines_data <- data.frame(
+      splines    = splines_data$linear.predictors,
+      splines_se = splines_data$se.fit,
+      knots_used = knots_sub
+    )
+    observed_grid <- cbind(observed_grid, splines_data)
+    if (verbose) {
+      message("Spline model for cluster ", subcluster, " fitted with ", knots_sub, " knots.")
     }
 
     # --- KDE method ---
@@ -259,7 +262,6 @@ MAC2 <- function(data = NULL,
       "loess"   = list(TE = data_v$loess, seTE = data_v$loess_se),
       "splines" = list(TE = data_v$splines, seTE = data_v$splines_se),
       # "kde" = list(TE = data_v$kde, seTE = NA),
-      stop("Invalid method choice: ", method_choice)
     )
 
     meta <- metagen(

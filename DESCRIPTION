@@ -16,7 +16,7 @@ Depends: R (>= 3.5.0), rms (>= 7.0-0), ggplot2
 Imports: grDevices, graphics, methods, stats, utils, survival, Hmisc, bookdown, rstudioapi, timeROC, riskRegression, meta, metafor,
          zoo, lme4, merTools, dplyr, magrittr
 Suggests: knitr, rmarkdown, mgcv, MASS, Matrix
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.3
 Encoding: UTF-8
 VignetteBuilder: knitr
 URL: https://bavodc.github.io/websiteCalibrationCurves/

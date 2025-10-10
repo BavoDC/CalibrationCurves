@@ -16,7 +16,7 @@ CGC(
   size = 1,
   linewidth = 0.4,
   univariate = FALSE,
-  method = "grouped"
+  method = c("grouped", "interval")
 )
 }
 \arguments{
@@ -45,8 +45,8 @@ curves in the plot. Default is `FALSE`.}
 
 \item{univariate}{Logical; whether to use univariate meta-analysis. Default is `FALSE`.}
 
-\item{method}{Character; grouping method: `"grouped"` (equal-sized groups) or
-`"interval"` (interval-based). Default is `"grouped"`.}
+\item{method}{Character; grouping method: \code{"grouped"} (equal-sized groups) or
+\code{"interval"} (interval-based). Default is \code{"grouped"}.}
 }
 \value{
 A list containing:
@@ -68,6 +68,8 @@ Optionally, a calibration plot can be produced with cluster-specific curves.
 - `"grouped"`: predictions are divided into equal-sized bins using quantiles.
 - `"interval"`: predictions are divided into fixed-width bins across [0, 1].
 
-The function performs meta-analysis within each group, with optional univariate
-analysis. Results are aggregated and plotted as calibration curves.
+The function performs a meta-analysis within each group. This can be either a univariate or bivariate analysis,
+which is specified in the \code{univariate} argument. The univariate analysis is performed using the
+\code{\link[meta]{metaprop}} function and the bivariate analysis employs the \code{\link[metafor]{rma.mv}} function.
+Hereafter, the results are aggregated and plotted as calibration curves.
 }

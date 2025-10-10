@@ -10,7 +10,6 @@ MAC2(
   y,
   cluster,
   grid,
-  methods = c("log", "loess", "splines"),
   cl.level = 0.95,
   alpha.lr = 0.05/3,
   plot = TRUE,
@@ -41,9 +40,6 @@ Default is `NULL`.}
 
 \item{grid}{the grid for the calibration curve evaluation}
 
-\item{methods}{Character vector; methods to use for calibration. Options are:
-`"log"` (logistic regression), `"loess"` and `"splines"`.}
-
 \item{cl.level}{the confidence level for the calculation of the confidence interval. Default is \code{0.95}.}
 
 \item{alpha.lr}{the alpha-level used for the likelihood ratio test, selecting the number of knots for the
@@ -60,19 +56,25 @@ restricted cubic splines}
 \item{method_choice}{Character; which method to use for meta-analysis. Options are:
 `"log"`, `"loess"` or `"splines"`. Default is `"splines"`.}
 
-\item{method.tau}{Character; method for between-study heterogeneity estimation. Default is `"REML"`.}
+\item{method.tau}{Character; method for between-study heterogeneity estimation. Default is `"REML"`.
+This argument is passed to the  \code{\link[meta]{metagen}} function.}
 
-\item{prediction}{Logical; whether to compute prediction intervals. Default is `TRUE`.}
+\item{prediction}{Logical; whether to compute prediction intervals. Default is `TRUE`.
+This argument is passed to the  \code{prediction} argument of the \code{\link[meta]{metagen}} function.}
 
-\item{random}{Logical; whether to use random-effects model. Default is `TRUE`.}
+\item{random}{Logical; whether to use random-effects model. Default is `TRUE`.
+This argument is passed to the  \code{random} argument of the \code{\link[meta]{metagen}} function.}
 
-\item{sm}{Character; summary measure for meta-analysis. Default is `"PLOGIT"`.}
+\item{sm}{Character; summary measure for meta-analysis. Default is `"PLOGIT"`.
+This argument is passed to the  \code{sm} argument of the \code{\link[meta]{metagen}} function.}
 
-\item{hakn}{Logical; whether to use Hartung-Knapp adjustment. Default is `FALSE`.}
+\item{hakn}{Logical; whether to use Hartung-Knapp adjustment. Default is `FALSE`.
+This argument is passed to the  \code{method.random.ci} argument of the \code{\link[meta]{metagen}} function.}
 
 \item{linewidth}{Numeric; line width for the meta-curve. Default is `1`.}
 
-\item{method.predict}{Character; method for prediction intervals. Default is `"HTS"`.}
+\item{method.predict}{Character; method for prediction intervals. Default is `"HTS"`.
+This argument is passed to the  \code{method.predict} argument of the \code{\link[meta]{metagen}} function.}
 
 \item{verbose}{logical, indicates whether progress has to be printed in the console.}
 }
@@ -86,11 +88,12 @@ A list containing:
 }
 \description{
 Computes meta-analytical calibration curves using multiple methods (logistic regression,
-loess, splines, or kernel density estimation) and performs meta-analysis across clusters
+loess or splines) and performs meta-analysis across clusters
 to generate aggregated calibration curves with confidence and prediction intervals.
 }
 \details{
-This function calculates calibration curves for multiple methods and aggregates them
-using meta-analysis. The `method_choice` argument determines which method is used
-for the meta-analytical aggregation.
+This function estimates the center-specific calibration curves using logistic regression,
+loess or splines. Hereafter, it aggregates the calibration curves using meta-analytical techniques.
+The meta-analysis is performed using the function \code{\link[meta]{metagen}} from the \code{\link[meta]{meta}}
+package. The `method_choice` argument determines which method is for the meta-analytical aggregation.
 }

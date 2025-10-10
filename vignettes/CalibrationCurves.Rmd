@@ -438,7 +438,7 @@ The following code gives an example of the CG-C (Grouped).
 ```{r CGC}
 res_cgcg <- valProbCluster(
   data = valClusterData,
-  p = preds, y = y, cluster = center, pl = TRUE,
+  p = preds, y = y, cluster = center,
   approach = "CGC", method = "grouped"
 )
 res_cgcg
@@ -449,7 +449,7 @@ You can employ the CG-C (Interval) using the following code. This follows the sa
 ```{r CGCinterval}
 res_cgci <- valProbCluster(
   data = valClusterData,
-  p = preds, y = y, cluster = center, pl = TRUE,
+  p = preds, y = y, cluster = center,
   approach = "CGC", method = "interval"
 )
 res_cgci
@@ -538,17 +538,17 @@ The code below shows how to estimate the calibration curves using the MAC2 metho
 ```{r MAC2, warning = FALSE}
 res_mac2_spl <- valProbCluster(
   data = valClusterData,
-  p = preds, y = y, cluster = center, pl = T,
-  approach = "MAC2", knots = 3, grid_l = 100,
-  method_choice = "splines", methods = "splines"
+  p = preds, y = y, cluster = center,
+  approach = "MAC2", knots = 3,
+  method_choice = "splines"
 )
-res_mac2_spl$ggPlot
+res_mac2_spl
 res_mac2_loess <- valProbCluster(
   data = valClusterData,
-  p = preds, y = y, cluster = center, pl = T,
-  approach = "MAC2", grid_l = 20,
-  method_choice = "loess", 
-  methods = "loess"
+  p = preds, y = y, cluster = center,
+  grid_l = 20,
+  approach = "MAC2",
+  method_choice = "loess"
 )
 res_mac2_loess
 ```
@@ -613,7 +613,7 @@ Using the code as shown below, we can estimate the calibration curve using the M
 res_mixc_slo <- valProbCluster(
   p = valClusterData$preds, y = valClusterData$y, cluster = valClusterData$center,
   pl = TRUE,
-  approach = "MIXC", method = "slope", grid_l = 100
+  approach = "MIXC", method = "slope"
 )
 res_mixc_slo
 ```
