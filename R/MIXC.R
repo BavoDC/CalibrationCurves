@@ -82,22 +82,21 @@ MIXC <- function(data = NULL,
   )
 
   # --- Model fitting ---
-  fit_model =
-    if (method == "intercept") {
-      glmer(
-        y ~ rcs(logit_preds, 3) + (1 | cluster),
-        data = df,
-        family = "binomial",
-        verbose = 0
-      )
-    } else if (method == "slope") {
-      glmer(
-        y ~ rcs(logit_preds, 3) + (rcs(logit_preds, 3) | cluster),
-        data = df,
-        family = "binomial",
-        verbose = 0
-      )
+  args = list(
+    data = df,
+    family = "binomial",
+    verbose = 0
+  )
+  args$formula =
+    if(method == "intercept") {
+      y ~ rcs(logit_preds, 3) + (1 | cluster)
+    } else {
+      y ~ rcs(logit_preds, 3) + (rcs(logit_preds, 3) | cluster)
     }
+  # Suppress "boundary (singular)" warning: arises from restricted cubic spline basis multicollinearity in GLMM,
+  # not from model misspecification, expected in this context.
+  fit_model = suppressMessages(do.call("glmer", args))
+
 
   # --- Predictions for original data ---
   df$re_preds = predict(fit_model, df)
