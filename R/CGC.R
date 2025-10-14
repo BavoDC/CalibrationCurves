@@ -18,16 +18,18 @@
 #' @param size Numeric; point size for plotted curves. Default is `1`.
 #' @param linewidth Numeric; line width for plotted curves. Default is `0.4`.
 #' @param univariate Logical; whether to use univariate meta-analysis. Default is `FALSE`.
-#' @param method Character; grouping method: `"grouped"` (equal-sized groups) or
-#'   `"interval"` (interval-based). Default is `"grouped"`.
+#' @param method Character; grouping method: \code{"grouped"} (equal-sized groups) or
+#'   \code{"interval"} (interval-based). Default is \code{"grouped"}.
 #' @param cl.level the confidence level for the calculation of the confidence interval. Default is \code{0.95}.
 #'
 #' @details
 #' - `"grouped"`: predictions are divided into equal-sized bins using quantiles.
 #' - `"interval"`: predictions are divided into fixed-width bins across [0, 1].
 #'
-#' The function performs meta-analysis within each group, with optional univariate
-#' analysis. Results are aggregated and plotted as calibration curves.
+#' The function performs a meta-analysis within each group. This can be either a univariate or bivariate analysis,
+#' which is specified in the \code{univariate} argument. The univariate analysis is performed using the
+#' \code{\link[meta]{metaprop}} function and the bivariate analysis employs the \code{\link[metafor]{rma.mv}} function.
+#' Hereafter, the results are aggregated and plotted as calibration curves.
 #'
 #' @return A list containing:
 #' \describe{
@@ -38,14 +40,6 @@
 #'   \item{plot}{A `ggplot2` object if `plot = TRUE`, otherwise `NULL`.}
 #' }
 #'
-#'
-#' @importFrom dplyr group_by summarise ungroup mutate ntile
-#' @importFrom meta metaprop
-#' @importFrom metafor escalc rma.mv
-#' @importFrom ggplot2 ggplot geom_ribbon geom_point geom_line xlab ylab theme_classic theme coord_cartesian scale_x_continuous scale_y_continuous scale_fill_manual scale_color_manual geom_abline geom_errorbar
-#' @importFrom ggnewscale new_scale_color
-#'
-#' @export
 CGC <- function(data = NULL,
                 preds,
                 y,
@@ -57,9 +51,12 @@ CGC <- function(data = NULL,
                 size = 1,
                 linewidth = 0.4,
                 univariate = FALSE,
-                method = "grouped") {
-  # --- Extract from data if provided ---
-  callFn   = match.call()
+                method = c("grouped", "interval")) {
+  # --- Arguments check ---
+  callFn = match.call()
+  method = match.arg(method)
+  alpha  = 1 - cl.level
+
   if (!is.null(data)) {
     if(!all(sapply(c("preds", "y", "cluster"), function(a) as.character(callFn[a])) %in% colnames(data)))
       stop(paste("Variables", paste0(
@@ -71,8 +68,14 @@ CGC <- function(data = NULL,
     cluster = eval(callFn$cluster, data)
   }
 
+  if(ntiles < 5) {
+    warning(sprintf("Number of groups is %s, which is too low. Will be set to 5", ntiles),
+            immediate. = TRUE)
+    ntiles = 5
+  }
+
   # --- Base dataframe ---
-  df <- data.frame(
+  df = data.frame(
     preds   = as.numeric(preds),
     y       = as.numeric(y),
     cluster = as.factor(cluster)
@@ -87,8 +90,6 @@ CGC <- function(data = NULL,
     df <- df %>%
       group_by(cluster) %>%
       mutate(decile_group = cut(preds, breaks = seq(0, 1, length.out = ntiles + 1)))
-  } else {
-    stop("Invalid 'method'. Must be 'grouped' or 'interval'.")
   }
 
   # --- Cluster-level summaries ---
@@ -97,6 +98,9 @@ CGC <- function(data = NULL,
     mutate(n_tile = n()) %>%
     ungroup() %>%
     mutate(N_tile = n())
+
+  if(min(deciles_cluster$n_tile) < 50)
+    warning("There is a group with less than 50 observations. Consider decreasing the number of groups.")
 
   decilesbycluster <- deciles_cluster %>%
     group_by(cluster, decile_group) %>%
@@ -189,8 +193,8 @@ CGC <- function(data = NULL,
         next
       }
 
-      pred_up <- res$b + qt(0.975, df = nrow(y_escalc) - 2) * sqrt(res$tau2 + res$se^2)
-      pred_low <- res$b - qt(0.975, df = nrow(y_escalc) - 2) * sqrt(res$tau2 + res$se^2)
+      pred_up  = res$b + qt(1 - alpha / 2, df = nrow(y_escalc) - 2) * sqrt(res$tau2 + res$se^2)
+      pred_low = res$b + qt(alpha / 2, df = nrow(y_escalc) - 2) * sqrt(res$tau2 + res$se^2)
 
       data_meta_curve <- data.frame(
         te_x = res$b[1],

@@ -9,14 +9,14 @@ Authors@R: c(person("De Cock", "Bavo", role = c("aut", "cre"),
 	      person("Van Calster", "Ben", role = "aut"),
 	      person("Steyerberg", "Ewout",role="aut"),
 	      person("Vergouwe", "Yvonne",role="aut"))
-Description: Plots calibration curves and computes statistics for assessing calibration performance. See De Cock Campo (2023) <doi:10.48550/arXiv.2309.08559> and Van Calster et al. (2016) <doi:10.1016/j.jclinepi.2015.12.005>.
+Description: Plots calibration curves and computes statistics for assessing calibration performance. See Lasai et al. (2025) <doi:10.48550/arXiv.2503.08389>, De Cock Campo (2023) <doi:10.48550/arXiv.2309.08559> and Van Calster et al. (2016) <doi:10.1016/j.jclinepi.2015.12.005>.
 License: GPL (>= 3)
 LazyData: TRUE
 Depends: R (>= 3.5.0), rms (>= 7.0-0), ggplot2
 Imports: grDevices, graphics, methods, stats, utils, survival, Hmisc, bookdown, rstudioapi, timeROC, riskRegression, meta, metafor,
          zoo, lme4, merTools, dplyr, magrittr
 Suggests: knitr, rmarkdown, mgcv, MASS, Matrix
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.3
 Encoding: UTF-8
 VignetteBuilder: knitr
 URL: https://bavodc.github.io/websiteCalibrationCurves/
