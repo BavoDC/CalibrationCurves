@@ -58,49 +58,51 @@ MIXC <- function(data = NULL,
                  CI_method = c("naive", "delta"),
                  cl.level = 0.95) {
   # --- Extract from data if provided ---
-  callFn    = match.call()
-  method    = match.arg(method)
-  CI_method = match.arg(CI_method)
+  callFn <- match.call()
+  method <- match.arg(method)
+  CI_method <- match.arg(CI_method)
 
   if (!is.null(data)) {
-    if(!all(sapply(c("preds", "y", "cluster"), function(a) as.character(callFn[a])) %in% colnames(data)))
+    if (!all(sapply(c("preds", "y", "cluster"), function(a) as.character(callFn[a])) %in% colnames(data))) {
       stop(paste("Variables", paste0(
-        callFn[c("preds", "y", "cluster")], collapse = ", "
+        callFn[c("preds", "y", "cluster")],
+        collapse = ", "
       ), "were not found in the data.frame."))
-    preds   = eval(callFn$preds, data)
-    logit   = Logit(preds)
-    y       = eval(callFn$y, data)
-    cluster = eval(callFn$cluster, data)
+    }
+    preds <- eval(callFn$preds, data)
+    logit <- Logit(preds)
+    y <- eval(callFn$y, data)
+    cluster <- eval(callFn$cluster, data)
   }
-  alpha = 1 - cl.level
+  alpha <- 1 - cl.level
 
   # --- Base dataframe ---
-  df = data.frame(
+  df <- data.frame(
     logit_preds = Logit(as.numeric(preds)),
     y           = as.factor(y),
     cluster     = as.factor(cluster)
   )
 
   # --- Model fitting ---
-  args = list(
+  args <- list(
     data = df,
     family = "binomial",
     verbose = 0
   )
-  args$formula =
-    if(method == "intercept") {
+  args$formula <-
+    if (method == "intercept") {
       y ~ rcs(logit_preds, 3) + (1 | cluster)
     } else {
       y ~ rcs(logit_preds, 3) + (rcs(logit_preds, 3) | cluster)
     }
   # Suppress "boundary (singular)" warning: arises from restricted cubic spline basis multicollinearity in GLMM,
   # not from model misspecification, expected in this context.
-  fit_model = suppressMessages(do.call("glmer", args))
+  fit_model <- suppressMessages(do.call("glmer", args))
 
 
   # --- Predictions for original data ---
-  df$re_preds = predict(fit_model, df)
-  df$obs_prob = Ilogit(df$re_preds)
+  df$re_preds <- predict(fit_model, df)
+  df$obs_prob <- Ilogit(df$re_preds)
 
   # --- Cluster range calculation ---
   cluster_ranges <- df %>%
@@ -115,8 +117,8 @@ MIXC <- function(data = NULL,
   cluster_cal_data <- data.frame()
 
   for (i in seq_len(nrow(cluster_ranges))) {
-    current_cluster     = cluster_ranges$cluster[i]
-    cluster_logit_preds = Logit(grid)
+    current_cluster <- cluster_ranges$cluster[i]
+    cluster_logit_preds <- Logit(grid)
 
     temp_data <- data.frame(
       cluster = current_cluster,
@@ -124,27 +126,27 @@ MIXC <- function(data = NULL,
       x = grid
     )
 
-    temp_data$p_obs_logit = predict(fit_model, newdata = temp_data)
-    temp_data$pred_prob   = Ilogit(temp_data$logit_preds)
-    temp_data$obs_prob    = Ilogit(temp_data$p_obs_logit)
+    temp_data$p_obs_logit <- predict(fit_model, newdata = temp_data)
+    temp_data$pred_prob <- Ilogit(temp_data$logit_preds)
+    temp_data$obs_prob <- Ilogit(temp_data$p_obs_logit)
 
-    cluster_cal_data = rbind(cluster_cal_data, temp_data)
+    cluster_cal_data <- rbind(cluster_cal_data, temp_data)
   }
 
   # --- Average calibration data ---
-  avg_logit_preds = Logit(grid)
-  avg_cal_data    = data.frame(logit_preds = avg_logit_preds)
+  avg_logit_preds <- Logit(grid)
+  avg_cal_data <- data.frame(logit_preds = avg_logit_preds)
 
-  avg_cal_data$p_obs_logit = eta = predict(fit_model, newdata = avg_cal_data, re.form = NA)
-  avg_cal_data$pred_prob   = Ilogit(avg_cal_data$logit_preds)
-  avg_cal_data$obs_prob    = Ilogit(avg_cal_data$p_obs_logit)
-  avg_cal_data$x           = grid
+  avg_cal_data$p_obs_logit <- eta <- predict(fit_model, newdata = avg_cal_data, re.form = NA)
+  avg_cal_data$pred_prob <- Ilogit(avg_cal_data$logit_preds)
+  avg_cal_data$obs_prob <- Ilogit(avg_cal_data$p_obs_logit)
+  avg_cal_data$x <- grid
 
   # --- Confidence intervals ---
   if (CI) {
     deltaCI <- function(eta, se, alpha) {
-      muHat = Ilogit(eta)
-      seMu  = binomial()$mu.eta(eta) * se
+      muHat <- Ilogit(eta)
+      seMu <- binomial()$mu.eta(eta) * se
       data.frame(
         eta     = eta,
         etaLCL  = eta + qnorm(alpha / 2) * se,
@@ -155,30 +157,32 @@ MIXC <- function(data = NULL,
       )
     }
 
-    Z = mm = model.matrix(~ rcs(logit_preds, 3), avg_cal_data)
+    Z <- mm <- model.matrix(~ rcs(logit_preds, 3), avg_cal_data)
     # pvar <- diag(mm %*% Matrix::tcrossprod(vcov(fit_model), mm))
-    V      = vcov(fit_model) # dense
-    pvar   = rowSums(as.array((mm %*% V) * mm))
-    D      = VarCorr(fit_model)$cluster
-    rvar   = rowSums((Z %*% D) * Z)
-    tvar   = pvar + rvar
+    V <- vcov(fit_model) # dense
+    pvar <- rowSums(as.array((mm %*% V) * mm))
+    D <- VarCorr(fit_model)$cluster
+    rvar <- rowSums((Z %*% D) * Z)
+    tvar <- pvar + rvar
     if (CI_method == "delta") {
-      deltaResults = deltaCI(eta, sqrt(tvar), alpha)
-      avg_cal_data = within(
-        avg_cal_data, {
-        p_lower_ci     = deltaResults$yHatLCL
-        p_upper_ci     = deltaResults$yHatUCL
-        logit_lower_ci = deltaResults$etaLCL
-        logit_upper_ci = deltaResults$etaUCL
+      deltaResults <- deltaCI(eta, sqrt(tvar), alpha)
+      avg_cal_data <- within(
+        avg_cal_data,
+        {
+          p_lower_ci <- deltaResults$yHatLCL
+          p_upper_ci <- deltaResults$yHatUCL
+          logit_lower_ci <- deltaResults$etaLCL
+          logit_upper_ci <- deltaResults$etaUCL
         }
       )
     } else {
-      avg_cal_data = within(
-        avg_cal_data, {
-          logit_lower_ci = p_obs_logit + qnorm(alpha / 2) * sqrt(tvar)
-          logit_upper_ci = p_obs_logit + qnorm(1 - alpha / 2) * sqrt(tvar)
-          p_lower_ci     = Ilogit(logit_lower_ci)
-          p_upper_ci     = Ilogit(logit_upper_ci)
+      avg_cal_data <- within(
+        avg_cal_data,
+        {
+          logit_lower_ci <- p_obs_logit + qnorm(alpha / 2) * sqrt(tvar)
+          logit_upper_ci <- p_obs_logit + qnorm(1 - alpha / 2) * sqrt(tvar)
+          p_lower_ci <- Ilogit(logit_lower_ci)
+          p_upper_ci <- Ilogit(logit_upper_ci)
         }
       )
     }
@@ -194,12 +198,12 @@ MIXC <- function(data = NULL,
     # fixed coefficients and the observation-level error.
     # 2: executing %dopar% sequentially: no parallel backend registered
     PI <- suppressWarnings(predictInterval(
-      merMod  = fit_model,
+      merMod = fit_model,
       newdata = avg_cal_data,
-      level   = cl.level,
-      n.sims  = nsims_pi,
-      stat    = "median",
-      type    = "probability",
+      level = cl.level,
+      n.sims = nsims_pi,
+      stat = "median",
+      type = "probability",
       include.resid.var = TRUE
     ))
 
@@ -239,8 +243,8 @@ MIXC <- function(data = NULL,
       plot_obj <- plot_obj +
         geom_line(
           data = cluster_cal_data,
-          aes(x = pred_prob, y = obs_prob, color = cluster),
-          linewidth = 0.2, linetype = "dotted", show.legend = FALSE
+          aes(x = pred_prob, y = obs_prob, group = cluster),
+          linewidth = 0.2, linetype = "solid", show.legend = FALSE
         )
     }
   }
