@@ -122,3 +122,33 @@ print.SurvivalCalibrationCurve <- function(x, ...) {
   print(x$stats$TimeDependentAUC)
   invisible(x)
 }
+
+
+#' Print function for a ClusteredCalibrationCurve object
+#'
+#' Prints the ggplot, call, confidence level and values for the performance measures.
+#'
+#' @param x an object of type ggplotCalibrationCurve, resulting from \code{\link{valProbggplot}}.
+#' @param ... arguments passed to \code{\link{print}}
+#'
+#' @seealso \code{\link{valProbggplot}}
+#' @return The original \code{ggplotCalibrationCurve} object is returned.
+print.ClusteredCalibrationCurve <- function(x, ...) {
+  print(x$ggPlot)
+  cat("Call:\n",
+      paste(deparse(x$call), sep = "\n", collapse = "\n"),
+      "\n\n", sep = "")
+  cat(
+    paste(
+      "A ",
+      x$cl.level * 100,
+      "% confidence interval is used. \n\n",
+      sep = ""
+    )
+  )
+  # print(x$stats, ...)
+  # if(!is.null(x$warningMessages))
+  #   for(w in x$warningMessages)
+  #     warning(paste0(w, "\n"), immediate. = TRUE)
+  # invisible(x)
+}

@@ -49,4 +49,19 @@ bibentry(bibtype = "Article",
     "arXiv: 2309.08559, available at https://arxiv.org/abs/2309.08559")
 )
 
-
+bibentry(bibtype = "Article",
+  title = "Clustered Flexible Calibration Plots For Binary Outcomes Using Random Effects Modeling",
+  author = c(
+  person(given = "Lasai", family = "Barreñada"),
+  person(given = "Bavo", family = "De Cock Campo"),
+  person(given = "Laure", family = "Wynants"),
+  person(given = "Ben", family = "Van Calster")
+  ),
+  journal = "arXiv",
+  year = "2025",
+  pages = "2503.08389",
+  url = "https://arxiv.org/abs/2503.08389",
+  textVersion = paste("Barreñada, L., De Cock Campo, B., Wynants, L., Van Calster, B. (2025).",
+  "Clustered Flexible Calibration Plots for Binary Outcomes Using Random Effects Modeling.",
+  "arXiv:2503.08389, available at https://arxiv.org/abs/2503.08389.")
+  )

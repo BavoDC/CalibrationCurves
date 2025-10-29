@@ -118,7 +118,7 @@
 
   df1 <- nk-2
   if(model == "logistic") {
-    b    <- rms::lrm.fit(cbind(x, xx, adj),  y)
+    b    <- lrm.fit(cbind(x, xx, adj),  y)
     beta <- b$coef
     cov  <- vcov(b)
     model.lr <- b$stats["Model L.R."]
