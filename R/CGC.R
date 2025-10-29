@@ -1,30 +1,31 @@
 #' Internal function for the Clustered Grouped Calibration Curve (CGC)
 #'
-#' Generates a flexible calibration curve using predicted values, observed outcomes,
-#' and clustering/grouping information. The function supports two grouping methods:
-#' equal-sized groups (`"grouped"`) or interval-based groups (`"interval"`).
+#' Estimates the calibration curves using the CGC approach. The function supports two grouping methods:
+#' equal-sized groups (\code{"grouped"}) or interval-based groups (\code{"interval"}).
 #' Optionally, a calibration plot can be produced with cluster-specific curves.
 #'
-#' @param data Optional data frame containing the columns for `preds`, `y`, and `cluster`.
-#'   If provided, `preds`, `y`, and `cluster` should be column names (unquoted).
-#'   Default is `NULL`.
-#' @param preds A numeric vector of predicted probabilities/values, or a column in `data`.
-#' @param y A numeric vector of observed outcomes, or a column in `data`.
-#' @param cluster A factor/character vector of cluster identifiers, or a column in `data`.
-#' @param ntiles Integer; number of groups (tiles) for calibration. Default is `10`.
-#' @param cluster_curves Logical; whether to include cluster-specific calibration
-#'   curves in the plot. Default is `FALSE`.
-#' @param plot Logical; whether to return a calibration plot. Default is `TRUE`.
-#' @param size Numeric; point size for plotted curves. Default is `1`.
-#' @param linewidth Numeric; line width for plotted curves. Default is `0.4`.
-#' @param univariate Logical; whether to use univariate meta-analysis. Default is `FALSE`.
-#' @param method Character; grouping method: \code{"grouped"} (equal-sized groups) or
+#' @param data optional data frame containing the variables \code{p}, \code{y},
+#'   and \code{cluster}. If supplied, variable names should be given without
+#'   quotation marks.
+#' @param p predicted probabilities (numeric vector) or name of the column in
+#'   \code{data}.
+#' @param y binary outcome variable or the name of the column in \code{data}.
+#' @param cluster cluster identifier (factor, character, or integer) or name of
+#'   the column in \code{data}.
+#' @param ntiles integer, number of groups (tiles) for calibration. Default is \code{10}.
+#' @param cluster_curves logical, whether to include cluster-specific calibration
+#'   curves in the plot. Default is \code{FALSE}.
+#' @param plot logical, whether to return a calibration plot. Default is \code{TRUE}.
+#' @param size numeric, point size for plotted curves. Default is \code{1}.
+#' @param linewidth numeric, line width for plotted curves. Default is \code{0.4}.
+#' @param univariate logical, whether to use univariate meta-analysis. Default is \code{FALSE}.
+#' @param method character, grouping method: \code{"grouped"} (equal-sized groups) or
 #'   \code{"interval"} (interval-based). Default is \code{"grouped"}.
 #' @param cl.level the confidence level for the calculation of the confidence interval. Default is \code{0.95}.
 #'
 #' @details
-#' - `"grouped"`: predictions are divided into equal-sized bins using quantiles.
-#' - `"interval"`: predictions are divided into fixed-width bins across [0, 1].
+#' When \code{method = "grouped"}, the predictions are divided into equal-sized bins using quantiles.
+#' Conversely, if \code{method ="interval"}, the predictions are divided into fixed-width bins across [0, 1].
 #'
 #' The function performs a meta-analysis within each group. This can be either a univariate or bivariate analysis,
 #' which is specified in the \code{univariate} argument. The univariate analysis is performed using the
@@ -33,15 +34,15 @@
 #'
 #' @return A list containing:
 #' \describe{
-#'   \item{plot_data}{Data frame of meta-analysis calibration estimates.}
-#'   \item{trad_grouped}{Data frame with traditional grouped calibration results.}
-#'   \item{observed_data}{Data frame with per-observation calibration data.}
-#'   \item{cluster_data}{Data frame with cluster-specific calibration summaries.}
-#'   \item{plot}{A `ggplot2` object if `plot = TRUE`, otherwise `NULL`.}
+#'   \item{\code{plot_data}}{Data frame of meta-analysis calibration estimates.}
+#'   \item{\code{trad_grouped}}{Data frame with traditional grouped calibration results.}
+#'   \item{\code{observed_data}}{Data frame with per-observation calibration data.}
+#'   \item{\code{cluster_data}}{Data frame with cluster-specific calibration summaries.}
+#'   \item{\code{plot}}{A \code{ggplot2} object if \code{plot = TRUE}, otherwise \code{NULL}.}
 #' }
 #'
 CGC <- function(data = NULL,
-                preds,
+                p,
                 y,
                 cluster,
                 cl.level = 0.95,
@@ -58,12 +59,12 @@ CGC <- function(data = NULL,
   alpha  = 1 - cl.level
 
   if (!is.null(data)) {
-    if(!all(sapply(c("preds", "y", "cluster"), function(a) as.character(callFn[a])) %in% colnames(data)))
+    if(!all(sapply(c("p", "y", "cluster"), function(a) as.character(callFn[a])) %in% colnames(data)))
       stop(paste("Variables", paste0(
-        callFn[c("preds", "y", "cluster")], collapse = ", "
+        callFn[c("p", "y", "cluster")], collapse = ", "
       ), "were not found in the data.frame."))
-    preds   = eval(callFn$preds, data)
-    logit   = Logit(preds)
+    p   = eval(callFn$p, data)
+    logit   = Logit(p)
     y       = eval(callFn$y, data)
     cluster = eval(callFn$cluster, data)
   }
@@ -76,7 +77,7 @@ CGC <- function(data = NULL,
 
   # --- Base dataframe ---
   df = data.frame(
-    preds   = as.numeric(preds),
+    p       = as.numeric(p),
     y       = as.numeric(y),
     cluster = as.factor(cluster)
   )
@@ -85,11 +86,11 @@ CGC <- function(data = NULL,
   if (method == "grouped") {
     df <- df %>%
       group_by(cluster) %>%
-      mutate(decile_group = ntile(preds, ntiles))
+      mutate(decile_group = ntile(p, ntiles))
   } else if (method == "interval") {
     df <- df %>%
       group_by(cluster) %>%
-      mutate(decile_group = cut(preds, breaks = seq(0, 1, length.out = ntiles + 1)))
+      mutate(decile_group = cut(p, breaks = seq(0, 1, length.out = ntiles + 1)))
   }
 
   # --- Cluster-level summaries ---
@@ -107,21 +108,21 @@ CGC <- function(data = NULL,
     summarise(
       n_tile = n(),
       y_mean = mean(y),
-      x_mean = mean(preds),
+      x_mean = mean(p),
       .groups = "drop"
     )
 
   # --- Traditional grouped calibration ---
   deciles_all <- df %>%
     ungroup() %>%
-    mutate(decile_group = if (method == "grouped") ntile(preds, ntiles) else cut(preds, breaks = seq(0, 1, length.out = ntiles + 1))) %>%
+    mutate(decile_group = if (method == "grouped") ntile(p, ntiles) else cut(p, breaks = seq(0, 1, length.out = ntiles + 1))) %>%
     group_by(decile_group) %>%
     summarise(
       std_error_y = sd(y) / sqrt(length(y)),
-      std_error_x = sd(preds) / sqrt(length(preds)),
-      var_x = var(preds),
+      std_error_x = sd(p) / sqrt(length(p)),
+      var_x = var(p),
       var_y = var(y),
-      preds = mean(preds),
+      p = mean(p),
       y = mean(y),
       .groups = "drop"
     )
@@ -130,9 +131,9 @@ CGC <- function(data = NULL,
   var_150_cluster_decile <- deciles_cluster %>%
     group_by(cluster, decile_group) %>%
     summarise(
-      var_x_cluster_tile = var(preds),
+      var_x_cluster_tile = var(p),
       var_y_cluster_tile = var(y),
-      preds_150 = mean(preds),
+      preds_150 = mean(p),
       y_150 = mean(y),
       ntile_150 = n(),
       .groups = "drop"
@@ -173,7 +174,7 @@ CGC <- function(data = NULL,
         measure = "PLO", xi = preds_150 * ntile_150,
         ni = ntile_150, data = data_meta
       )
-      preds_escalc$group <- "preds"
+      preds_escalc$group <- "p"
       y_escalc <- escalc(
         measure = "PLO", xi = y_150 * ntile_150,
         ni = ntile_150, data = data_meta
@@ -228,8 +229,8 @@ CGC <- function(data = NULL,
         alpha = 0.2, width = 0, lwd = linewidth, lty = "dashed"
       ) +
       scale_fill_manual(name = "Heterogeneity", values = c("cornflowerblue", "lightblue")) +
-      geom_point(data = deciles_all, aes(x = preds, y = y, color = "Traditional grouped"), size = size) +
-      geom_line(data = deciles_all, aes(x = preds, y = y, color = "Traditional grouped"), linewidth = linewidth) +
+      geom_point(data = deciles_all, aes(x = p, y = y, color = "Traditional grouped"), size = size) +
+      geom_line(data = deciles_all, aes(x = p, y = y, color = "Traditional grouped"), linewidth = linewidth) +
       geom_point(data = data_all, aes(color = paste0("CGC-C(", method, ")")), size = size * 1.3) +
       geom_line(data = data_all, aes(color = paste0("CGC-C(", method, ")")), linewidth = linewidth) +
       scale_color_manual(name = "Methodology", values = c("black", "gold")) +

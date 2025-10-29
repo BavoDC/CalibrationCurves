@@ -16,8 +16,7 @@ library("devtools")
 install_github("BavoDC/CalibrationCurves", dependencies = TRUE, build_vignettes = TRUE, ref = "master")
 ```
 
-This requires `devtools` >= 1.6.1, and installs the "master" branch. This approach builds the package from source, 
-i.e. `make` and compilers must be installed on your system -- see the R FAQ for your operating system.
+This requires `devtools` >= 1.6.1, and installs the "master" branch. This approach builds the package from source.
 
 ## Documentation
 The basic functionality of the package is explained and demonstrated in the vignette, which you can access using

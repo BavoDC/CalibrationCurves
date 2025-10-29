@@ -4,31 +4,33 @@
 #' loess or splines) and performs meta-analysis across clusters
 #' to generate aggregated calibration curves with confidence and prediction intervals.
 #'
-#' @param data Optional data frame containing the columns for `preds`, `y`, and `cluster`.
-#'   If provided, `preds`, `y`, and `cluster` should be column names (unquoted).
-#'   Default is `NULL`.
-#' @param preds A numeric vector of predicted probabilities.
-#' @param y A numeric vector of binary outcomes (0 or 1).
-#' @param cluster A factor or character vector identifying cluster memberships.
+#' @param data optional data frame containing the variables \code{p}, \code{y},
+#'   and \code{cluster}. If supplied, variable names should be given without
+#'   quotation marks.
+#' @param p predicted probabilities (numeric vector) or name of the column in
+#'   \code{data}.
+#' @param y binary outcome variable or the name of the column in \code{data}.
+#' @param cluster Cluster identifier (factor, character, or integer) or name of
+#'   the column in \code{data}.
 #' @param grid the grid for the calibration curve evaluation
-#' @param plot Logical; whether to plot the calibration curves. Default is `TRUE`.
-#' @param cluster_curves Logical; whether to include cluster-specific curves in the plot. Default is `FALSE`.
-#' @param knots Integer; number of knots for splines. Default is `3`.
-#' @param transf Character; transformation for predictions: `"logit"` or `"identity"`. Default is `"logit"`.
-#' @param method_choice Character; which method to use for meta-analysis. Options are:
-#'   `"log"`, `"loess"` or `"splines"`. Default is `"splines"`.
-#' @param method.tau Character; method for between-study heterogeneity estimation. Default is `"REML"`.
+#' @param plot logical, indicates whether to plot the calibration curves. Default is \code{TRUE}.
+#' @param cluster_curves logical, whether to include cluster-specific curves in the plot. Default is \code{FALSE}.
+#' @param knots integer, number of knots for splines. Default is \code{3}.
+#' @param transf character, transformation for predictions: \code{"logit"} or \code{"identity"}. Default is \code{"logit"}.
+#' @param method_choice character, which method to use for meta-analysis. Options are:
+#'   \code{"log"}, \code{"loess"} or \code{"splines"}. Default is \code{"splines"}.
+#' @param method.tau character, method for between-study heterogeneity estimation. Default is \code{"REML"}.
 #' This argument is passed to the  \code{\link[meta]{metagen}} function.
-#' @param prediction Logical; whether to compute prediction intervals. Default is `TRUE`.
+#' @param prediction logical, whether to compute prediction intervals. Default is \code{TRUE}.
 #' This argument is passed to the  \code{prediction} argument of the \code{\link[meta]{metagen}} function.
-#' @param random Logical; whether to use random-effects model. Default is `TRUE`.
+#' @param random logical, whether to use random-effects model. Default is \code{TRUE}.
 #' This argument is passed to the  \code{random} argument of the \code{\link[meta]{metagen}} function.
-#' @param sm Character; summary measure for meta-analysis. Default is `"PLOGIT"`.
+#' @param sm character, summary measure for meta-analysis. Default is \code{"PLOGIT"}.
 #' This argument is passed to the  \code{sm} argument of the \code{\link[meta]{metagen}} function.
-#' @param hakn Logical; whether to use Hartung-Knapp adjustment. Default is `FALSE`.
+#' @param hakn logical, whether to use Hartung-Knapp adjustment. Default is \code{FALSE}.
 #' This argument is passed to the  \code{method.random.ci} argument of the \code{\link[meta]{metagen}} function.
-#' @param linewidth Numeric; line width for the meta-curve. Default is `1`.
-#' @param method.predict Character; method for prediction intervals. Default is `"HTS"`.
+#' @param linewidth numeric, line width for the meta-curve. Default is \code{1}.
+#' @param method.predict character, method for prediction intervals. Default is \code{"HTS"}.
 #' This argument is passed to the  \code{method.predict} argument of the \code{\link[meta]{metagen}} function.
 #' @param verbose logical, indicates whether progress has to be printed in the console.
 #' @param cl.level the confidence level for the calculation of the confidence interval. Default is \code{0.95}.
@@ -39,18 +41,18 @@
 #' This function estimates the center-specific calibration curves using logistic regression,
 #' loess or splines. Hereafter, it aggregates the calibration curves using meta-analytical techniques.
 #' The meta-analysis is performed using the function \code{\link[meta]{metagen}} from the \code{\link[meta]{meta}}
-#' package. The `method_choice` argument determines which method is for the meta-analytical aggregation.
+#' package. The \code{method_choice} argument determines which method is for the meta-analytical aggregation.
 #'
 #' @return A list containing:
 #' \describe{
-#'   \item{cluster_data}{Data frame with linear predictors and standard errors for each method per cluster}
-#'   \item{plot_data}{Data frame with meta-analysis results including predictions and intervals}
-#'   \item{plot}{A `ggplot2` object if `plot = TRUE`, otherwise `NULL`}
+#'   \item{\code{cluster_data}}{Data frame with linear predictors and standard errors for each method per cluster}
+#'   \item{\code{plot_data}}{Data frame with meta-analysis results including predictions and intervals}
+#'   \item{\code{plot}}{A \code{ggplot2} object if \code{plot = TRUE}, otherwise \code{NULL}}
 #' }
 #'
 #'
 MAC2 <- function(data = NULL,
-                 preds,
+                 p,
                  y,
                  cluster,
                  grid,
@@ -79,19 +81,19 @@ MAC2 <- function(data = NULL,
   }
 
   if (!is.null(data)) {
-    if(!all(sapply(c("preds", "y", "cluster"), function(a) as.character(callFn[a])) %in% colnames(data)))
+    if(!all(sapply(c("p", "y", "cluster"), function(a) as.character(callFn[a])) %in% colnames(data)))
       stop(paste("Variables", paste0(
-        callFn[c("preds", "y", "cluster")], collapse = ", "
+        callFn[c("p", "y", "cluster")], collapse = ", "
       ), "were not found in the data.frame."))
-    preds   = eval(callFn$preds, data)
-    logit   = Logit(preds)
+    p       = eval(callFn$p, data)
+    logit   = Logit(p)
     y       = eval(callFn$y, data)
     cluster = eval(callFn$cluster, data)
   }
 
   # --- Base dataframe ---
   df <- data.frame(
-    predictions = as.numeric(preds),
+    predictions = as.numeric(p),
     outcome = as.numeric(y),
     cluster = as.factor(cluster)
   )
