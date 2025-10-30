@@ -22,6 +22,7 @@
 .Rproj
 *.Rproj
 .RDataTmp
+cran-comments.md
 
 # produced vignettes
 vignettes/*.html

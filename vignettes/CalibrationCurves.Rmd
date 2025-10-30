@@ -299,7 +299,7 @@ Next to the plot, you also get a range of statistics that assess the calibration
 calPerf
 ```
 
-# Assesing the calibration of prediction models in clustered datasets
+# Assessing the calibration of prediction models in clustered datasets
 In certain scenarios, we have hierarchically structured data. Here, we have heterogeneity between clusters and dependency among observations belonging to the same cluster. It is of utmost importance that this hierarchical structure is taken into account when assessing the calibration of a predictive model. A prime example of this hierarchical structure is when patients (level 1) are nested within hospitals (level 2). In these cases, the observations within the same cluster may be more similar to each other than to those belonging to different clusters.
 
 We assume that the validation data set has a total of $J$ clusters and use $j = (1, \dots, J)$ to index the clusters. In each cluster, we have $n_j$ patients and we index the patients using $i = (1, \dots, n_j)$. The total sample size is $N = \sum_{j = 1}^J n_j$. We use $y_{ij} \in (0,1)$ to denote the outcome of patient $i$ in cluster $j$, which takes on the value 0 in case of a non-event and 1 in case of an event. We assume that $y_{ij}$ follows a Bernouilli distribution $y_{ij} \sim \text{Bern}(\pi_{ij})$, where $\pi_{ij}$ denotes the probability of experiencing the event. Similar to before, we express $\pi_{ij}$ as a function of a set of risk characteristics
