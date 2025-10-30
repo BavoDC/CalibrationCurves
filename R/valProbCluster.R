@@ -55,6 +55,7 @@
 #' }
 #'
 #' @examples
+#' \donttest{
 #' library(lme4)
 #' data("clustertraindata")
 #' data("clustertestdata")
@@ -72,6 +73,7 @@
 #' approach = "MIXC", method = "slope", grid_l = 100
 #' )
 #' Results
+#' }
 #'
 #' @references Barreñada, L., De Cock Campo, B., Wynants, L., Van Calster, B. (2025).
 #' Clustered Flexible Calibration Plots for Binary Outcomes Using Random Effects Modeling.
