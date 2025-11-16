@@ -292,7 +292,7 @@ y      = rbinom(5e2, 1, p0true)
 Df     = data.frame(y, X)
 
 # Fit logistic model
-FitLog = lrm(y ~ ., Df)
+FitLog = glm(y ~ ., Df, family = binomial)
 
 # Simulate validation data
 Xval   = replicate(4, rnorm(5e2))
