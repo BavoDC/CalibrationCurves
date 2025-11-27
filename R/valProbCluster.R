@@ -92,19 +92,6 @@ valProbCluster <- function(data = NULL, p, y, cluster,
   # Capture call
   callFn <- match.call()
   approach <- match.arg(approach)
-
-  # grid for plotting if needed
-  rangeGrid <- sort(rangeGrid)
-  if (rangeGrid[1] <= 0) {
-    warning("Minimum of the grid is smaller than or equal to 0. Will be set to 0.01.", immediate. = TRUE)
-    rangeGrid[1] <- 0.01
-  }
-  if (rangeGrid[2] >= 1) {
-    warning("Maximum of the grid is smaller than or equal to 0. Will be set to 0.99.", immediate. = TRUE)
-    rangeGrid[2] <- 0.99
-  }
-  grid <- seq(rangeGrid[1], rangeGrid[2], length.out = grid_l)
-
   # Handle case where user passes a data frame
   if (!is.null(data)) {
     if (!all(sapply(c("p", "y", "cluster"), function(a) as.character(callFn[a])) %in% colnames(data))) {
@@ -118,6 +105,18 @@ valProbCluster <- function(data = NULL, p, y, cluster,
     y <- eval(callFn$y, data)
     cluster <- eval(callFn$cluster, data)
   }
+  # grid for plotting if needed
+  rangeGrid <- sort(rangeGrid)
+  if (rangeGrid[1] <= 0) {
+    warning("Minimum of the grid is smaller than or equal to 0. Will be set to 0.01.", immediate. = TRUE)
+    rangeGrid[1] <- 0.01
+  }
+  if (rangeGrid[2] >= 1) {
+    warning("Maximum of the grid is smaller than or equal to 0. Will be set to 0.99.", immediate. = TRUE)
+    rangeGrid[2] <- 0.99
+  }
+  grid <- seq(rangeGrid[1], rangeGrid[2], length.out = grid_l)
+
 
   # Data checks
   if (length(unique(cluster)) == 1) {
