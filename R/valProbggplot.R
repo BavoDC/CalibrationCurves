@@ -242,9 +242,9 @@ valProbggplot <- function(p, y, logit, group,
   y     <- y[order(p)]
   logit <- logit[order(p)]
   p     <- p[order(p)]
+  n     <- length(y)
 
-
-  if (length(p) > 5000 & smooth == "loess") {
+  if (n > 5000 & smooth == "loess") {
     warning("Number of observations > 5000, RCS is recommended. Will perform a preliminary fit to see if any errors occur.", immediate. = TRUE)
     argzLoess$formula = y ~ p
     tmpFit = tryCatch({
@@ -258,7 +258,20 @@ valProbggplot <- function(p, y, logit, group,
       wmess = c(wmess, tmpmess)
     }
   }
-  if (length(p) > 1000 & CL.BT == TRUE) {
+
+  if(n > 1e5 & smooth %in% c("loess", "RCS")) {
+    warning(
+      "Dataset contains ", format(n, big.mark = " "), " observations. ",
+      "Very large datasets (> 100 000 rows) may cause integer overflow errors ",
+      "when using nonparametric methods (e.g., loess or restricted cubic splines). ",
+      "Consider using the logistic calibration framework instead, which is computationally ",
+      "more efficient and stable for large datasets. See the package vignette or documentation ",
+      "for guidance on logistic calibration methods.",
+      immediate. = TRUE
+    )
+  }
+
+  if (n > 1000 & CL.BT == TRUE) {
     warning("Number of observations is > 1000, this could take a while...",
             immediate. = TRUE)
   }
