@@ -229,10 +229,10 @@ CGC <- function(data = NULL,
         alpha = 0.2, width = 0, lwd = linewidth, lty = "dashed"
       ) +
       scale_fill_manual(name = "Heterogeneity", values = c("cornflowerblue", "lightblue")) +
-      geom_point(data = deciles_all, aes(x = p, y = y, color = "Traditional grouped"), size = size) +
-      geom_line(data = deciles_all, aes(x = p, y = y, color = "Traditional grouped"), linewidth = linewidth) +
-      geom_point(data = data_all, aes(color = paste0("CGC-C(", method, ")")), size = size * 1.3) +
-      geom_line(data = data_all, aes(color = paste0("CGC-C(", method, ")")), linewidth = linewidth) +
+      geom_point(data = deciles_all, aes(x = preds, y = y, color = "Traditional grouped"), size = size) +
+      geom_line(data = deciles_all, aes(x = preds, y = y, color = "Traditional grouped"), linewidth = linewidth) +
+      geom_point(data = data_all, aes(color = paste0("CG-C(", method, ")")), size = size * 1.3) +
+      geom_line(data = data_all, aes(color = paste0("CG-C(", method, ")")), linewidth = linewidth) +
       scale_color_manual(name = "Methodology", values = c("black", "gold")) +
       xlab("Estimated probability") +
       ylab("Observed proportion") +
