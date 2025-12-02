@@ -16,8 +16,7 @@ library("devtools")
 install_github("BavoDC/CalibrationCurves", dependencies = TRUE, build_vignettes = TRUE, ref = "master")
 ```
 
-This requires `devtools` >= 1.6.1, and installs the "master" branch. This approach builds the package from source, 
-i.e. `make` and compilers must be installed on your system -- see the R FAQ for your operating system.
+This requires `devtools` >= 1.6.1, and installs the "master" branch. This approach builds the package from source.
 
 ## Documentation
 The basic functionality of the package is explained and demonstrated in the vignette, which you can access using
@@ -34,7 +33,7 @@ forwarded to this one).
 
 ## Citation
 If you use this package, please cite: <br />
-- Barreñada, Lasai, Bavo DC Campo, Laure Wynants, and Ben Van Calster. 2025. Clustered Flexible Calibration Plots for
+- Barreñada, L., De Cock Campo, B., Wynants, L., Van Calster, B. (2025). Clustered Flexible Calibration Plots for
 Binary Outcomes Using Random Effects Modeling. arXiv:2503.08389, available at [https://arxiv.org/abs/2503.08389](https://arxiv.org/abs/2503.08389). <br />
 - De Cock Campo, B. (2023). Towards reliable predictive analytics: a generalized calibration framework.
 arXiv:2309.08559, available at [https://arxiv.org/abs/2309.08559](https://arxiv.org/abs/2309.08559). <br />

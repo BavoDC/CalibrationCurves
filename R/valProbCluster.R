@@ -1,36 +1,32 @@
 #' Calibration performance with cluster adjustment (ggplot version)
 #'
-#' This function evaluates calibration performance of predicted probabilities
-#' while accounting for clustering. It supports multiple approaches
-#' (`"CGC"`, `"MAC2"`, `"MIXC"`) and returns both results and a `ggplot` object.
-#' Additional arguments can be passed flexibly to the chosen subfunction.
+#' This function evaluates the calibration performance of a model's predicted probabilities
+#' whilst accounting for clustering. The function supports multiple approaches
+#' (`"CGC"`, `"MAC2"`, `"MIXC"`) and returns the results as well as a `ggplot` object.
 #'
-#' @param data Optional data frame containing the variables \code{p}, \code{y},
+#' @param data optional, a data frame containing the variables \code{p}, \code{y},
 #'   and \code{cluster}. If supplied, variable names should be given without
 #'   quotation marks.
-#' @param p Predicted probabilities (numeric vector) or name of the column in
-#'   \code{data}.
-#' @param y Binary outcome (0/1; numeric, integer, or logical) or name of the
-#'   column in \code{data}.
-#' @param cluster Cluster identifier (factor, character, or integer) or name of
-#'   the column in \code{data}.
-#' @param plot Logical. If \code{TRUE}, a plot will be produced by the chosen
+#' @param p predicted probabilities (numeric vector) or name of the column in \code{data}
+#' @param y binary outcome variable or the name of the column in \code{data}
+#' @param cluster cluster identifier (factor, character, or integer) or name of the column in \code{data}
+#' @param plot logical, indicates whether a plot needs to be produced. If \code{TRUE}, a plot will be constructed by the chosen
 #'   subfunction.
-#' @param cl.level the confidence level for the calculation of the confidence interval. Default is \code{0.95}.
-#' @param approach Character string specifying the calibration method to use.
-#'   Must be one of:
+#' @param cl.level the confidence level for the calculation of the confidence intervals. Default is \code{0.95}.
+#' @param approach character string specifying which calibration method to use.
+#'   Must be one of the following:
 #'   \itemize{
-#'     \item \code{"CGC"}: Clustered Generalized Calibration
-#'     \item \code{"MAC2"}: Marginal Calibration (2nd version)
-#'     \item \code{"MIXC"}: Mixed-effects Calibration
+#'     \item \code{"\link{CGC}"}: Clustered Grouped Calibration;
+#'     \item \code{"\link{MAC2}"}: Meta-Analytical Calibration Curve;
+#'     \item \code{"\link{MIXC}"}: Mixed-Effects Model Calibration.
 #'   }
 #'   Defaults to \code{"MIXC"}.
-#' @param xlab Label for the x-axis of the plot (default: \code{"Predicted probability"}).
-#' @param ylab Label for the y-axis of the plot (default: \code{"Observed proportion"}).
-#' @param grid_l Integer. Number of points in the probability grid for plotting
-#'   (default: \code{100}).
+#' @param xlab label for the x-axis of the plot (default is \code{"Predicted probability"}).
+#' @param ylab label for the y-axis of the plot (default is \code{"Observed proportion"}).
+#' @param grid_l integer. Number of points in the probability grid for plotting
+#'   (default is \code{100}).
 #' @param rangeGrid the range of the grid. Default is \code{range(p)}.
-#' @param ... Additional arguments passed to the selected subfunction
+#' @param ... additional arguments to be passed to the selected subfunction
 #'   (\code{\link{CGC}}, \code{\link{MAC2}} and \code{\link{MIXC}}).
 #'
 #' @seealso \code{\link{CGC}}, \code{\link{MAC2}} and \code{\link{MIXC}}
@@ -38,29 +34,28 @@
 #' @details
 #' The function internally calls one of the following subfunctions:
 #' \itemize{
-#'   \item \code{CGC(preds, y, cluster, plot, ...)}
-#'   \item \code{MAC2(preds, y, cluster, plot, grid, ...)}
-#'   \item \code{MIXC(preds, y, cluster, plot, CI, grid, ...)}
+#'   \item \code{CGC(p, y, cluster, plot, ...)}
+#'   \item \code{MAC2(p, y, cluster, plot, grid, ...)}
+#'   \item \code{MIXC(p, y, cluster, plot, CI, grid, ...)}
 #' }
 #'
-#' Extra arguments supplied via \code{...} are passed directly to these
-#' subfunctions, providing flexibility in controlling their behavior. For a list
-#' of available arguments for each subfunction, refer to their respective
-#' documentation.
+#' Extra arguments supplied via the ellipsis argument \code{...} are passed directly to the chosen
+#' subfunction. Please check the additional documentation of
+#' \code{\link{CGC}}, \code{\link{MAC2}} and \code{\link{MIXC}} for detailed information on the arguments.
 #'
 #' @return An object of class \code{"valProbCluster"} containing:
 #' \itemize{
-#'   \item \code{call}: The matched call.
-#'   \item \code{approach}: The chosen approach.
+#'   \item \code{call}: the matched call.
+#'   \item \code{approach}: the chosen approach.
 #'   \item \code{cl.level}: the confidence level used.
-#'   \item \code{grid}: Probability grid used for plotting.
-#'   \item \code{ggplot}: A \code{ggplot} object if returned by the subfunction,
+#'   \item \code{grid}: probability grid used for plotting.
+#'   \item \code{ggplot}: a \code{ggplot} object if returned by the subfunction,
 #'         otherwise \code{NULL}.
-#'   \item \code{results}: Results from the chosen subfunction.
-#'   \item \code{labels}: A list with \code{xlab} and \code{ylab}.
+#'   \item \code{results}: results from the chosen subfunction.
 #' }
 #'
 #' @examples
+#' \donttest{
 #' library(lme4)
 #' data("clustertraindata")
 #' data("clustertestdata")
@@ -79,8 +74,11 @@
 #'   approach = "MIXC", method = "slope", grid_l = 100
 #' )
 #' Results
+#' }
 #'
-#' @export
+#' @references Barreñada, L., De Cock Campo, B., Wynants, L., Van Calster, B. (2025).
+#' Clustered Flexible Calibration Plots for Binary Outcomes Using Random Effects Modeling.
+#' arXiv:2503.08389, available at https://arxiv.org/abs/2503.08389.
 valProbCluster <- function(data = NULL, p, y, cluster,
                            plot = TRUE, approach = c("MIXC", "CGC", "MAC2", "default"),
                            cl.level = 0.95,
@@ -106,14 +104,14 @@ valProbCluster <- function(data = NULL, p, y, cluster,
     cluster <- eval(callFn$cluster, data)
   }
   # grid for plotting if needed
-  rangeGrid <- sort(rangeGrid)
-  if (rangeGrid[1] <= 0) {
-    warning("Minimum of the grid is smaller than or equal to 0. Will be set to 0.01.", immediate. = TRUE)
-    rangeGrid[1] <- 0.01
+  rangeGrid = sort(rangeGrid)
+  if(rangeGrid[1] <= 0) {
+    warning("Minimum of the grid is smaller than or equal to 0. Will be set to 0.0001.", immediate. = TRUE)
+    rangeGrid[1] = 1e-4
   }
-  if (rangeGrid[2] >= 1) {
-    warning("Maximum of the grid is smaller than or equal to 0. Will be set to 0.99.", immediate. = TRUE)
-    rangeGrid[2] <- 0.99
+  if(rangeGrid[2] >= 1) {
+    warning("Maximum of the grid is smaller than or equal to 0. Will be set to 0.9999.", immediate. = TRUE)
+    rangeGrid[2] = 1 - 1e-4
   }
   grid <- seq(rangeGrid[1], rangeGrid[2], length.out = grid_l)
 
@@ -160,15 +158,15 @@ valProbCluster <- function(data = NULL, p, y, cluster,
   results <-
     if (approach == "CGC") {
       do.call(CGC, c(
-        list(preds = p, y = y, cluster = cluster, plot = plot, cl.level = 0.95), extraArgs
+        list(p = p, y = y, cluster = cluster, plot = plot, cl.level = 0.95), extraArgs
       ))
     } else if (approach == "MAC2" || approach == "default") {
       do.call(MAC2, c(
-        list(preds = p, y = y, cluster = cluster, plot = plot, grid = grid, cl.level = 0.95), extraArgs
+        list(p = p, y = y, cluster = cluster, plot = plot, grid = grid, cl.level = 0.95), extraArgs
       ))
     } else if (approach == "MIXC") {
       do.call(MIXC, c(
-        list(preds = p, y = y, cluster = cluster, plot = plot, CI = TRUE, grid = grid, cl.level = 0.95), extraArgs
+        list(p = p, y = y, cluster = cluster, plot = plot, CI = TRUE, grid = grid, cl.level = 0.95), extraArgs
       ))
     }
   if (approach == "default") {
@@ -191,8 +189,7 @@ valProbCluster <- function(data = NULL, p, y, cluster,
       # ),
       grid = grid,
       ggPlot = if ("plot" %in% names(results)) results$plot else NULL,
-      results = results,
-      labels = list(xlab = xlab, ylab = ylab)
+      results = results
     ),
     class = "ClusteredCalibrationCurve"
   )

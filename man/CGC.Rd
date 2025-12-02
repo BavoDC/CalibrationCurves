@@ -6,7 +6,7 @@
 \usage{
 CGC(
   data = NULL,
-  preds,
+  p,
   y,
   cluster,
   cl.level = 0.95,
@@ -20,53 +20,54 @@ CGC(
 )
 }
 \arguments{
-\item{data}{Optional data frame containing the columns for `preds`, `y`, and `cluster`.
-If provided, `preds`, `y`, and `cluster` should be column names (unquoted).
-Default is `NULL`.}
+\item{data}{optional data frame containing the variables \code{p}, \code{y},
+and \code{cluster}. If supplied, variable names should be given without
+quotation marks.}
 
-\item{preds}{A numeric vector of predicted probabilities/values, or a column in `data`.}
+\item{p}{predicted probabilities (numeric vector) or name of the column in
+\code{data}.}
 
-\item{y}{A numeric vector of observed outcomes, or a column in `data`.}
+\item{y}{binary outcome variable or the name of the column in \code{data}.}
 
-\item{cluster}{A factor/character vector of cluster identifiers, or a column in `data`.}
+\item{cluster}{cluster identifier (factor, character, or integer) or name of
+the column in \code{data}.}
 
 \item{cl.level}{the confidence level for the calculation of the confidence interval. Default is \code{0.95}.}
 
-\item{ntiles}{Integer; number of groups (tiles) for calibration. Default is `10`.}
+\item{ntiles}{integer, number of groups (tiles) for calibration. Default is \code{10}.}
 
-\item{cluster_curves}{Logical; whether to include cluster-specific calibration
-curves in the plot. Default is `FALSE`.}
+\item{cluster_curves}{logical, whether to include cluster-specific calibration
+curves in the plot. Default is \code{FALSE}.}
 
-\item{plot}{Logical; whether to return a calibration plot. Default is `TRUE`.}
+\item{plot}{logical, whether to return a calibration plot. Default is \code{TRUE}.}
 
-\item{size}{Numeric; point size for plotted curves. Default is `1`.}
+\item{size}{numeric, point size for plotted curves. Default is \code{1}.}
 
-\item{linewidth}{Numeric; line width for plotted curves. Default is `0.4`.}
+\item{linewidth}{numeric, line width for plotted curves. Default is \code{0.4}.}
 
-\item{univariate}{Logical; whether to use univariate meta-analysis. Default is `FALSE`.}
+\item{univariate}{logical, whether to use univariate meta-analysis. Default is \code{FALSE}.}
 
-\item{method}{Character; grouping method: \code{"grouped"} (equal-sized groups) or
+\item{method}{character, grouping method: \code{"grouped"} (equal-sized groups) or
 \code{"interval"} (interval-based). Default is \code{"grouped"}.}
 }
 \value{
 A list containing:
 \describe{
-  \item{plot_data}{Data frame of meta-analysis calibration estimates.}
-  \item{trad_grouped}{Data frame with traditional grouped calibration results.}
-  \item{observed_data}{Data frame with per-observation calibration data.}
-  \item{cluster_data}{Data frame with cluster-specific calibration summaries.}
-  \item{plot}{A `ggplot2` object if `plot = TRUE`, otherwise `NULL`.}
+  \item{\code{plot_data}}{Data frame of meta-analysis calibration estimates.}
+  \item{\code{trad_grouped}}{Data frame with traditional grouped calibration results.}
+  \item{\code{observed_data}}{Data frame with per-observation calibration data.}
+  \item{\code{cluster_data}}{Data frame with cluster-specific calibration summaries.}
+  \item{\code{plot}}{A \code{ggplot2} object if \code{plot = TRUE}, otherwise \code{NULL}.}
 }
 }
 \description{
-Generates a flexible calibration curve using predicted values, observed outcomes,
-and clustering/grouping information. The function supports two grouping methods:
-equal-sized groups (`"grouped"`) or interval-based groups (`"interval"`).
+Estimates the calibration curves using the CGC approach. The function supports two grouping methods:
+equal-sized groups (\code{"grouped"}) or interval-based groups (\code{"interval"}).
 Optionally, a calibration plot can be produced with cluster-specific curves.
 }
 \details{
-- `"grouped"`: predictions are divided into equal-sized bins using quantiles.
-- `"interval"`: predictions are divided into fixed-width bins across [0, 1].
+When \code{method = "grouped"}, the predictions are divided into equal-sized bins using quantiles.
+Conversely, if \code{method ="interval"}, the predictions are divided into fixed-width bins across [0, 1].
 
 The function performs a meta-analysis within each group. This can be either a univariate or bivariate analysis,
 which is specified in the \code{univariate} argument. The univariate analysis is performed using the

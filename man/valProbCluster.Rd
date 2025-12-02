@@ -20,78 +20,73 @@ valProbCluster(
 )
 }
 \arguments{
-\item{data}{Optional data frame containing the variables \code{p}, \code{y},
+\item{data}{optional, a data frame containing the variables \code{p}, \code{y},
 and \code{cluster}. If supplied, variable names should be given without
 quotation marks.}
 
-\item{p}{Predicted probabilities (numeric vector) or name of the column in
-\code{data}.}
+\item{p}{predicted probabilities (numeric vector) or name of the column in \code{data}}
 
-\item{y}{Binary outcome (0/1; numeric, integer, or logical) or name of the
-column in \code{data}.}
+\item{y}{binary outcome variable or the name of the column in \code{data}}
 
-\item{cluster}{Cluster identifier (factor, character, or integer) or name of
-the column in \code{data}.}
+\item{cluster}{cluster identifier (factor, character, or integer) or name of the column in \code{data}}
 
-\item{plot}{Logical. If \code{TRUE}, a plot will be produced by the chosen
+\item{plot}{logical, indicates whether a plot needs to be produced. If \code{TRUE}, a plot will be constructed by the chosen
 subfunction.}
 
-\item{approach}{Character string specifying the calibration method to use.
-Must be one of:
+\item{approach}{character string specifying which calibration method to use.
+Must be one of the following:
 \itemize{
-  \item \code{"CGC"}: Clustered Generalized Calibration
-  \item \code{"MAC2"}: Marginal Calibration (2nd version)
-  \item \code{"MIXC"}: Mixed-effects Calibration
+  \item \code{"\link{CGC}"}: Clustered Grouped Calibration;
+  \item \code{"\link{MAC2}"}: Meta-Analytical Calibration Curve;
+  \item \code{"\link{MIXC}"}: Mixed-Effects Model Calibration.
 }
 Defaults to \code{"MIXC"}.}
 
-\item{cl.level}{the confidence level for the calculation of the confidence interval. Default is \code{0.95}.}
+\item{cl.level}{the confidence level for the calculation of the confidence intervals. Default is \code{0.95}.}
 
-\item{xlab}{Label for the x-axis of the plot (default: \code{"Predicted probability"}).}
+\item{xlab}{label for the x-axis of the plot (default is \code{"Predicted probability"}).}
 
-\item{ylab}{Label for the y-axis of the plot (default: \code{"Observed proportion"}).}
+\item{ylab}{label for the y-axis of the plot (default is \code{"Observed proportion"}).}
 
-\item{grid_l}{Integer. Number of points in the probability grid for plotting
-(default: \code{100}).}
+\item{grid_l}{integer. Number of points in the probability grid for plotting
+(default is \code{100}).}
 
 \item{rangeGrid}{the range of the grid. Default is \code{range(p)}.}
 
-\item{...}{Additional arguments passed to the selected subfunction
+\item{...}{additional arguments to be passed to the selected subfunction
 (\code{\link{CGC}}, \code{\link{MAC2}} and \code{\link{MIXC}}).}
 }
 \value{
 An object of class \code{"valProbCluster"} containing:
 \itemize{
-  \item \code{call}: The matched call.
-  \item \code{approach}: The chosen approach.
+  \item \code{call}: the matched call.
+  \item \code{approach}: the chosen approach.
   \item \code{cl.level}: the confidence level used.
-  \item \code{grid}: Probability grid used for plotting.
-  \item \code{ggplot}: A \code{ggplot} object if returned by the subfunction,
+  \item \code{grid}: probability grid used for plotting.
+  \item \code{ggplot}: a \code{ggplot} object if returned by the subfunction,
         otherwise \code{NULL}.
-  \item \code{results}: Results from the chosen subfunction.
-  \item \code{labels}: A list with \code{xlab} and \code{ylab}.
+  \item \code{results}: results from the chosen subfunction.
 }
 }
 \description{
-This function evaluates calibration performance of predicted probabilities
-while accounting for clustering. It supports multiple approaches
-(`"CGC"`, `"MAC2"`, `"MIXC"`) and returns both results and a `ggplot` object.
-Additional arguments can be passed flexibly to the chosen subfunction.
+This function evaluates the calibration performance of a model's predicted probabilities
+whilst accounting for clustering. The function supports multiple approaches
+(`"CGC"`, `"MAC2"`, `"MIXC"`) and returns the results as well as a `ggplot` object.
 }
 \details{
 The function internally calls one of the following subfunctions:
 \itemize{
-  \item \code{CGC(preds, y, cluster, plot, ...)}
-  \item \code{MAC2(preds, y, cluster, plot, grid, ...)}
-  \item \code{MIXC(preds, y, cluster, plot, CI, grid, ...)}
+  \item \code{CGC(p, y, cluster, plot, ...)}
+  \item \code{MAC2(p, y, cluster, plot, grid, ...)}
+  \item \code{MIXC(p, y, cluster, plot, CI, grid, ...)}
 }
 
-Extra arguments supplied via \code{...} are passed directly to these
-subfunctions, providing flexibility in controlling their behavior. For a list
-of available arguments for each subfunction, refer to their respective
-documentation.
+Extra arguments supplied via the ellipsis argument \code{...} are passed directly to the chosen
+subfunction. Please check the additional documentation of
+\code{\link{CGC}}, \code{\link{MAC2}} and \code{\link{MIXC}} for detailed information on the arguments.
 }
 \examples{
+\donttest{
 library(lme4)
 data("clustertraindata")
 data("clustertestdata")
@@ -109,7 +104,13 @@ plot = TRUE,
 approach = "MIXC", method = "slope", grid_l = 100
 )
 Results
+}
 
+}
+\references{
+Barreñada, L., De Cock Campo, B., Wynants, L., Van Calster, B. (2025).
+Clustered Flexible Calibration Plots for Binary Outcomes Using Random Effects Modeling.
+arXiv:2503.08389, available at https://arxiv.org/abs/2503.08389.
 }
 \seealso{
 \code{\link{CGC}}, \code{\link{MAC2}} and \code{\link{MIXC}}

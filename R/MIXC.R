@@ -1,52 +1,41 @@
 #' Internal function for the Mixed-Effects Model Calibration Curve (MIXC)
 #'
-#' Generates calibration plots for mixed-effects models, assessing the agreement between
-#' predicted probabilities and observed binary outcomes while accounting for clustering.
-#' Supports random intercept and random slope models with confidence and prediction intervals.
+#' Estimates the calibration curve using a logistic generalized linear mixed model.
 #'
-#' @param data Optional data frame containing the columns for `preds`, `y`, and `cluster`.
-#'   If provided, `preds`, `y`, and `cluster` should be column names (unquoted).
-#'   Default is `NULL`.
-#' @param preds A numeric vector of predicted probabilities.
-#' @param y A numeric vector of binary outcomes (0 or 1).
-#' @param cluster A factor or character vector of cluster identifiers.
+#' @param data optional data frame containing the variables \code{p}, \code{y},
+#'   and \code{cluster}. If supplied, variable names should be given without
+#'   quotation marks.
+#' @param p predicted probabilities (numeric vector) or name of the column in
+#'   \code{data}.
+#' @param y binary outcome variable or the name of the column in \code{data}.
+#' @param cluster Cluster identifier (factor, character, or integer) or name of
+#'   the column in \code{data}.
 #' @param grid the grid for the calibration curve evaluation
-#' @param method Character; type of mixed-effects model: `"intercept"` (random intercept)
-#'   or `"slope"` (random slope). Default is `"slope"`.
-#' @param plot Logical; whether to generate a calibration plot. Default is `TRUE`.
-#' @param cluster_curves Logical; whether to include cluster-specific curves in the plot.
-#'   Default is `FALSE`.
-#' @param nsims_pi Integer; number of simulations for prediction intervals. Default is `10000`.
-#' @param CI Logical; whether to calculate confidence intervals. Default is `TRUE`.
-#' @param CI_method Character; method for confidence intervals: `"delta"` or \code{"naive"}. Default is `"naive"`.
+#' @param method character, type of mixed-effects model: \code{"intercept"} (random intercept)
+#'   or \code{"slope"} (random slope). Default is \code{"slope"}.
+#' @param plot logical, indicating whether to generate a calibration plot. Default is \code{TRUE}.
+#' @param cluster_curves logical, whether to include cluster-specific curves in the plot.
+#'   Default is \code{FALSE}.
+#' @param nsims_pi integer, number of simulations for prediction intervals. Default is \code{10000}.
+#' @param CI logical, whether to calculate confidence intervals. Default is \code{TRUE}.
+#' @param CI_method character, method for computing the confidence intervals of the observed proportions.
+#'  If \code{"delta"}, the delta method is applied. Conversely, when \code{CI_method == "naive"}, no correction is applied.
+#'  Default is \code{"naive"}.
 #' @param cl.level the confidence level for the calculation of the confidence interval. Default is \code{0.95}.
 #'
 #' @details
-#' This function fits mixed-effects logistic regression models to account for clustering
-#' and generates calibration curves with optional confidence and prediction intervals.
+#' This function estimates the calibration curves using a logistic generalized linear mixed model.
 #'
 #' @return A list containing:
 #' \describe{
-#'   \item{model}{The fitted mixed-effects model object}
-#'   \item{cluster_data}{Data frame with calibration data for each cluster}
-#'   \item{plot_data}{Data frame with calibration data for the average cluster}
-#'   \item{observed_data}{Data frame with calibration data for individual patients}
-#'   \item{plot}{A `ggplot2` object if `plot = TRUE`, otherwise `NULL`}
+#'   \item{\code{model}}{The fitted mixed-effects model object}
+#'   \item{\code{cluster_data}}{Data frame with calibration data for each cluster}
+#'   \item{\code{plot_data}}{Data frame with calibration data for the average cluster}
+#'   \item{\code{observed_data}}{Data frame with calibration data for individual observations}
+#'   \item{\code{plot}}{A \code{ggplot2} object if \code{plot = TRUE}, otherwise \code{NULL}}
 #' }
-#'
-#'
-#' @importFrom dplyr filter group_by summarise
-#' @importFrom lme4 glmer
-#' @importFrom merTools predictInterval
-#' @importFrom ggplot2 ggplot geom_abline geom_ribbon geom_line xlab ylab theme_classic
-#' @importFrom ggplot2 scale_x_continuous scale_y_continuous coord_cartesian theme
-#' @importFrom ggplot2 scale_fill_manual unit
-#' @importFrom Matrix tcrossprod
-#' @importFrom rms rcs
-#'
-#' @export
 MIXC <- function(data = NULL,
-                 preds,
+                 p,
                  y,
                  cluster,
                  grid,

@@ -6,7 +6,7 @@
 \usage{
 MAC2(
   data = NULL,
-  preds,
+  p,
   y,
   cluster,
   grid,
@@ -28,15 +28,17 @@ MAC2(
 )
 }
 \arguments{
-\item{data}{Optional data frame containing the columns for `preds`, `y`, and `cluster`.
-If provided, `preds`, `y`, and `cluster` should be column names (unquoted).
-Default is `NULL`.}
+\item{data}{optional data frame containing the variables \code{p}, \code{y},
+and \code{cluster}. If supplied, variable names should be given without
+quotation marks.}
 
-\item{preds}{A numeric vector of predicted probabilities.}
+\item{p}{predicted probabilities (numeric vector) or name of the column in
+\code{data}.}
 
-\item{y}{A numeric vector of binary outcomes (0 or 1).}
+\item{y}{binary outcome variable or the name of the column in \code{data}.}
 
-\item{cluster}{A factor or character vector identifying cluster memberships.}
+\item{cluster}{Cluster identifier (factor, character, or integer) or name of
+the column in \code{data}.}
 
 \item{grid}{the grid for the calibration curve evaluation}
 
@@ -45,35 +47,35 @@ Default is `NULL`.}
 \item{alpha.lr}{the alpha-level used for the likelihood ratio test, selecting the number of knots for the
 restricted cubic splines}
 
-\item{plot}{Logical; whether to plot the calibration curves. Default is `TRUE`.}
+\item{plot}{logical, indicates whether to plot the calibration curves. Default is \code{TRUE}.}
 
-\item{cluster_curves}{Logical; whether to include cluster-specific curves in the plot. Default is `FALSE`.}
+\item{cluster_curves}{logical, whether to include cluster-specific curves in the plot. Default is \code{FALSE}.}
 
-\item{knots}{Integer; number of knots for splines. Default is `3`.}
+\item{knots}{integer, number of knots for splines. Default is \code{3}.}
 
-\item{transf}{Character; transformation for predictions: `"logit"` or `"identity"`. Default is `"logit"`.}
+\item{transf}{character, transformation for predictions: \code{"logit"} or \code{"identity"}. Default is \code{"logit"}.}
 
-\item{method_choice}{Character; which method to use for meta-analysis. Options are:
-`"log"`, `"loess"` or `"splines"`. Default is `"splines"`.}
+\item{method_choice}{character, which method to use for meta-analysis. Options are:
+\code{"log"}, \code{"loess"} or \code{"splines"}. Default is \code{"splines"}.}
 
-\item{method.tau}{Character; method for between-study heterogeneity estimation. Default is `"REML"`.
+\item{method.tau}{character, method for between-study heterogeneity estimation. Default is \code{"REML"}.
 This argument is passed to the  \code{\link[meta]{metagen}} function.}
 
-\item{prediction}{Logical; whether to compute prediction intervals. Default is `TRUE`.
+\item{prediction}{logical, whether to compute prediction intervals. Default is \code{TRUE}.
 This argument is passed to the  \code{prediction} argument of the \code{\link[meta]{metagen}} function.}
 
-\item{random}{Logical; whether to use random-effects model. Default is `TRUE`.
+\item{random}{logical, whether to use random-effects model. Default is \code{TRUE}.
 This argument is passed to the  \code{random} argument of the \code{\link[meta]{metagen}} function.}
 
-\item{sm}{Character; summary measure for meta-analysis. Default is `"PLOGIT"`.
+\item{sm}{character, summary measure for meta-analysis. Default is \code{"PLOGIT"}.
 This argument is passed to the  \code{sm} argument of the \code{\link[meta]{metagen}} function.}
 
-\item{hakn}{Logical; whether to use Hartung-Knapp adjustment. Default is `FALSE`.
+\item{hakn}{logical, whether to use Hartung-Knapp adjustment. Default is \code{FALSE}.
 This argument is passed to the  \code{method.random.ci} argument of the \code{\link[meta]{metagen}} function.}
 
-\item{linewidth}{Numeric; line width for the meta-curve. Default is `1`.}
+\item{linewidth}{numeric, line width for the meta-curve. Default is \code{1}.}
 
-\item{method.predict}{Character; method for prediction intervals. Default is `"HTS"`.
+\item{method.predict}{character, method for prediction intervals. Default is \code{"HTS"}.
 This argument is passed to the  \code{method.predict} argument of the \code{\link[meta]{metagen}} function.}
 
 \item{verbose}{logical, indicates whether progress has to be printed in the console.}
@@ -81,9 +83,9 @@ This argument is passed to the  \code{method.predict} argument of the \code{\lin
 \value{
 A list containing:
 \describe{
-  \item{cluster_data}{Data frame with linear predictors and standard errors for each method per cluster}
-  \item{plot_data}{Data frame with meta-analysis results including predictions and intervals}
-  \item{plot}{A `ggplot2` object if `plot = TRUE`, otherwise `NULL`}
+  \item{\code{cluster_data}}{Data frame with linear predictors and standard errors for each method per cluster}
+  \item{\code{plot_data}}{Data frame with meta-analysis results including predictions and intervals}
+  \item{\code{plot}}{A \code{ggplot2} object if \code{plot = TRUE}, otherwise \code{NULL}}
 }
 }
 \description{
@@ -95,5 +97,5 @@ to generate aggregated calibration curves with confidence and prediction interva
 This function estimates the center-specific calibration curves using logistic regression,
 loess or splines. Hereafter, it aggregates the calibration curves using meta-analytical techniques.
 The meta-analysis is performed using the function \code{\link[meta]{metagen}} from the \code{\link[meta]{meta}}
-package. The `method_choice` argument determines which method is for the meta-analytical aggregation.
+package. The \code{method_choice} argument determines which method is for the meta-analytical aggregation.
 }

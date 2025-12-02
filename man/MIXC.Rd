@@ -6,7 +6,7 @@
 \usage{
 MIXC(
   data = NULL,
-  preds,
+  p,
   y,
   cluster,
   grid,
@@ -20,50 +20,51 @@ MIXC(
 )
 }
 \arguments{
-\item{data}{Optional data frame containing the columns for `preds`, `y`, and `cluster`.
-If provided, `preds`, `y`, and `cluster` should be column names (unquoted).
-Default is `NULL`.}
+\item{data}{optional data frame containing the variables \code{p}, \code{y},
+and \code{cluster}. If supplied, variable names should be given without
+quotation marks.}
 
-\item{preds}{A numeric vector of predicted probabilities.}
+\item{p}{predicted probabilities (numeric vector) or name of the column in
+\code{data}.}
 
-\item{y}{A numeric vector of binary outcomes (0 or 1).}
+\item{y}{binary outcome variable or the name of the column in \code{data}.}
 
-\item{cluster}{A factor or character vector of cluster identifiers.}
+\item{cluster}{Cluster identifier (factor, character, or integer) or name of
+the column in \code{data}.}
 
 \item{grid}{the grid for the calibration curve evaluation}
 
-\item{method}{Character; type of mixed-effects model: `"intercept"` (random intercept)
-or `"slope"` (random slope). Default is `"slope"`.}
+\item{method}{character, type of mixed-effects model: \code{"intercept"} (random intercept)
+or \code{"slope"} (random slope). Default is \code{"slope"}.}
 
-\item{plot}{Logical; whether to generate a calibration plot. Default is `TRUE`.}
+\item{plot}{logical, indicating whether to generate a calibration plot. Default is \code{TRUE}.}
 
-\item{cluster_curves}{Logical; whether to include cluster-specific curves in the plot.
-Default is `FALSE`.}
+\item{cluster_curves}{logical, whether to include cluster-specific curves in the plot.
+Default is \code{FALSE}.}
 
-\item{nsims_pi}{Integer; number of simulations for prediction intervals. Default is `10000`.}
+\item{nsims_pi}{integer, number of simulations for prediction intervals. Default is \code{10000}.}
 
-\item{CI}{Logical; whether to calculate confidence intervals. Default is `TRUE`.}
+\item{CI}{logical, whether to calculate confidence intervals. Default is \code{TRUE}.}
 
-\item{CI_method}{Character; method for confidence intervals: `"delta"` or \code{"naive"}. Default is `"naive"`.}
+\item{CI_method}{character, method for computing the confidence intervals of the observed proportions.
+If \code{"delta"}, the delta method is applied. Conversely, when \code{CI_method == "naive"}, no correction is applied.
+Default is \code{"naive"}.}
 
 \item{cl.level}{the confidence level for the calculation of the confidence interval. Default is \code{0.95}.}
 }
 \value{
 A list containing:
 \describe{
-  \item{model}{The fitted mixed-effects model object}
-  \item{cluster_data}{Data frame with calibration data for each cluster}
-  \item{plot_data}{Data frame with calibration data for the average cluster}
-  \item{observed_data}{Data frame with calibration data for individual patients}
-  \item{plot}{A `ggplot2` object if `plot = TRUE`, otherwise `NULL`}
+  \item{\code{model}}{The fitted mixed-effects model object}
+  \item{\code{cluster_data}}{Data frame with calibration data for each cluster}
+  \item{\code{plot_data}}{Data frame with calibration data for the average cluster}
+  \item{\code{observed_data}}{Data frame with calibration data for individual observations}
+  \item{\code{plot}}{A \code{ggplot2} object if \code{plot = TRUE}, otherwise \code{NULL}}
 }
 }
 \description{
-Generates calibration plots for mixed-effects models, assessing the agreement between
-predicted probabilities and observed binary outcomes while accounting for clustering.
-Supports random intercept and random slope models with confidence and prediction intervals.
+Estimates the calibration curve using a logistic generalized linear mixed model.
 }
 \details{
-This function fits mixed-effects logistic regression models to account for clustering
-and generates calibration curves with optional confidence and prediction intervals.
+This function estimates the calibration curves using a logistic generalized linear mixed model.
 }

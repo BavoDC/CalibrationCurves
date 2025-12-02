@@ -58,10 +58,10 @@ bibentry(bibtype = "Article",
   person(given = "Ben", family = "Van Calster")
   ),
   journal = "arXiv",
-  year = "2023",
-  pages = "2309.08559",
-  url = "https://arxiv.org/abs/2309.08559",
-  textVersion = paste("Barreñada, Lasai, Bavo D.C. Campo, Laure Wynants, and Ben Van Calster (2025).",
+  year = "2025",
+  pages = "2503.08389",
+  url = "https://arxiv.org/abs/2503.08389",
+  textVersion = paste("Barreñada, L., De Cock Campo, B., Wynants, L., Van Calster, B. (2025).",
   "Clustered Flexible Calibration Plots for Binary Outcomes Using Random Effects Modeling.",
   "arXiv:2503.08389, available at https://arxiv.org/abs/2503.08389.")
   )
