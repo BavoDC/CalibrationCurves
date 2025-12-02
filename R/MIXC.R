@@ -43,6 +43,7 @@ MIXC <- function(data = NULL,
                  plot = TRUE,
                  cluster_curves = FALSE,
                  nsims_pi = 10000,
+                 linewidth = 1,
                  CI = TRUE,
                  CI_method = c("naive", "delta"),
                  cl.level = 0.95) {
@@ -213,7 +214,7 @@ MIXC <- function(data = NULL,
         fill = "PI 95%"
       ), alpha = 0.2) +
       geom_line(aes(x = pred_prob, y = obs_prob),
-        linewidth = 1, linetype = "dashed", color = "black"
+        linewidth = linewidth, linetype = "dashed", color = "black"
       ) +
       xlab("Estimated probability") +
       ylab("Observed proportion") +
@@ -221,7 +222,7 @@ MIXC <- function(data = NULL,
       scale_x_continuous(breaks = seq(0, 1, 0.1)) +
       scale_y_continuous(breaks = seq(0, 1, 0.2)) +
       coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
-      scale_fill_manual(name = "Uncertainty", values = c("green4", "green")) +
+      scale_fill_manual(name = "Heterogeneity", values = c("green4", "green")) +
       theme(
         legend.key.size = unit(0.3, "cm"),
         panel.grid.major = element_blank(),
@@ -233,7 +234,7 @@ MIXC <- function(data = NULL,
         geom_line(
           data = cluster_cal_data,
           aes(x = pred_prob, y = obs_prob, group = cluster),
-          linewidth = 0.2, linetype = "solid", show.legend = FALSE
+          linewidth = linewidth / 2, linetype = "solid", show.legend = FALSE
         )
     }
   }
