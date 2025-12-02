@@ -238,9 +238,9 @@ val.prob.ci.2 <- function(p, y, logit, group,
   y     <- y[order(p)]
   logit <- logit[order(p)]
   p     <- p[order(p)]
+  n     <- length(y)
 
-
-  if (length(p) > 5000 & smooth == "loess") {
+  if (n > 5000 & smooth == "loess") {
     warning("Number of observations > 5000, RCS is recommended. Will perform a preliminary fit to see if any errors occur.", immediate. = TRUE)
     argzLoess$formula = y ~ p
     tmpFit = tryCatch({
@@ -254,7 +254,20 @@ val.prob.ci.2 <- function(p, y, logit, group,
       wmess = c(wmess, tmpmess)
     }
   }
-  if (length(p) > 1000 & CL.BT == TRUE) {
+
+  if(n > 1e5 & smooth %in% c("loess", "RCS")) {
+    warning(
+      "Dataset contains ", format(n, big.mark = " "), " observations. ",
+      "Very large datasets (>100 000 rows) may cause integer overflow errors ",
+      "when using nonparametric methods (e.g., loess or restricted cubic splines). ",
+      "Consider using the logistic calibration framework instead, which is computationally ",
+      "more efficient and stable for large datasets. See the package vignette or documentation ",
+      "for guidance on logistic calibration methods.",
+      immediate. = TRUE
+    )
+  }
+
+  if (n > 1000 & CL.BT == TRUE) {
     warning("Number of observations is > 1000, this could take a while...",
             immediate. = TRUE)
   }
@@ -263,13 +276,12 @@ val.prob.ci.2 <- function(p, y, logit, group,
     # Adjusted 2022-09-26
     P       <- mean(y)
     Intc    <- log(P/(1 - P))
-    n       <- length(y)
-    D       <- -1/n
+    D       <- -1 / n
     L01     <- -2 * sum(y * logit - log(1 + exp(logit)), na.rm = TRUE)
     L.cal   <- -2 * sum(y * Intc - log(1 + exp(Intc)), na.rm = TRUE)
     U.chisq <- L01 - L.cal
     U.p     <- 1 - pchisq(U.chisq, 1)
-    U       <- (U.chisq - 1)/n
+    U       <- (U.chisq - 1) / n
     Q       <- D - U
     cl.auc  <- ci.auc(y, p, cl.level, method.ci)
 
