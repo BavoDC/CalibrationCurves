@@ -59,19 +59,18 @@
 #' library(lme4)
 #' data("clustertraindata")
 #' data("clustertestdata")
-#' mFit <- glmer(y ~ x1 + x2 + x3 + x5 + (1 | cluster),
-#'   data = clustertraindata, family = "binomial"
-#' )
-#' preds <- predict(mFit, clustertestdata, type = "response", re.form = NA)
-#' y <- clustertestdata$y
-#' cluster <- clustertestdata$cluster
-#' valClusterData <- data.frame(y = y, preds = preds, center = cluster)
+#' mFit = glmer(y ~ x1 + x2 + x3 + x5 + (1 | cluster),
+#'              data = clustertraindata, family = "binomial")
+#' preds          = predict(mFit, clustertestdata, type = "response", re.form = NA)
+#' y              = clustertestdata$y
+#' cluster        = clustertestdata$cluster
+#' valClusterData = data.frame(y = y, preds = preds, center = cluster)
 #'
 #' # Assess calibration performance
-#' Results <- valProbCluster(
-#'   p = valClusterData$preds, y = valClusterData$y, cluster = valClusterData$center,
-#'   plot = TRUE,
-#'   approach = "MIXC", method = "slope", grid_l = 100
+#' Results  = valProbCluster(
+#' p = valClusterData$preds, y = valClusterData$y, cluster = valClusterData$center,
+#' plot = TRUE,
+#' approach = "MIXC", method = "slope", grid_l = 100
 #' )
 #' Results
 #' }
@@ -80,7 +79,7 @@
 #' Clustered Flexible Calibration Plots for Binary Outcomes Using Random Effects Modeling.
 #' arXiv:2503.08389, available at https://arxiv.org/abs/2503.08389.
 valProbCluster <- function(data = NULL, p, y, cluster,
-                           plot = TRUE, approach = c("MIXC", "CGC", "MAC2", "default"),
+                           plot = TRUE, approach = c("MIXC", "CGC", "MAC2"),
                            cl.level = 0.95,
                            xlab = "Predicted probability",
                            ylab = "Observed proportion",
@@ -88,33 +87,20 @@ valProbCluster <- function(data = NULL, p, y, cluster,
                            rangeGrid = range(p),
                            ...) {
   # Capture call
-  callFn <- match.call()
-  approach <- match.arg(approach)
+  callFn   = match.call()
+  approach = match.arg(approach)
+
   # Handle case where user passes a data frame
   if (!is.null(data)) {
-    if (!all(sapply(c("p", "y", "cluster"), function(a) as.character(callFn[a])) %in% colnames(data))) {
+    if(!all(sapply(c("p", "y", "cluster"), function(a) as.character(callFn[a])) %in% colnames(data)))
       stop(paste("Variables", paste0(
-        callFn[c("p", "y", "cluster")],
-        collapse = ", "
+        callFn[c("p", "y", "cluster")], collapse = ", "
       ), "were not found in the data.frame."))
-    }
-    p <- eval(callFn$p, data)
-    logit <- qlogis(p)
-    y <- eval(callFn$y, data)
-    cluster <- eval(callFn$cluster, data)
+    p       = eval(callFn$p, data)
+    logit   = qlogis(p)
+    y       = eval(callFn$y, data)
+    cluster = eval(callFn$cluster, data)
   }
-  # grid for plotting if needed
-  rangeGrid = sort(rangeGrid)
-  if(rangeGrid[1] <= 0) {
-    warning("Minimum of the grid is smaller than or equal to 0. Will be set to 0.0001.", immediate. = TRUE)
-    rangeGrid[1] = 1e-4
-  }
-  if(rangeGrid[2] >= 1) {
-    warning("Maximum of the grid is smaller than or equal to 0. Will be set to 0.9999.", immediate. = TRUE)
-    rangeGrid[2] = 1 - 1e-4
-  }
-  grid <- seq(rangeGrid[1], rangeGrid[2], length.out = grid_l)
-
 
   # grid for plotting if needed
   rangeGrid = sort(rangeGrid)
@@ -147,32 +133,31 @@ valProbCluster <- function(data = NULL, p, y, cluster,
   #   "() for details about additional arguments. After running check warnings"
   # )
   # Remove clusters that don’t have both 0 and 1 in y
-  tab <- table(cluster, y)
-  valid_clusters <- rownames(tab)[rowSums(tab > 0) == 2]
-  removed_clusters <- setdiff(unique(cluster), valid_clusters)
+  tab              = table(cluster, y)
+  valid_clusters   = rownames(tab)[rowSums(tab > 0) == 2]
+  removed_clusters = setdiff(unique(cluster), valid_clusters)
 
   if (length(removed_clusters) > 0) {
     warning(
       "The following clusters were removed because they did not contain both outcomes (y=0 and y=1): ",
-      paste(removed_clusters, collapse = ", "),
-      immediate. = TRUE
+      paste(removed_clusters, collapse = ", "), immediate. = TRUE
     )
 
-    keep <- cluster %in% valid_clusters
-    p <- p[keep]
-    y <- y[keep]
-    cluster <- cluster[keep]
+    keep    = cluster %in% valid_clusters
+    p       = p[keep]
+    y       = y[keep]
+    cluster = cluster[keep]
   }
   # Collect extra args
-  extraArgs <- list(...)
+  extraArgs = list(...)
 
   # Call the right subfunction with do.call
-  results <-
+  results =
     if (approach == "CGC") {
       do.call(CGC, c(
         list(p = p, y = y, cluster = cluster, plot = plot, cl.level = 0.95), extraArgs
       ))
-    } else if (approach == "MAC2" || approach == "default") {
+    } else if (approach == "MAC2") {
       do.call(MAC2, c(
         list(p = p, y = y, cluster = cluster, plot = plot, grid = grid, cl.level = 0.95), extraArgs
       ))
@@ -181,15 +166,9 @@ valProbCluster <- function(data = NULL, p, y, cluster,
         list(p = p, y = y, cluster = cluster, plot = plot, CI = TRUE, grid = grid, cl.level = 0.95), extraArgs
       ))
     }
-  if (approach == "default") {
-    results_cluster <- do.call(MIXC, c(
-      list(preds = p, y = y, cluster = cluster, plot = plot, CI = TRUE, grid = grid, cl.level = 0.95), extraArgs
-    ))
-    results$cluster_data <- results_cluster$cluster_data
-    results$plot$layers[5] <- results_cluster$plot$layers[5]
-  }
+
   # Wrap results in a structured list
-  Results <- structure(
+  Results = structure(
     list(
       call = callFn,
       approach = approach,

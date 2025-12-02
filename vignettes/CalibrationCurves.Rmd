@@ -546,7 +546,7 @@ res_mac2_spl
 res_mac2_loess <- valProbCluster(
   data = valClusterData,
   p = preds, y = y, cluster = center,
-  grid_l = 100,
+  grid_l = 20,
   approach = "MAC2",
   method_choice = "loess"
 )
@@ -630,18 +630,6 @@ We interpret the plot as follows:
 
 MIX-C is a mixed-effects logistic calibration model using restricted cubic splines with random intercepts and slopes per cluster, designed to account for both fixed and random effects in calibration. It performs especially well for cluster-specific calibration curves, particularly when sample sizes per cluster are small, due to its shrinkage properties. A limitation is that its prediction intervals can be inconsistently too narrow or too wide, and like other methods, it tends to underestimate between-cluster heterogeneity. Overall, MIX-C is recommended for producing cluster-specific calibration plots, while other methods may be preferred for average-effect curves.
 
-## Default approach {#ClusCalDef}
-
-By default, the `valProbCluster` function employs the 2MA-C method for prediction intervals and overall curve and the MIX-C approach for the center specific curves as recommended in the publication @ClusteredCalibration.
-
-```{r}
-res_def <- valProbCluster(
-  p = valClusterData$preds, y = valClusterData$y, cluster = valClusterData$center,
-  pl = TRUE,
-  approach = "default", cluster_curves =T
-)
-res_def
-```
 
   
 
