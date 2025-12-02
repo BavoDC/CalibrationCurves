@@ -116,6 +116,18 @@ valProbCluster <- function(data = NULL, p, y, cluster,
   grid <- seq(rangeGrid[1], rangeGrid[2], length.out = grid_l)
 
 
+  # grid for plotting if needed
+  rangeGrid = sort(rangeGrid)
+  if(rangeGrid[1] <= 0) {
+    warning("Minimum of the grid is smaller than or equal to 0. Will be set to 0.0001.", immediate. = TRUE)
+    rangeGrid[1] = 1e-4
+  }
+  if(rangeGrid[2] >= 1) {
+    warning("Maximum of the grid is smaller than or equal to 0. Will be set to 0.9999.", immediate. = TRUE)
+    rangeGrid[2] = 1 - 1e-4
+  }
+  grid = seq(rangeGrid[1], rangeGrid[2], length.out = grid_l)
+
   # Data checks
   if (length(unique(cluster)) == 1) {
     stop("The cluster variable should have at least two unique values.")
