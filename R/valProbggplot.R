@@ -157,7 +157,7 @@ valProbggplot <- function(p, y, logit, group,
       "Number of knots = ",
       nr.knots,
       sep = "",
-      ", only 5 >= nk >=3 is allowed."
+      ", only 3 <= nk <= 5 is allowed."
     ))
   if (!missing(p))
     if(allowPerfectPredictions & any(!(p > 0 | p < 1)))
