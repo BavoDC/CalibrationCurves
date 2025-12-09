@@ -3,6 +3,7 @@
 #' @inheritParams val.prob.ci.2
 #' @param fit the model fit, has to be of type \code{\link[survival]{coxph}}
 #' @param valdata the validation data set
+#' @param weights vector of case weights
 #' @param alpha the significance level
 #' @param timeHorizon the time point at which the predictions have to be evaluated
 #' @param nk the number of knots, for the restricted cubic splines fit
@@ -49,7 +50,7 @@
 #' calPerf = valProbSurvival(sFit, testDataSurvival, plotCal = "base", nk = 5)
 #' }
 
-valProbSurvival <- function(fit, valdata, alpha = 0.05, timeHorizon = 5, nk = 3,
+valProbSurvival <- function(fit, valdata, weights = NULL, alpha = 0.05, timeHorizon = 5, nk = 3,
                             plotCal = c("none", "base", "ggplot"),
                             addCox = FALSE, addRCS = TRUE,
                             CL.cox = c("fill", "line"),
@@ -78,6 +79,7 @@ valProbSurvival <- function(fit, valdata, alpha = 0.05, timeHorizon = 5, nk = 3,
   stats     = list()
 
   valdata$LP = predict(fit, newdata = valdata, type = "lp")
+  valdata$wt = if(is.null(weights)) rep(1, nrow(valdata)) else weights
 
   argzConc =
     alist(
@@ -125,12 +127,12 @@ valProbSurvival <- function(fit, valdata, alpha = 0.05, timeHorizon = 5, nk = 3,
         times = max(as.numeric(fit$y)) - 0.01,
         iid = TRUE
       ),
-     c(
+      c(
         "Uno AUC" = AUC[[2]],
         "2.5 %"   = AUC[[2]] - qnorm(1 - alpha / 2) * inference$vect_sd_1[[2]],
         "97. 5 %" = AUC[[2]] + qnorm(1 - alpha / 2) * inference$vect_sd_1[[2]]
       )
-     )
+    )
 
   stats$TimeDependentAUC = UnoTDAUC
 
@@ -140,11 +142,17 @@ valProbSurvival <- function(fit, valdata, alpha = 0.05, timeHorizon = 5, nk = 3,
 
   # Observed
   adjFormula = update(fit$formula, ~ - . + 1)
-  obj        = summary(survfit(adjFormula, data = valdata), times = timeHorizon)
+  obj        = summary(survfit(adjFormula, data = valdata, weights = wt), times = timeHorizon)
   obs_t      = 1 - obj$surv
 
   # Predicted risk
-  valdata$pred <- predictRisk(fit, newdata = valdata, times = timeHorizon)
+  valdata$pred <- if(is.null(weights)) {
+    predictRisk(fit, newdata = valdata, times = timeHorizon)
+  } else {
+    bh    = basehaz(fit, centered = TRUE)  # Breslow baseline hazard
+    H0_t0 = approx(bh$time, bh$hazard, xout = timeHorizon, method = "constant", f = 1)$y
+    1 - exp(-H0_t0 * exp(valdata$LP))
+  }
 
   # Expected
   exp_t = mean(valdata$pred)
@@ -164,11 +172,12 @@ valProbSurvival <- function(fit, valdata, alpha = 0.05, timeHorizon = 5, nk = 3,
   calFormula = update(fit$formula, ~ - . + LP)
   # Estimate actual risk
   calCox = cph(calFormula,
-             x    = TRUE,
-             y    = TRUE,
-             surv = TRUE,
-             data = valdata
-    )
+               x    = TRUE,
+               y    = TRUE,
+               surv = TRUE,
+               data = valdata,
+               weights = weights
+  )
 
   calRCSFormula = eval(substitute(update(fit$formula, ~ - . + rcs(LP, nk)), list(nk = nk)))
   vcal = cph(
@@ -176,14 +185,13 @@ valProbSurvival <- function(fit, valdata, alpha = 0.05, timeHorizon = 5, nk = 3,
     x    = TRUE,
     y    = TRUE,
     surv = TRUE,
-    data = valdata
+    data = valdata,
+    weights = weights
   )
 
   datCox <- cbind.data.frame(
     "obs" = 1 - survest(calCox, times = timeHorizon, newdata = valdata)$surv,
-
     "lower" = 1 - survest(calCox, times = timeHorizon, newdata = valdata)$upper,
-
     "upper" = 1 - survest(calCox, times = timeHorizon, newdata = valdata)$lower,
     "pred" = valdata$pred
   )
@@ -192,9 +200,7 @@ valProbSurvival <- function(fit, valdata, alpha = 0.05, timeHorizon = 5, nk = 3,
 
   dat_cal <- cbind.data.frame(
     "obs" = 1 - survest(vcal, times = timeHorizon, newdata = valdata)$surv,
-
     "lower" = 1 - survest(vcal, times = timeHorizon, newdata = valdata)$upper,
-
     "upper" = 1 - survest(vcal, times = timeHorizon, newdata = valdata)$lower,
     "pred" = valdata$pred
   )
@@ -210,7 +216,7 @@ valProbSurvival <- function(fit, valdata, alpha = 0.05, timeHorizon = 5, nk = 3,
   )
 
   # calibration slope (fixed time point)-------------------------------------
-  gval <- coxph(calFormula, data = valdata)
+  gval <- coxph(calFormula, data = valdata, weights = wt)
 
   stats$Calibration$Slope <- c(
     "calibration slope" = unname(gval$coef),
@@ -220,21 +226,26 @@ valProbSurvival <- function(fit, valdata, alpha = 0.05, timeHorizon = 5, nk = 3,
 
   # Overall performance ---------------------------------------
   stats$Calibration$BrierScore <-
-    Score(list("cox" = fit),
-                formula  = adjFormula,
-                data     = valdata,
-                conf.int = TRUE,
-                times    = timeHorizon - 0.01,
-                cens.model = "km",
-                metrics  = "brier",
-                summary  = "ipa"
-    )$Brier$score
+    if(is.null(weights)) {
+      Score(
+        list("cox" = fit),
+        formula  = adjFormula,
+        data     = valdata,
+        conf.int = TRUE,
+        times    = timeHorizon - 0.01,
+        cens.model = "km",
+        metrics  = "brier",
+        summary  = "ipa"
+      )$Brier$score
+    } else {
+      NULL
+    }
 
   # Save calibration curves
   calCurves = list(
     CoxCalibration = datCox,
     RCS = dat_cal
-    )
+  )
 
   ## Double check!!!
   if(is.character(riskdist)) {
@@ -260,171 +271,171 @@ valProbSurvival <- function(fit, valdata, alpha = 0.05, timeHorizon = 5, nk = 3,
     f0	  <- (0.1 * f0) / maxf
     f1	  <- (0.1 * f1) / maxf
 
-  ## Plotting
-  if(plotCal == "base") {
-    par(xaxs = "i", yaxs = "i", las = 1)
-    plot(
-      dat_cal$pred,
-      dat_cal$obs,
-      type = "l",
-      col = "white",
-      lty = 1,
-      xlim = xlim,
-      ylim = ylim,
-      lwd = 2,
-      xlab = xlab,
-      ylab = ylab
-    )
-    abline(0, 1, lty = lty.ideal, col = col.ideal, lwd = lwd.ideal)
-    legCol    = c("Ideal" = col.ideal)
-    lt        = lty.ideal
-    lw.d      = lwd.ideal
-    marks     = NA
-    if(addCox) {
-      legCol = c(legCol, "Cox calibration" = col.cox)
-      lt     = c(lt, lty.cox)
-      lw.d   = c(lw.d, lwd.cox)
-      marks  = c(marks, NA)
-      if(CL.cox == "line") {
-        legCol = c(legCol, "CL Cox" = col.cox)
-        lt     = c(lt, 2)
-        lw.d   = c(lw.d, 1)
+    ## Plotting
+    if(plotCal == "base") {
+      par(xaxs = "i", yaxs = "i", las = 1)
+      plot(
+        dat_cal$pred,
+        dat_cal$obs,
+        type = "l",
+        col = "white",
+        lty = 1,
+        xlim = xlim,
+        ylim = ylim,
+        lwd = 2,
+        xlab = xlab,
+        ylab = ylab
+      )
+      abline(0, 1, lty = lty.ideal, col = col.ideal, lwd = lwd.ideal)
+      legCol    = c("Ideal" = col.ideal)
+      lt        = lty.ideal
+      lw.d      = lwd.ideal
+      marks     = NA
+      if(addCox) {
+        legCol = c(legCol, "Cox calibration" = col.cox)
+        lt     = c(lt, lty.cox)
+        lw.d   = c(lw.d, lwd.cox)
         marks  = c(marks, NA)
-        lines(datCox$pred,
-              datCox$lower,
-              type = "l",
-              lty = 2,
-              lwd = 2)
-        lines(datCox$pred,
-              datCox$upper,
-              type = "l",
-              lty = 2,
-              lwd = 2)
-      } else {
-        polygon(
-          x = with(datCox, c(pred, rev(pred))),
-          y = with(datCox, c(upper, rev(lower))),
-          col = fill.cox,
-          border = NA
-        )
-      }
-      lines(datCox$pred, datCox$obs, type = "l",
-            lwd = lwd.cox, lty = lty.cox)
-    }
-
-    if(addRCS) {
-      legCol = c(legCol, "Flexible calibration (rcs)" = col.rcs)
-      lt     = c(lt, lty.rcs)
-      lw.d   = c(lw.d, lwd.rcs)
-      marks  = c(marks, NA)
-      if(CL.rcs == "line") {
-        legCol = c(legCol, "CL flexible (rcs)" = col.rcs)
-        lt     = c(lt, 2)
-        lw.d   = c(lw.d, 1)
-        marks  = c(marks, NA)
-        lines(dat_cal$pred,
-              dat_cal$lower,
-              type = "l",
-              lty = 2,
-              lwd = 2)
-        lines(dat_cal$pred,
-              dat_cal$upper,
-              type = "l",
-              lty = 2,
-              lwd = 2)
-      } else {
-        polygon(
-          x = with(dat_cal, c(pred, rev(pred))),
-          y = with(dat_cal, c(upper, rev(lower))),
-          col = fill.cox,
-          border = NA
-        )
-      }
-      lines(dat_cal$pred, dat_cal$obs, type = "l", lwd = lwd.rcs, lty = lty.rcs)
-    }
-    ll <- legendloc
-    if (!is.logical(ll))
-      if (!is.list(ll))
-        ll <- list(x = ll[1], y = ll[2])
-    legend(ll,
-           c("Ideal calibration",
-             "Cox calibration",
-             "95% confidence interval"),
-           col = c(2, 1, 1),
-           lty = c(2, 1, 2),
-           lwd = c(2, 2, 2),
-           bty = "n",
-           cex = 0.85)
-    segments(bins1, line.bins, bins1, length.seg * f1 + line.bins)
-    segments(bins0, line.bins, bins0, length.seg * -f0 + line.bins)
-    lines(c(min(bins0, bins1) - 0.01, max(bins0, bins1) + 0.01), c(line.bins, line.bins))
-    text(max(bins0, bins1) + dist.label,
-         line.bins + dist.label2,
-         d1lab,
-         cex = size.d01 * 0.25)
-    text(max(bins0, bins1) + dist.label,
-         line.bins - dist.label2,
-         d0lab,
-         cex = size.d01 * 0.25)
-  } else if(plotCal == "ggplot") {
-    gg =
-      ggplot(data.frame()) +
-      geom_line(data = data.frame(x = 0:1, y = 0:1),
-                aes(x = x, y = y, colour = "Ideal"),
-                linewidth = lwd.ideal,
-                show.legend = TRUE) +
-      labs(x = xlab, y = ylab)
-    legCol    = c("Ideal" = col.ideal)
-    lt        = lty.ideal
-    lw.d      = lwd.ideal
-    marks     = NA
-    if(addCox) {
-      gg =
-        gg +
-        geom_line(data = datCox, aes(x = pred, y = obs, color = "Cox calibration"), linetype = lty.cox, linewidth = lwd.cox)
-      legCol = c(legCol, "Cox calibration" = col.cox)
-      lt     = c(lt, lty.cox)
-      lw.d   = c(lw.d, lwd.cox)
-      marks  = c(marks, NA)
-      gg =
         if(CL.cox == "line") {
           legCol = c(legCol, "CL Cox" = col.cox)
           lt     = c(lt, 2)
           lw.d   = c(lw.d, 1)
           marks  = c(marks, NA)
-          gg +
-            geom_line(data = datCox, aes(x = pred, y = lower, color = "CL Cox"), linetype = 2, linewidth = 1) +
-            geom_line(data = datCox, aes(x = pred, y = upper, color = "CL Cox"), linetype = 2, linewidth = 1)
+          lines(datCox$pred,
+                datCox$lower,
+                type = "l",
+                lty = 2,
+                lwd = 2)
+          lines(datCox$pred,
+                datCox$upper,
+                type = "l",
+                lty = 2,
+                lwd = 2)
         } else {
-          gg +
-            geom_ribbon(data = datCox, aes(x = pred, ymin = lower, ymax = upper),
-                        fill = fill.cox)
+          polygon(
+            x = with(datCox, c(pred, rev(pred))),
+            y = with(datCox, c(upper, rev(lower))),
+            col = fill.cox,
+            border = NA
+          )
         }
-    }
+        lines(datCox$pred, datCox$obs, type = "l",
+              lwd = lwd.cox, lty = lty.cox)
+      }
 
-    if(addRCS) {
-      gg =
-        gg +
-        geom_line(data = dat_cal, aes(x = pred, y = obs, color = "Flexible calibration (rcs)"), linetype = lty.cox, linewidth = lwd.cox)
-      legCol = c(legCol, "Flexible calibration (rcs)" = col.rcs)
-      lt     = c(lt, lty.rcs)
-      lw.d   = c(lw.d, lwd.rcs)
-      marks  = c(marks, NA)
-      gg =
+      if(addRCS) {
+        legCol = c(legCol, "Flexible calibration (rcs)" = col.rcs)
+        lt     = c(lt, lty.rcs)
+        lw.d   = c(lw.d, lwd.rcs)
+        marks  = c(marks, NA)
         if(CL.rcs == "line") {
           legCol = c(legCol, "CL flexible (rcs)" = col.rcs)
           lt     = c(lt, 2)
           lw.d   = c(lw.d, 1)
           marks  = c(marks, NA)
-          gg +
-            geom_line(data = dat_cal, aes(x = pred, y = lower, color = "CL flexible (rcs)"), linetype = 2, linewidth = 1) +
-            geom_line(data = dat_cal, aes(x = pred, y = upper, color = "CL flexible (rcs)"), linetype = 2, linewidth = 1)
+          lines(dat_cal$pred,
+                dat_cal$lower,
+                type = "l",
+                lty = 2,
+                lwd = 2)
+          lines(dat_cal$pred,
+                dat_cal$upper,
+                type = "l",
+                lty = 2,
+                lwd = 2)
         } else {
-          gg +
-            geom_ribbon(data = dat_cal, aes(x = pred, ymin = lower, ymax = upper),
-                        fill = fill.rcs)
+          polygon(
+            x = with(dat_cal, c(pred, rev(pred))),
+            y = with(dat_cal, c(upper, rev(lower))),
+            col = fill.cox,
+            border = NA
+          )
         }
-    }
+        lines(dat_cal$pred, dat_cal$obs, type = "l", lwd = lwd.rcs, lty = lty.rcs)
+      }
+      ll <- legendloc
+      if (!is.logical(ll))
+        if (!is.list(ll))
+          ll <- list(x = ll[1], y = ll[2])
+      legend(ll,
+             c("Ideal calibration",
+               "Cox calibration",
+               "95% confidence interval"),
+             col = c(2, 1, 1),
+             lty = c(2, 1, 2),
+             lwd = c(2, 2, 2),
+             bty = "n",
+             cex = 0.85)
+      segments(bins1, line.bins, bins1, length.seg * f1 + line.bins)
+      segments(bins0, line.bins, bins0, length.seg * -f0 + line.bins)
+      lines(c(min(bins0, bins1) - 0.01, max(bins0, bins1) + 0.01), c(line.bins, line.bins))
+      text(max(bins0, bins1) + dist.label,
+           line.bins + dist.label2,
+           d1lab,
+           cex = size.d01 * 0.25)
+      text(max(bins0, bins1) + dist.label,
+           line.bins - dist.label2,
+           d0lab,
+           cex = size.d01 * 0.25)
+    } else if(plotCal == "ggplot") {
+      gg =
+        ggplot(data.frame()) +
+        geom_line(data = data.frame(x = 0:1, y = 0:1),
+                  aes(x = x, y = y, colour = "Ideal"),
+                  linewidth = lwd.ideal,
+                  show.legend = TRUE) +
+        labs(x = xlab, y = ylab)
+      legCol    = c("Ideal" = col.ideal)
+      lt        = lty.ideal
+      lw.d      = lwd.ideal
+      marks     = NA
+      if(addCox) {
+        gg =
+          gg +
+          geom_line(data = datCox, aes(x = pred, y = obs, color = "Cox calibration"), linetype = lty.cox, linewidth = lwd.cox)
+        legCol = c(legCol, "Cox calibration" = col.cox)
+        lt     = c(lt, lty.cox)
+        lw.d   = c(lw.d, lwd.cox)
+        marks  = c(marks, NA)
+        gg =
+          if(CL.cox == "line") {
+            legCol = c(legCol, "CL Cox" = col.cox)
+            lt     = c(lt, 2)
+            lw.d   = c(lw.d, 1)
+            marks  = c(marks, NA)
+            gg +
+              geom_line(data = datCox, aes(x = pred, y = lower, color = "CL Cox"), linetype = 2, linewidth = 1) +
+              geom_line(data = datCox, aes(x = pred, y = upper, color = "CL Cox"), linetype = 2, linewidth = 1)
+          } else {
+            gg +
+              geom_ribbon(data = datCox, aes(x = pred, ymin = lower, ymax = upper),
+                          fill = fill.cox)
+          }
+      }
+
+      if(addRCS) {
+        gg =
+          gg +
+          geom_line(data = dat_cal, aes(x = pred, y = obs, color = "Flexible calibration (rcs)"), linetype = lty.cox, linewidth = lwd.cox)
+        legCol = c(legCol, "Flexible calibration (rcs)" = col.rcs)
+        lt     = c(lt, lty.rcs)
+        lw.d   = c(lw.d, lwd.rcs)
+        marks  = c(marks, NA)
+        gg =
+          if(CL.rcs == "line") {
+            legCol = c(legCol, "CL flexible (rcs)" = col.rcs)
+            lt     = c(lt, 2)
+            lw.d   = c(lw.d, 1)
+            marks  = c(marks, NA)
+            gg +
+              geom_line(data = dat_cal, aes(x = pred, y = lower, color = "CL flexible (rcs)"), linetype = 2, linewidth = 1) +
+              geom_line(data = dat_cal, aes(x = pred, y = upper, color = "CL flexible (rcs)"), linetype = 2, linewidth = 1)
+          } else {
+            gg +
+              geom_ribbon(data = dat_cal, aes(x = pred, ymin = lower, ymax = upper),
+                          fill = fill.rcs)
+          }
+      }
 
       gg =
         gg +
@@ -451,7 +462,7 @@ valProbSurvival <- function(fit, valdata, alpha = 0.05, timeHorizon = 5, nk = 3,
       gg =
         gg + coord_cartesian(xlim = xlim, ylim = ylim)
       print(gg)
-  }
+    }
   }
   Results = structure(
     list(call = callFn,
