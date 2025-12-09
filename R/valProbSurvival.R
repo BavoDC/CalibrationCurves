@@ -41,11 +41,12 @@
 #' @examples
 #' \dontrun{
 #' library(CalibrationCurves)
+#' library(survival)
 #' data(trainDataSurvival)
 #' data(testDataSurvival)
 #' sFit = coxph(Surv(ryear, rfs) ~ csize + cnode + grade3, data = trainDataSurvival,
 #'  x = TRUE, y = TRUE)
-#' calPerf = valProbSurvival(sFit, gbsg5, plotCal = "base", nk = 5)
+#' calPerf = valProbSurvival(sFit, testDataSurvival, plotCal = "base", nk = 5)
 #' }
 
 valProbSurvival <- function(fit, valdata, alpha = 0.05, timeHorizon = 5, nk = 3,

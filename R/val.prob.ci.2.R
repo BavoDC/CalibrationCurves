@@ -223,6 +223,13 @@ val.prob.ci.2 <- function(p, y, logit, group,
   if (!is.numeric(nr.knots)) {
     stop("Nr.knots must be numeric.")
   }
+  if(nr.knots > 5 | nr.knots < 3)
+    stop(paste(
+      "Number of knots = ",
+      nr.knots,
+      sep = "",
+      ", only 3 <= nk <= 5 is allowed."
+    ))
 
   logit <- logit[nma]
   y <- y[nma]
