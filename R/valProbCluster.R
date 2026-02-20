@@ -155,15 +155,15 @@ valProbCluster <- function(data = NULL, p, y, cluster,
   results =
     if (approach == "CGC") {
       do.call(CGC, c(
-        list(p = p, y = y, cluster = cluster, plot = plot, cl.level = 0.95), extraArgs
+        list(p = p, y = y, cluster = cluster, plot = plot, cl.level = cl.level), extraArgs
       ))
     } else if (approach == "MAC2") {
       do.call(MAC2, c(
-        list(p = p, y = y, cluster = cluster, plot = plot, grid = grid, cl.level = 0.95), extraArgs
+        list(p = p, y = y, cluster = cluster, plot = plot, grid = grid, cl.level = cl.level), extraArgs
       ))
     } else if (approach == "MIXC") {
       do.call(MIXC, c(
-        list(p = p, y = y, cluster = cluster, plot = plot, CI = TRUE, grid = grid, cl.level = 0.95), extraArgs
+        list(p = p, y = y, cluster = cluster, plot = plot, CI = TRUE, grid = grid, cl.level = cl.level), extraArgs
       ))
     }
 
