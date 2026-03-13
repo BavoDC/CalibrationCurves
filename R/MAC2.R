@@ -166,13 +166,19 @@ MAC2 <- function(data = NULL,
 
     # --- Splines method ---
     nkDecrease <- function(Argz) {
+      fallbackLinear <- function() {
+        warning("Spline model failed at 3 knots, falling back to linear logistic model.",
+                immediate. = TRUE)
+        lrm(data = risk_cluster, outcome ~ transf_preds)
+      }
       tryCatch(
         do.call("lrm", Argz),
         error = function(e) {
           nk = Argz$formula[[3]][[3]]
-          warning(paste0("The number of knots led to estimation problems, nk will be set to ", nk - 1), immediate. = TRUE)
+          if (nk <= 3) return(fallbackLinear())
+          warning(paste0("The number of knots led to estimation problems, nk will be set to ", nk - 1),
+                  immediate. = TRUE)
           nk = nk - 1
-          cat(paste("fitting with", nk, "knots"))
           Argz = list(
             formula = eval(substitute(outcome ~ rcs(transf_preds, k), list(k = nk))),
             data    = risk_cluster
@@ -181,9 +187,10 @@ MAC2 <- function(data = NULL,
         },
         warning = function(w) {
           nk = Argz$formula[[3]][[3]]
-          warning(paste0("The number of knots led to estimation problems, nk will be set to ", nk - 1), immediate. = TRUE)
+          if (nk <= 3) return(fallbackLinear())
+          warning(paste0("The number of knots led to estimation problems, nk will be set to ", nk - 1),
+                  immediate. = TRUE)
           nk = nk - 1
-          cat(paste("fitting with", nk, "knots"))
           Argz = list(
             formula = eval(substitute(outcome ~ rcs(transf_preds, k), list(k = nk))),
             data    = risk_cluster
@@ -191,6 +198,7 @@ MAC2 <- function(data = NULL,
           nkDecrease(Argz)
         })
     }
+
     knots_sub   = knots
     argzSplines = list(
       formula = eval(substitute(outcome ~ rcs(transf_preds, k), list(k = knots_sub))),
@@ -198,6 +206,8 @@ MAC2 <- function(data = NULL,
     )
     splines_model = nkDecrease(argzSplines)
     knots_sub     = splines_model$sformula[[3]][[3]]
+    # NULL when nkDecrease fell back to linear lrm (no rcs)
+    if (is.null(knots_sub)) knots_sub <- 0
 
     if (knots_sub > 3) {
       splines_model3 = lrm(data = risk_cluster, outcome ~ rcs(transf_preds, 3))
@@ -219,11 +229,22 @@ MAC2 <- function(data = NULL,
       }
     }
 
-    splines_data <- predict(splines_model,
+    splines_data <- try(predict(splines_model,
       newdata = data.frame(transf_preds = transform_function(grid)),
       type = "lp",
       se.fit = TRUE
-    )
+    ), silent = TRUE)
+
+    # Safety net: if predict on the splines model fails, refit as linear lrm
+    if (inherits(splines_data, "try-error")) {
+      splines_model <- lrm(data = risk_cluster, outcome ~ transf_preds)
+      splines_data <- predict(splines_model,
+        newdata = data.frame(transf_preds = transform_function(grid)),
+        type = "lp",
+        se.fit = TRUE
+      )
+      knots_sub <- 0
+    }
 
     splines_data <- data.frame(
       splines    = splines_data$linear.predictors,
