@@ -49,7 +49,7 @@
 #'  x = TRUE, y = TRUE)
 #' calPerf = valProbSurvival(sFit, testDataSurvival, plotCal = "base", nk = 5)
 #' }
-
+#' @export
 valProbSurvival <- function(fit, valdata, weights = NULL, alpha = 0.05, timeHorizon = 5, nk = 3,
                             plotCal = c("none", "base", "ggplot"),
                             addCox = FALSE, addRCS = TRUE,
@@ -108,7 +108,7 @@ valProbSurvival <- function(fit, valdata, weights = NULL, alpha = 0.05, timeHori
     ,
     nrow = 2,
     ncol = 3,
-    byrow = T,
+    byrow = TRUE,
     dimnames = list(c("Harrell C", "Uno C"),
                     c("Estimate", "2.5 %", "97.5 %"))
   )

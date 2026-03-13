@@ -97,8 +97,7 @@
 #' @references Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina M., Steyerberg E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. \emph{Journal of Clinical Epidemiology}, \bold{74}, pp. 167-176
 #' @references Van Hoorde, K., Van Huffel, S., Timmerman, D., Bourne, T., Van Calster, B. (2015). A spline-based tool to assess and visualize the calibration of multiclass risk predictions. \emph{Journal of Biomedical Informatics}, \bold{54}, pp. 283-93
 #'
-#' @importFrom Hmisc cut2
-#' @import ggplot2
+#' @export
 #'
 #' @examples
 #'
@@ -160,9 +159,9 @@ valProbggplot <- function(p, y, logit, group,
       ", only 3 <= nk <= 5 is allowed."
     ))
   if (!missing(p))
-    if(allowPerfectPredictions & any(!(p > 0 | p < 1)))
+    if(allowPerfectPredictions & any(p < 0 | p > 1, na.rm = TRUE))
       stop("Probabilities can not be > 1 or < 0.")
-  else if (any(!(p >= 0 | p <= 1)))
+  else if (!allowPerfectPredictions & any(p <= 0 | p >= 1, na.rm = TRUE))
     stop("Probabilities can not be >= 1 or <= 0.")
   if(allowPerfectPredictions) {
     if(all(p %in% 0:1))

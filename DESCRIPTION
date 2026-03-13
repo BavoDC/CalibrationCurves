@@ -13,9 +13,9 @@ Description: Plots calibration curves and computes statistics for assessing cali
 License: GPL (>= 3)
 LazyData: TRUE
 Depends: R (>= 3.5.0), rms (>= 7.0-0), ggplot2
-Imports: grDevices, graphics, methods, stats, utils, survival, Hmisc, bookdown, rstudioapi, timeROC, riskRegression, meta, metafor,
+Imports: grDevices, graphics, methods, stats, utils, survival, Hmisc, timeROC, riskRegression, meta, metafor,
          zoo, lme4, merTools, dplyr, magrittr
-Suggests: knitr, rmarkdown, mgcv, MASS, Matrix, testthat (>= 3.0.0)
+Suggests: knitr, rmarkdown, bookdown, rstudioapi, mgcv, MASS, Matrix, testthat (>= 3.0.0)
 Config/testthat/edition: 3
 RoxygenNote: 7.3.3
 Encoding: UTF-8
