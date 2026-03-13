@@ -344,6 +344,8 @@ valProbggplot <- function(p, y, logit, group,
   lt <- f$coef[1] + f$coef[2] * log(predprob/(1 - predprob))
   calp <- 1/(1 + exp( - lt))
   emax <- max(abs(predprob - calp))
+  calCurves = list()
+
   if (pl) {
     gg = ggplot(data.frame()) +
       geom_line(data = data.frame(x = 0:1, y = 0:1), aes(x = x, y = y, colour = "Ideal"), linewidth = lwd.ideal, show.legend = TRUE) +
@@ -353,7 +355,6 @@ valProbggplot <- function(p, y, logit, group,
     lt        = lty.ideal
     lw.d      = lwd.ideal
     marks     = NA
-    calCurves = list()
 
 
     if (logistic.cal) {
@@ -540,6 +541,18 @@ valProbggplot <- function(p, y, logit, group,
       marks   <- c(marks, 2)
     }
   }
+
+  # Compute eavg and ECI for loess (needed regardless of whether we plot)
+  if (smooth == "loess") {
+    argzLoess$formula = y ~ p
+    if (!exists("SmFit"))
+      SmFit <- do.call("loess", argzLoess)
+    Sm.01.npl <- data.frame(x = unname(SmFit$x), y = SmFit$fitted)
+    cal.smooth <- approx(Sm.01.npl, xout = p, ties = "ordered")$y
+    eavg       <- mean(abs(p - cal.smooth))
+    ECI        <- mean((p - cal.smooth) ^ 2) * 100
+  }
+
   lr      = stats["Model L.R."]
   p.lr    = stats["P"]
   D       = (lr - 1) / n
@@ -664,20 +677,24 @@ valProbggplot <- function(p, y, logit, group,
 
     }
   }
-  gg =
-    gg +
-    scale_color_manual("", values = legCol, breaks = names(legCol)) +
-    guides(colour = guide_legend(override.aes = list(linetype = lt, shape = marks, linewidth = lw.d * 0.5, size = 7))) +
-    theme_bw() +
-    theme(plot.background=element_blank(),
-          panel.border = element_rect(colour = "black", fill = NA, linewidth = 1),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          axis.text = element_text(size = 12),
-          axis.title = element_text(size = 14),
-          plot.margin = margin(11, 11, 5.5, 5.5, "points"), legend.position = "bottom")
-  gg =
-    gg + coord_cartesian(xlim = xlim, ylim = ylim)
+  if (pl) {
+    gg =
+      gg +
+      scale_color_manual("", values = legCol, breaks = names(legCol)) +
+      guides(colour = guide_legend(override.aes = list(linetype = lt, shape = marks, linewidth = lw.d * 0.5, size = 7))) +
+      theme_bw() +
+      theme(plot.background=element_blank(),
+            panel.border = element_rect(colour = "black", fill = NA, linewidth = 1),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            axis.text = element_text(size = 12),
+            axis.title = element_text(size = 14),
+            plot.margin = margin(11, 11, 5.5, 5.5, "points"), legend.position = "bottom")
+    gg =
+      gg + coord_cartesian(xlim = xlim, ylim = ylim)
+  } else {
+    gg = NULL
+  }
   Results =
     structure(
       list(

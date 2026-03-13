@@ -344,13 +344,14 @@ val.prob.ci.2 <- function(p, y, logit, group,
   calp <- 1/(1 + exp( - lt))
   emax <- max(abs(predprob - calp))
 
+  calCurves = list()
+
   if (pl) {
     plot(0.5, 0.5, xlim = xlim, ylim = ylim, type = "n", xlab = xlab,
          ylab = ylab, las=las,...)
     clip(0,1,0,1)
     abline(0, 1, lty = lty.ideal,col=col.ideal,lwd=lwd.ideal)
     do.call("clip", as.list(par()$usr))
-    calCurves = list()
 
 
     lt <- lty.ideal
@@ -620,6 +621,18 @@ val.prob.ci.2 <- function(p, y, logit, group,
       marks <- c(marks, 2)
     }
   }
+
+  # Compute eavg and ECI for loess (needed regardless of whether we plot)
+  if (smooth == "loess") {
+    argzLoess$formula = y ~ p
+    if (!exists("SmFit"))
+      SmFit <- do.call("loess", argzLoess)
+    Sm.01.npl <- data.frame(x = unname(SmFit$x), y = SmFit$fitted)
+    cal.smooth <- approx(Sm.01.npl, xout = p, ties = "ordered")$y
+    eavg <- mean(abs(p - cal.smooth))
+    ECI  <- mean((p - cal.smooth) ^ 2) * 100
+  }
+
   lr <- stats["Model L.R."]
   p.lr <- stats["P"]
   D <- (lr - 1) / n
