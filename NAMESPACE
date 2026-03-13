@@ -9,7 +9,7 @@ importFrom("stats", "approx", "confint", "loess", "na.omit", "pchisq",
            "loess.control", "model.matrix", "optimize", "qlogis", "sd", "var")
 importFrom("utils", "getFromNamespace")
 importFrom("Hmisc", "cut2", "groupn", "label", "rcspline.eval")
-importFrom("survival", "coxph", "coxph.control", "concordance", "survfit")
+importFrom("survival", "basehaz", "coxph", "coxph.control", "concordance", "survfit")
 importFrom("timeROC", "timeROC")
 importFrom("riskRegression", "predictRisk", "Score")
 importFrom("bookdown", "html_document2")

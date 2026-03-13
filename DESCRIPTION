@@ -2,20 +2,21 @@ Package: CalibrationCurves
 Type: Package
 Title: Calibration Performance
 Version: 3.0.0
-Authors@R: c(person("De Cock", "Bavo", role = c("aut", "cre"),
+Authors@R: c(person(given = "Bavo", family = "De Cock", role = c("aut", "cre"),
 		     email = "bavo.decock@kuleuven.be"),
-		    person("Barrenada", "Lasai", role = "aut"),
-	      person("Nieboer", "Daan", role = "aut"),
-	      person("Van Calster", "Ben", role = "aut"),
-	      person("Steyerberg", "Ewout",role="aut"),
-	      person("Vergouwe", "Yvonne",role="aut"))
+		    person(given = "Lasai", family = "Barrenada", role = "aut"),
+	      person(given = "Daan", family = "Nieboer", role = "aut"),
+	      person(given = "Ben", family = "Van Calster", role = "aut"),
+	      person(given = "Ewout", family = "Steyerberg", role = "aut"),
+	      person(given = "Yvonne", family = "Vergouwe", role = "aut"))
 Description: Plots calibration curves and computes statistics for assessing calibration performance. See Lasai et al. (2025) <doi:10.48550/arXiv.2503.08389>, De Cock Campo (2023) <doi:10.48550/arXiv.2309.08559> and Van Calster et al. (2016) <doi:10.1016/j.jclinepi.2015.12.005>.
 License: GPL (>= 3)
 LazyData: TRUE
 Depends: R (>= 3.5.0), rms (>= 7.0-0), ggplot2
 Imports: grDevices, graphics, methods, stats, utils, survival, Hmisc, bookdown, rstudioapi, timeROC, riskRegression, meta, metafor,
          zoo, lme4, merTools, dplyr, magrittr
-Suggests: knitr, rmarkdown, mgcv, MASS, Matrix
+Suggests: knitr, rmarkdown, mgcv, MASS, Matrix, testthat (>= 3.0.0)
+Config/testthat/edition: 3
 RoxygenNote: 7.3.3
 Encoding: UTF-8
 VignetteBuilder: knitr
