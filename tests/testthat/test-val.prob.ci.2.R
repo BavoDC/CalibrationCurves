@@ -88,14 +88,13 @@ test_that("val.prob.ci.2 warns when allowPerfectPredictions = TRUE and p contain
   )
 })
 
-test_that("val.prob.ci.2 handles p = 0 with allowPerfectPredictions = FALSE via downstream logit", {
+test_that("val.prob.ci.2 errors on p = 0 with allowPerfectPredictions = FALSE", {
   d <- local_binary_preds()
   p_perf <- d$p
   p_perf[1] <- 0
-  # p = 0 creates -Inf logit; expect a warning about deletion
-  expect_warning(
+  expect_error(
     val.prob.ci.2(p_perf, d$y, pl = FALSE, allowPerfectPredictions = FALSE),
-    "deleted"
+    "Probabilities can not be >= 1 or <= 0"
   )
 })
 
