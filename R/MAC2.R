@@ -167,7 +167,7 @@ MAC2 <- function(data = NULL,
     # --- Splines method ---
     nkDecrease <- function(Argz) {
       fallbackLinear <- function() {
-        warning("Spline model failed at 3 knots, falling back to linear logistic model.",
+        warning(paste0("Spline model for cluster ", subcluster, " failed at 3 knots, falling back to linear logistic model."),
                 immediate. = TRUE)
         lrm(data = risk_cluster, outcome ~ transf_preds)
       }
@@ -205,9 +205,13 @@ MAC2 <- function(data = NULL,
       data    = risk_cluster
     )
     splines_model = nkDecrease(argzSplines)
-    knots_sub     = splines_model$sformula[[3]][[3]]
-    # NULL when nkDecrease fell back to linear lrm (no rcs)
-    if (is.null(knots_sub)) knots_sub <- 0
+    # When nkDecrease fell back to linear lrm, sformula[[3]] is a symbol
+    # (not a call), so [[3]] would error. Guard with is.call().
+    knots_sub <- if (is.call(splines_model$sformula[[3]])) {
+      splines_model$sformula[[3]][[3]]
+    } else {
+      0L
+    }
 
     if (knots_sub > 3) {
       splines_model3 = lrm(data = risk_cluster, outcome ~ rcs(transf_preds, 3))
