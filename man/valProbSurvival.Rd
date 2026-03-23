@@ -7,6 +7,7 @@
 valProbSurvival(
   fit,
   valdata,
+  weights = NULL,
   alpha = 0.05,
   timeHorizon = 5,
   nk = 3,
@@ -45,6 +46,8 @@ valProbSurvival(
 \item{fit}{the model fit, has to be of type \code{\link[survival]{coxph}}}
 
 \item{valdata}{the validation data set}
+
+\item{weights}{vector of case weights}
 
 \item{alpha}{the significance level}
 

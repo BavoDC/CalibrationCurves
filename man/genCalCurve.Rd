@@ -21,7 +21,7 @@ genCalCurve(
   lwdGLMCal = 1,
   colGLMCal = "red",
   ltyGLMCal = 1,
-  AddStats = T,
+  AddStats = TRUE,
   Digits = 3,
   cexStats = 1,
   lwdLeg = 1.5,

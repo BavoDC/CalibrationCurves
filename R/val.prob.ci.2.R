@@ -101,7 +101,7 @@
 #' @references Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina M., Steyerberg E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. \emph{Journal of Clinical Epidemiology}, \bold{74}, pp. 167-176
 #' @references Van Hoorde, K., Van Huffel, S., Timmerman, D., Bourne, T., Van Calster, B. (2015). A spline-based tool to assess and visualize the calibration of multiclass risk predictions. \emph{Journal of Biomedical Informatics}, \bold{54}, pp. 283-93
 #'
-#' @importFrom Hmisc cut2
+#' @export
 #'
 #' @examples
 #'
@@ -156,9 +156,9 @@ val.prob.ci.2 <- function(p, y, logit, group,
     smooth <- "F"
   }
   if (!missing(p))
-    if(allowPerfectPredictions & any(!(p > 0 | p < 1)))
+    if(allowPerfectPredictions & any(p < 0 | p > 1, na.rm = TRUE))
       stop("Probabilities can not be > 1 or < 0.")
-  else if (any(!(p >= 0 | p <= 1)))
+  else if (!allowPerfectPredictions & any(p <= 0 | p >= 1, na.rm = TRUE))
     stop("Probabilities can not be >= 1 or <= 0.")
   if(allowPerfectPredictions) {
     if(all(p %in% 0:1))
@@ -344,13 +344,14 @@ val.prob.ci.2 <- function(p, y, logit, group,
   calp <- 1/(1 + exp( - lt))
   emax <- max(abs(predprob - calp))
 
+  calCurves = list()
+
   if (pl) {
     plot(0.5, 0.5, xlim = xlim, ylim = ylim, type = "n", xlab = xlab,
          ylab = ylab, las=las,...)
     clip(0,1,0,1)
     abline(0, 1, lty = lty.ideal,col=col.ideal,lwd=lwd.ideal)
     do.call("clip", as.list(par()$usr))
-    calCurves = list()
 
 
     lt <- lty.ideal
@@ -412,7 +413,7 @@ val.prob.ci.2 <- function(p, y, logit, group,
               col = rgb(177, 177, 177, 177, maxColorValue = 255),
               border = NA
             )
-            if (connect.smooth == T) {
+            if (connect.smooth == TRUE) {
               lines(Sm,
                     lty = lty.smooth,
                     lwd = lwd.smooth,
@@ -620,6 +621,18 @@ val.prob.ci.2 <- function(p, y, logit, group,
       marks <- c(marks, 2)
     }
   }
+
+  # Compute eavg and ECI for loess (needed regardless of whether we plot)
+  if (smooth == "loess") {
+    argzLoess$formula = y ~ p
+    if (!exists("SmFit"))
+      SmFit <- do.call("loess", argzLoess)
+    Sm.01.npl <- data.frame(x = unname(SmFit$x), y = SmFit$fitted)
+    cal.smooth <- approx(Sm.01.npl, xout = p, ties = "ordered")$y
+    eavg <- mean(abs(p - cal.smooth))
+    ECI  <- mean((p - cal.smooth) ^ 2) * 100
+  }
+
   lr <- stats["Model L.R."]
   p.lr <- stats["P"]
   D <- (lr - 1) / n

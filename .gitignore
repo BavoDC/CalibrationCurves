@@ -61,3 +61,6 @@ docs
 
 # vignettes
 #/vignettes/
+.positai
+CHANGELOG-dev.md
+NEWS.md

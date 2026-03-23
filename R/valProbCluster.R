@@ -78,6 +78,7 @@
 #' @references Barreñada, L., De Cock Campo, B., Wynants, L., Van Calster, B. (2025).
 #' Clustered Flexible Calibration Plots for Binary Outcomes Using Random Effects Modeling.
 #' arXiv:2503.08389, available at https://arxiv.org/abs/2503.08389.
+#' @export
 valProbCluster <- function(data = NULL, p, y, cluster,
                            plot = TRUE, approach = c("MIXC", "CGC", "MAC2"),
                            cl.level = 0.95,

@@ -11,7 +11,10 @@
 #' @examples
 #' # Can only be executed in Rstudio
 #' \dontrun{x %<=% rnorm(1e7)}
+#' @export
 `%<=%` <- function(lhs, rhs) {
+  if (!rstudioapi::isAvailable())
+    stop("This operator requires RStudio.")
   Pkgs = names(sessionInfo()$otherPkgs)
   lhs  = as.character(enquote(substitute(lhs))[2])
   rhs  = as.character(enquote(substitute(rhs))[2])
@@ -21,7 +24,7 @@
   writeLines(Job, tmpR)
   if(!file.exists(tmpR))
     stop("Temporary R script not created")
-  jobRunScript(tmpR, exportEnv = "R_GlobalEnv", importEnv = TRUE)
+  rstudioapi::jobRunScript(tmpR, exportEnv = "R_GlobalEnv", importEnv = TRUE)
 }
 
 #' Infix operator to run background jobs
@@ -51,7 +54,10 @@
 #'  y = rnorm(1e7)
 #' })
 #' }
+#' @export
 `%{}%` <- function(lhs, rhs) {
+  if (!rstudioapi::isAvailable())
+    stop("This operator requires RStudio.")
   Pkgs = names(sessionInfo()$otherPkgs)
   Job  = c(if(is.null(Pkgs)) NULL else paste0("LibraryM(", paste0(Pkgs, collapse = ", "), ")"),
            as.character(enquote(substitute(rhs))[2]))
@@ -59,7 +65,7 @@
   writeLines(Job, tmpR)
   if(!file.exists(tmpR))
     stop("Temporary R script not created")
-  jobRunScript(tmpR, exportEnv = "R_GlobalEnv", importEnv = TRUE)
+  rstudioapi::jobRunScript(tmpR, exportEnv = "R_GlobalEnv", importEnv = TRUE)
 }
 
 
@@ -72,6 +78,7 @@
 #'
 #' @examples
 #' LibraryM(CalibrationCurves)
+#' @export
 LibraryM <- function(...) {
   libs = as.list(substitute(list(...)))[-1L]
   if(!is.character(libs)) {

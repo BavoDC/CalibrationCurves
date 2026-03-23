@@ -1,5 +1,4 @@
 \name{CalibrationCurves}
-\alias{CalibrationCurves-package}
 \docType{package}
 \title{General information on the package and its functions
 }
