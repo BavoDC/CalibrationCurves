@@ -9,6 +9,7 @@ Authors@R: c(person(given = "Bavo", family = "De Cock", role = c("aut", "cre"),
 	      person(given = "Ben", family = "Van Calster", role = "aut"),
 	      person(given = "Ewout", family = "Steyerberg", role = "aut"),
 	      person(given = "Yvonne", family = "Vergouwe", role = "aut"))
+Date: 2026-03-25
 Description: Plots calibration curves and computes statistics for assessing calibration performance. See Lasai et al. (2025) <doi:10.48550/arXiv.2503.08389>, De Cock Campo (2023) <doi:10.48550/arXiv.2309.08559> and Van Calster et al. (2016) <doi:10.1016/j.jclinepi.2015.12.005>.
 License: GPL (>= 3)
 LazyData: TRUE

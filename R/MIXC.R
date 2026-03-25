@@ -216,11 +216,11 @@ MIXC <- function(data = NULL,
       ) +
       xlab("Estimated probability") +
       ylab("Observed proportion") +
-      theme_classic(base_size = 8, base_family = "serif") +
+      theme_classic(base_size = 11, base_family = "sans") +
       scale_x_continuous(breaks = seq(0, 1, 0.1)) +
       scale_y_continuous(breaks = seq(0, 1, 0.2)) +
       coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
-      scale_fill_manual(name = "Uncertainty", values = c("green4", "green"),
+      scale_fill_manual(name = "Heterogeneity", values = c("green4", "green"),
                        breaks = c(unname(ci_pi["ci"]), unname(ci_pi["pi"]))) +
       theme(
         legend.key.size = unit(0.3, "cm"),
@@ -232,8 +232,8 @@ MIXC <- function(data = NULL,
       plot_obj <- plot_obj +
         geom_line(
           data = cluster_cal_data,
-          aes(x = pred_prob, y = obs_prob, color = cluster),
-          linewidth = 0.2, linetype = "dotted", show.legend = FALSE
+          aes(x = pred_prob, y = obs_prob, group = cluster),
+          linewidth = 0.2, linetype = "solid", color = "black", show.legend = FALSE
         )
     }
   }

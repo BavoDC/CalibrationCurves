@@ -236,17 +236,14 @@ CGC <- function(data = NULL,
       ) +
       scale_fill_manual(name = "Heterogeneity", values = c("cornflowerblue", "lightblue"),
                        breaks = c(unname(ci_pi["ci"]), unname(ci_pi["pi"]))) +
-      geom_point(data = deciles_all, aes(x = p, y = y, color = "Traditional grouped"), size = size) +
-      geom_line(data = deciles_all, aes(x = p, y = y, color = "Traditional grouped"), linewidth = linewidth) +
-      geom_point(data = data_all, aes(color = paste0("CG-C(", method, ")")), size = size * 1.3) +
-      geom_line(data = data_all, aes(color = paste0("CG-C(", method, ")")), linewidth = linewidth) +
-      scale_color_manual(name = "Methodology", values = c("black", "gold")) +
+      geom_point(data = data_all, size = size * 1.3, color = "black") +
+      geom_line(data = data_all, linewidth = linewidth, color = "black") +
       xlab("Estimated probability") +
       ylab("Observed proportion") +
       scale_x_continuous(breaks = seq(0, 1, 0.1)) +
       scale_y_continuous(breaks = seq(0, 1, 0.2)) +
       coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
-      theme_classic(base_size = 8, base_family = "serif") +
+      theme_classic(base_size = 11, base_family = "sans") +
       theme(
         legend.key.size = unit(0.3, "cm"),
         panel.grid.major = element_blank(),

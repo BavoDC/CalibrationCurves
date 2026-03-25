@@ -404,3 +404,55 @@ test_that("valProbCluster warns when clusters with single outcome are removed", 
     "removed"
   )
 })
+
+# --------------------------------------------------------------------------
+# Default (combined MAC2 + MIXC) approach
+# --------------------------------------------------------------------------
+
+test_that("valProbCluster default approach returns correct structure", {
+  skip_on_cran()
+  d <- local_cluster_preds()
+  res <- suppressWarnings(
+    valProbCluster(p = d$p, y = d$y, cluster = d$cluster,
+                   plot = TRUE, approach = "default", grid_l = 50)
+  )
+  expect_s3_class(res, "ClusteredCalibrationCurve")
+  expect_equal(res$approach, "default")
+
+ # results should contain both overall (MAC2) and clusters (MIXC)
+  expect_true(all(c("overall", "clusters") %in% names(res$results)))
+
+  # MAC2 overall curve data
+  expect_true("plot_data" %in% names(res$results$overall))
+  mac2_cols <- c("x", "y", "upper", "lower", "up_pre", "low_pre")
+  expect_true(all(mac2_cols %in% names(res$results$overall$plot_data)))
+
+  # MIXC cluster-specific data
+  expect_true("cluster_data" %in% names(res$results$clusters))
+  mixc_cols <- c("cluster", "pred_prob", "obs_prob")
+  expect_true(all(mixc_cols %in% names(res$results$clusters$cluster_data)))
+
+  # ggPlot should be present
+  expect_s3_class(res$ggPlot, "ggplot")
+})
+
+test_that("valProbCluster default approach works with plot = FALSE", {
+  skip_on_cran()
+  d <- local_cluster_preds()
+  res <- suppressWarnings(
+    valProbCluster(p = d$p, y = d$y, cluster = d$cluster,
+                   plot = FALSE, approach = "default", grid_l = 50)
+  )
+  expect_null(res$ggPlot)
+  expect_true(all(c("overall", "clusters") %in% names(res$results)))
+})
+
+test_that("valProbCluster uses default approach when approach is not specified", {
+  skip_on_cran()
+  d <- local_cluster_preds()
+  res <- suppressWarnings(
+    valProbCluster(p = d$p, y = d$y, cluster = d$cluster,
+                   plot = FALSE, grid_l = 50)
+  )
+  expect_equal(res$approach, "default")
+})
