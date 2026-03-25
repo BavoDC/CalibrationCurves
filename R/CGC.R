@@ -148,12 +148,14 @@ CGC <- function(data = NULL,
       x_meta <- metaprop(
         data = data_meta, event = preds_150 * ntile_150,
         n = ntile_150, studlab = cluster,
-        method = "Inverse", backtransf = TRUE
+        method = "Inverse", backtransf = TRUE,
+        level.ma = cl.level, level.predict = cl.level
       )
       y_meta <- metaprop(
         data = data_meta, event = y_150 * ntile_150,
         n = ntile_150, studlab = cluster,
-        method = "Inverse", backtransf = TRUE
+        method = "Inverse", backtransf = TRUE,
+        level.ma = cl.level, level.predict = cl.level
       )
       data_meta_curve <- data.frame(
         te_x = x_meta$TE.random,
@@ -186,6 +188,7 @@ CGC <- function(data = NULL,
         mods = ~ group - 1,
         random = ~ group | cluster,
         struct = "UN", data = dat,
+        level = 100 * cl.level,
         control = list(iter.max = 10000, rel.tol = 1e-6)
       ))
 
@@ -221,14 +224,18 @@ CGC <- function(data = NULL,
   # --- Plotting ---
   curve <- NULL
   if (plot) {
+    # Generate dynamic CI/PI labels based on cl.level
+    ci_pi <- ci_pi_labels(cl.level)
+    
     curve <- ggplot(data_all, aes(x = te_x, y = te_y)) +
       geom_abline(linetype = "dashed", alpha = 0.1) +
-      geom_ribbon(aes(ymax = pre_up_y, ymin = pre_low_y, fill = "PI 95%"), alpha = 1) +
-      geom_ribbon(aes(ymax = ci_up_y, ymin = ci_low_y, fill = "CI 95%"), alpha = 1) +
+      geom_ribbon(aes(ymax = pre_up_y, ymin = pre_low_y, fill = unname(ci_pi["pi"])), alpha = 1) +
+      geom_ribbon(aes(ymax = ci_up_y, ymin = ci_low_y, fill = unname(ci_pi["ci"])), alpha = 1) +
       geom_errorbar(aes(x = te_x, y = te_y, xmin = pre_low_x, xmax = pre_up_x),
         alpha = 0.2, width = 0, lwd = linewidth, lty = "dashed"
       ) +
-      scale_fill_manual(name = "Heterogeneity", values = c("cornflowerblue", "lightblue")) +
+      scale_fill_manual(name = "Heterogeneity", values = c("cornflowerblue", "lightblue"),
+                       breaks = c(unname(ci_pi["ci"]), unname(ci_pi["pi"]))) +
       geom_point(data = deciles_all, aes(x = p, y = y, color = "Traditional grouped"), size = size) +
       geom_line(data = deciles_all, aes(x = p, y = y, color = "Traditional grouped"), linewidth = linewidth) +
       geom_point(data = data_all, aes(color = paste0("CG-C(", method, ")")), size = size * 1.3) +

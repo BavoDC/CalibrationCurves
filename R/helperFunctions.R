@@ -175,3 +175,14 @@ loess.as <-
 ## Logit and inverse logit functions
 Ilogit <- function(x) binomial()$linkinv(x)
 Logit  <- function(x) binomial()$linkfun(x)
+
+#' Generate CI/PI labels based on confidence level
+#'
+#' @param cl.level The confidence level (between 0 and 1)
+#' @return Named vector with "ci" and "pi" labels formatted as percentages
+#' @keywords internal
+ci_pi_labels <- function(cl.level) {
+  percentage <- round(cl.level * 100)
+  c(ci = paste0("CI ", percentage, "%"),
+    pi = paste0("PI ", percentage, "%"))
+}

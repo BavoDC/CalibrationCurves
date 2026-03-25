@@ -198,15 +198,18 @@ MIXC <- function(data = NULL,
   # --- Plotting ---
   plot_obj <- NULL
   if (plot) {
+    # Generate dynamic CI/PI labels based on cl.level
+    ci_pi <- ci_pi_labels(cl.level)
+    
     plot_obj <- ggplot(avg_cal_data) +
       geom_abline(linetype = "dashed", alpha = 0.1) +
       geom_ribbon(aes(
         x = pred_prob, ymin = p_lower_ci, ymax = p_upper_ci,
-        fill = "CI 95%"
+        fill = unname(ci_pi["ci"])
       ), alpha = 0.3) +
       geom_ribbon(aes(
         x = pred_prob, ymin = lwr, ymax = upr,
-        fill = "PI 95%"
+        fill = unname(ci_pi["pi"])
       ), alpha = 0.2) +
       geom_line(aes(x = pred_prob, y = obs_prob),
         linewidth = 1, linetype = "dashed", color = "black"
@@ -217,7 +220,8 @@ MIXC <- function(data = NULL,
       scale_x_continuous(breaks = seq(0, 1, 0.1)) +
       scale_y_continuous(breaks = seq(0, 1, 0.2)) +
       coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
-      scale_fill_manual(name = "Uncertainty", values = c("green4", "green")) +
+      scale_fill_manual(name = "Uncertainty", values = c("green4", "green"),
+                       breaks = c(unname(ci_pi["ci"]), unname(ci_pi["pi"]))) +
       theme(
         legend.key.size = unit(0.3, "cm"),
         panel.grid.major = element_blank(),

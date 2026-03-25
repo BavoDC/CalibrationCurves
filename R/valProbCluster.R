@@ -125,6 +125,9 @@ valProbCluster <- function(data = NULL, p, y, cluster,
   if (!all(y %in% 0:1)) {
     stop("The vector with the binary outcome can only contain the values 0 and 1.")
   }
+  if (!is.numeric(cl.level) || cl.level <= 0 || cl.level >= 1) {
+    stop("The confidence level (cl.level) must be a numeric value between 0 and 1 (exclusive).")
+  }
 
 
   # Inform user about the chosen approach

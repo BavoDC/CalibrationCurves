@@ -124,7 +124,7 @@ valProbSurvival <- function(fit, valdata, weights = NULL, alpha = 0.05, timeHori
         marker = valdata$LP,
         cause = 1,
         weighting = "marginal",
-        times = max(as.numeric(fit$y)) - 0.01,
+        times = timeHorizon,
         iid = TRUE
       ),
       c(

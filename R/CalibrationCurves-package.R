@@ -1,6 +1,3 @@
-#' @keywords internal
-"_PACKAGE"
-
 ## Base R imports ----
 #' @importFrom grDevices rgb
 #' @importFrom graphics abline arrows clip legend lines locator par plot points
@@ -16,7 +13,7 @@
 #' @import ggplot2
 #' @importFrom Hmisc cut2 groupn label rcspline.eval
 #' @importFrom survival basehaz coxph coxph.control concordance survfit
-#' @importFrom timeROC timeROC
+#' @importFrom pec ipcw
 #' @importFrom riskRegression predictRisk Score
 #' @importFrom meta metaprop metagen
 #' @importFrom metafor escalc rma.mv

@@ -1,22 +1,41 @@
 \name{CalibrationCurves}
+\alias{CalibrationCurves-package}
 \docType{package}
 \title{General information on the package and its functions
 }
 \description{
- Using this package, you can assess the calibration performance of your prediction model. That is, to which extent the predictions and correspond with what we observe empirically.
- To assess the calibration of model with a binary outcome, you can use the \code{\link{val.prob.ci.2}} or the \code{\link{valProbggplot}} function. If the outcome of your prediction model
- is not binary but follows a different distribution of the exponential family, you can employ the \code{\link{genCalCurve}} function.
+  The \pkg{CalibrationCurves} package provides tools to assess and visualize the calibration
+  performance of prediction models. Calibration refers to the agreement between predicted
+  probabilities or values and what is actually observed.
 
- If you are not familiar with the theory and/or application of calibration, you can consult the vignette of the package. This vignette provides a comprehensive overview of the theory and
- contains a tutorial with some practical examples. Further, we suggest the reader to consult the \href{https://arxiv.org/abs/2309.08559}{paper} on generalized calibration curves on arXiv.
- In this paper, we provide the theoretical background on the generalized calibration framework and illustrate its applicability with some prototypical examples of both statistical and
- machine learning prediction models that are well-calibrated, overfit and underfit.
+  The package covers a broad range of outcome types and modelling settings:
 
- Originally, the package only contained functions to assess the calibration of prediction models with a binary outcome. The details section provides some background information on the
- history of the package's development.
+  \itemize{
+    \item \strong{Binary outcomes} — \code{\link{val.prob.ci.2}} (base R graphics) and
+      \code{\link{valProbggplot}} (ggplot2) compute flexible calibration curves (loess or
+      restricted cubic splines) with pointwise 95\% confidence intervals, logistic calibration
+      slope and intercept, c-statistic, Brier score, and other statistics.
+    \item \strong{Clustered binary outcomes} — \code{\link{valProbCluster}} assesses
+      calibration while accounting for clustering via three approaches: Clustered Grouped
+      Calibration (\code{\link{CGC}}), Meta-Analytical Calibration Curve (\code{\link{MAC2}}),
+      and Mixed-Effects Model Calibration (\code{\link{MIXC}}). See Barreñada et al. (2025).
+    \item \strong{Generalized outcomes (exponential family)} — \code{\link{genCalCurve}}
+      extends the calibration framework to outcomes whose distribution belongs to the
+      exponential family (e.g., Poisson, Gamma). It estimates the generalized calibration
+      slope and intercept and plots the generalized calibration curve. See De Cock Campo (2023).
+    \item \strong{Survival outcomes} — \code{\link{valProbSurvival}} evaluates calibration
+      for a fitted Cox proportional hazards model at a given time horizon, producing
+      calibration curves and summary statistics for time-to-event predictions.
+  }
+
+  A vignette is available that provides a comprehensive overview of the theory and
+  illustrates the functions with worked examples. Further background is available in the
+  linked papers below.
 }
 \details{
-Some years ago, Yvonne Vergouwe and Ewout Steyerberg adapted the function \code{\link[rms]{val.prob}} from the rms-package (\url{https://cran.r-project.org/package=rms}) into \code{val.prob.ci} and added the following functions to \code{\link[rms]{val.prob}}:
+\strong{History}
+
+Some years ago, Yvonne Vergouwe and Ewout Steyerberg adapted the function \code{\link[rms]{val.prob}} from the rms-package (\url{https://cran.r-project.org/package=rms}) into \code{val.prob.ci} and added the following features:
 
 \itemize{
   \item Scaled Brier score by relating to max for average calibrated Null model
@@ -27,55 +46,54 @@ Some years ago, Yvonne Vergouwe and Ewout Steyerberg adapted the function \code{
   \item A cut-off can be plotted; set x coordinate
 }
 
-
 In December 2015, Bavo De Cock, Daan Nieboer, and Ben Van Calster adapted
 this to \code{\link{val.prob.ci.2}}:
 \itemize{
-  \item Flexible calibration curves can be obtained using loess (default) or
-    restricted cubic splines, with pointwise 95\% confidence intervals. Flexible calibration curves are now given by default and this decision is based on the findings reported in Van Calster et al. (2016).
+  \item Flexible calibration curves using loess (default) or restricted cubic splines,
+    with pointwise 95\% confidence intervals.
   \item Loess: confidence intervals can be obtained in closed form or using bootstrapping
-    (CL.BT=T will do bootstrapping with 2000 bootstrap samples, however
-    this will take a while)
-  \item RCS: 3 to 5 knots can be used
-    \itemize{
-      \item the knot locations will be estimated using default quantiles of
-         x (by \code{\link[Hmisc]{rcspline.eval}}, see \code{\link[Hmisc]{rcspline.plot}} and \code{\link[Hmisc]{rcspline.eval}})
-      \item if estimation problems occur at the specified number of knots
-         (nr.knots, default is 5), the analysis is repeated with
-          nr.knots-1 until the problem has disappeared and the function stops if there is still an estimation problem with 3 knots
-          }
-  \item You can now adjust the plot through use of normal plot commands
-    (\code{cex.axis} etcetera), and the size of the legend now has to be specified in
-    \code{cex.leg}
-  \item Label y-axis: "Observed proportion"
-  \item Stats: added the Estimated Calibration Index (ECI), a statistical
-    measure to quantify lack of calibration (Van Hoorde et al., 2015)
-  \item Stats to be shown in the plot: by default we show the \code{"abc"} of model performance (Steyerberg et al., 2011). That is, calibration intercept (calibration-in-the-large), calibration slope and c-
-    statistic. Alternatively, the user can select the statistics of
-    choice (e.g. \code{dostats=c("C (ROC)","R2")} or \code{dostats=c(2,3)}.
-  \item Vectors p, y and logit no longer have to be sorted
-  }
+    (\code{CL.BT=TRUE} uses 2000 bootstrap samples).
+  \item RCS: 3 to 5 knots; knot locations estimated via default quantiles of the
+    predictor (by \code{\link[Hmisc]{rcspline.eval}}).
+  \item Plot customization through standard plot arguments (\code{cex.axis}, etc.);
+    legend size controlled via \code{cex.leg}.
+  \item Label y-axis: "Observed proportion".
+  \item Added the Estimated Calibration Index (ECI) to quantify lack of calibration
+    (Van Hoorde et al., 2015).
+  \item By default shows the "abc" of model performance: calibration intercept,
+    calibration slope, and c-statistic (Steyerberg et al., 2011).
+  \item Vectors p, y and logit no longer have to be sorted.
+}
 
+A ggplot2-based equivalent, \code{\link{valProbggplot}}, was subsequently added, offering
+the same functionality with ggplot2 graphics.
 
-In 2023, Bavo De Cock (Campo) published a \href{https://arxiv.org/abs/2309.08559}{paper} that introduces the generalized calibration framework. This framework is an extension of the logistic calibration framework to prediction models where the outcome's distribution is a member of the exponential family. As such, we are able to assess the calibration of a wider range of prediction models. The methods in this paper are implemented
-in the CalibrationCurves package.
+In 2023, Bavo De Cock (Campo) introduced the generalized calibration framework
+(\href{https://arxiv.org/abs/2309.08559}{De Cock Campo, 2023}), extending logistic
+calibration to prediction models with outcomes from any distribution in the exponential
+family, implemented in \code{\link{genCalCurve}}.
 
+Support for \strong{survival models} was added via \code{\link{valProbSurvival}}, enabling
+calibration assessment of Cox proportional hazards model predictions at a specified time
+horizon.
 
-The most current version of this package can always be found on
-\url{https://github.com/BavoDC} and can easily be installed using the following code: \cr
-\code{install.packages("devtools") # if not yet installed} \cr
-\code{require(devtools)} \cr
-\code{install_github("BavoDC/CalibrationCurves", dependencies = TRUE, build_vignettes = TRUE)} \cr
+In 2025, methods for \strong{clustered data} were introduced
+(\href{https://arxiv.org/abs/2503.08389}{Barreñada et al., 2025}), accessible through
+\code{\link{valProbCluster}}, which supports CGC, MAC2, and MIXC approaches.
+
+The most current version of this package can be found on
+\url{https://github.com/BavoDC/CalibrationCurves}.
 }
 \references{
-Barreñada, L., De Cock Campo, B., Wynants, L., Van Calster, B. (2025). Clustered Flexible Calibration Plots for Binary Outcomes Using Random Effects Modeling. arXiv:2503.08389, available at https://arxiv.org/abs/2503.08389.
+Barreñada, L., De Cock Campo, B., Wynants, L., Van Calster, B. (2025). Clustered Flexible Calibration Plots for Binary Outcomes Using Random Effects Modeling. arXiv:2503.08389, available at \url{https://arxiv.org/abs/2503.08389}.
 
 De Cock Campo, B. (2023). Towards reliable predictive analytics: a generalized calibration framework. arXiv:2309.08559, available at \url{https://arxiv.org/abs/2309.08559}.
 
-Steyerberg, E.W.Van Calster, B., Pencina, M.J. (2011). Performance measures for prediction models and markers : evaluation of predictions and classifications. \emph{Revista Espanola de Cardiologia}, \bold{64(9)}, pp. 788-794
+Steyerberg, E.W., Van Calster, B., Pencina, M.J. (2011). Performance measures for prediction models and markers: evaluation of predictions and classifications. \emph{Revista Espanola de Cardiologia}, \bold{64(9)}, pp. 788-794
 
 Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina M., Steyerberg E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. \emph{Journal of Clinical Epidemiology}, \bold{74}, pp. 167-176
 
-Van Hoorde, K., Van Huffel, S., Timmerman, D., Bourne, T., Van Calster, B. (2015). A spline-based tool to assess and visualize the calibration of multiclass risk predictions.
-\emph{Journal of Biomedical Informatics}, \bold{54}, pp. 283-93
+Van Hoorde, K., Van Huffel, S., Timmerman, D., Bourne, T., Van Calster, B. (2015). A spline-based tool to assess and visualize the calibration of multiclass risk predictions. \emph{Journal of Biomedical Informatics}, \bold{54}, pp. 283-93
+
+van Geloven, N., Giardiello, D., Bonneville, E.F., Teece, L., Ramspek, C.L., van Smeden, M. et al. (2022). Validation of prediction models in the presence of competing risks: a guide through modern methods. \emph{BMJ}, \bold{377:e069249}, doi:10.1136/bmj-2021-069249
 }

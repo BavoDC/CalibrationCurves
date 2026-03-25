@@ -301,7 +301,9 @@ MAC2 <- function(data = NULL,
       sm = sm,
       backtransf = TRUE,
       method.random.ci = hakn,
-      method.predict = method.predict
+      method.predict = method.predict,
+      level.ma = cl.level,
+      level.predict = cl.level
     )
 
     data_v_b <- data.frame(
@@ -319,17 +321,20 @@ MAC2 <- function(data = NULL,
   # --- Plotting ---
   plot_obj <- NULL
   if (plot) {
+    # Generate dynamic CI/PI labels based on cl.level
+    ci_pi <- ci_pi_labels(cl.level)
+    
     plot_obj <- ggplot(data = curve) +
       geom_abline(linetype = "dashed", alpha = 0.1) +
       geom_ribbon(aes(
         x = x, ymin = pmax(0, pmin(lower, 1)),
         ymax = pmax(0, pmin(upper, 1)),
-        fill = "CI 95%", alpha = "CI 95%"
+        fill = unname(ci_pi["ci"]), alpha = unname(ci_pi["ci"])
       )) +
       geom_ribbon(aes(
         x = x, ymin = pmax(0, pmin(low_pre, 1)),
         ymax = pmax(0, pmin(up_pre, 1)),
-        fill = "PI 95%", alpha = "PI 95%"
+        fill = unname(ci_pi["pi"]), alpha = unname(ci_pi["pi"])
       )) +
       geom_line(aes(x = x, y = y),
         color = "black",
@@ -340,8 +345,10 @@ MAC2 <- function(data = NULL,
       theme_classic(base_size = 8, base_family = "serif") +
       scale_x_continuous(breaks = seq(0, 1, 0.1)) +
       scale_y_continuous(breaks = seq(0, 1, 0.2)) +
-      scale_alpha_manual(values = c(0.4, 0.2), name = "Heterogeneity") +
-      scale_fill_manual(values = c("red", "red"), name = "Heterogeneity") +
+      scale_alpha_manual(values = c(0.4, 0.2), name = "Heterogeneity",
+                        breaks = c(unname(ci_pi["ci"]), unname(ci_pi["pi"]))) +
+      scale_fill_manual(values = c("red", "red"), name = "Heterogeneity",
+                       breaks = c(unname(ci_pi["ci"]), unname(ci_pi["pi"]))) +
       coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
       theme(
         legend.key.size = unit(0.3, "cm"),
