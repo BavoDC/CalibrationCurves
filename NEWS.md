@@ -1,5 +1,8 @@
 # CalibrationCurves 3.1.0
 
+I would like to thank @sciatro and @lisch7 for reporting the bugs fixed in this release, 
+and @LasaiBarrenada for the collaboration on this new version.
+
 ## Major changes
 
 * **Archived timeROC dependency**: The `timeROC` package (v0.4) is being archived
