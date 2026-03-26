@@ -33,8 +33,8 @@ forwarded to this one).
 
 ## Citation
 If you use this package, please cite: <br />
-- Barreñada, L., De Cock Campo, B., Wynants, L., Van Calster, B. (2025). Clustered Flexible Calibration Plots for
-Binary Outcomes Using Random Effects Modeling. arXiv:2503.08389, available at [https://arxiv.org/abs/2503.08389](https://arxiv.org/abs/2503.08389). <br />
+- Barreñada L, De Cock Campo B, Wynants L, Van Calster B. Clustered flexible calibration plots for binary outcomes using random effects modeling. Research Synthesis Methods. Published online 2025:1-22. [doi:10.1017/rsm.2025.10046](https://www.cambridge.org/core/journals/research-synthesis-methods/article/clustered-flexible-calibration-plots-for-binary-outcomes-using-random-effects-modeling/FE857DCCAD4A37B60EF819F26B2F9411)
+ <br />
 - De Cock Campo, B. (2023). Towards reliable predictive analytics: a generalized calibration framework.
 arXiv:2309.08559, available at [https://arxiv.org/abs/2309.08559](https://arxiv.org/abs/2309.08559). <br />
 - De Cock, B., Nieboer, D., Van Calster, B., Steyerberg, E.W., Vergouwe, Y. (2023). _The CalibrationCurves package: assessing the agreement between observed outcomes and predictions_. R package version 2.0.3, [doi:10.32614/CRAN.package.CalibrationCurves](https://doi.org/10.32614/CRAN.package.CalibrationCurves), available at [https://cran.r-project.org/package=CalibrationCurves](https://cran.r-project.org/package=CalibrationCurves) <br />

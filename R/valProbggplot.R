@@ -97,8 +97,7 @@
 #' @references Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina M., Steyerberg E.W. (2016). A calibration hierarchy for risk models was defined: from utopia to empirical data. \emph{Journal of Clinical Epidemiology}, \bold{74}, pp. 167-176
 #' @references Van Hoorde, K., Van Huffel, S., Timmerman, D., Bourne, T., Van Calster, B. (2015). A spline-based tool to assess and visualize the calibration of multiclass risk predictions. \emph{Journal of Biomedical Informatics}, \bold{54}, pp. 283-93
 #'
-#' @importFrom Hmisc cut2
-#' @import ggplot2
+#' @export
 #'
 #' @examples
 #'
@@ -160,9 +159,9 @@ valProbggplot <- function(p, y, logit, group,
       ", only 3 <= nk <= 5 is allowed."
     ))
   if (!missing(p))
-    if(allowPerfectPredictions & any(!(p > 0 | p < 1)))
+    if(allowPerfectPredictions & any(p < 0 | p > 1, na.rm = TRUE))
       stop("Probabilities can not be > 1 or < 0.")
-  else if (any(!(p >= 0 | p <= 1)))
+  else if (!allowPerfectPredictions & any(p <= 0 | p >= 1, na.rm = TRUE))
     stop("Probabilities can not be >= 1 or <= 0.")
   if(allowPerfectPredictions) {
     if(all(p %in% 0:1))
@@ -344,6 +343,8 @@ valProbggplot <- function(p, y, logit, group,
   lt <- f$coef[1] + f$coef[2] * log(predprob/(1 - predprob))
   calp <- 1/(1 + exp( - lt))
   emax <- max(abs(predprob - calp))
+  calCurves = list()
+
   if (pl) {
     gg = ggplot(data.frame()) +
       geom_line(data = data.frame(x = 0:1, y = 0:1), aes(x = x, y = y, colour = "Ideal"), linewidth = lwd.ideal, show.legend = TRUE) +
@@ -353,7 +354,6 @@ valProbggplot <- function(p, y, logit, group,
     lt        = lty.ideal
     lw.d      = lwd.ideal
     marks     = NA
-    calCurves = list()
 
 
     if (logistic.cal) {
@@ -540,6 +540,18 @@ valProbggplot <- function(p, y, logit, group,
       marks   <- c(marks, 2)
     }
   }
+
+  # Compute eavg and ECI for loess (needed regardless of whether we plot)
+  if (smooth == "loess") {
+    argzLoess$formula = y ~ p
+    if (!exists("SmFit"))
+      SmFit <- do.call("loess", argzLoess)
+    Sm.01.npl <- data.frame(x = unname(SmFit$x), y = SmFit$fitted)
+    cal.smooth <- approx(Sm.01.npl, xout = p, ties = "ordered")$y
+    eavg       <- mean(abs(p - cal.smooth))
+    ECI        <- mean((p - cal.smooth) ^ 2) * 100
+  }
+
   lr      = stats["Model L.R."]
   p.lr    = stats["P"]
   D       = (lr - 1) / n
@@ -664,20 +676,24 @@ valProbggplot <- function(p, y, logit, group,
 
     }
   }
-  gg =
-    gg +
-    scale_color_manual("", values = legCol, breaks = names(legCol)) +
-    guides(colour = guide_legend(override.aes = list(linetype = lt, shape = marks, linewidth = lw.d * 0.5, size = 7))) +
-    theme_bw() +
-    theme(plot.background=element_blank(),
-          panel.border = element_rect(colour = "black", fill = NA, linewidth = 1),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          axis.text = element_text(size = 12),
-          axis.title = element_text(size = 14),
-          plot.margin = margin(11, 11, 5.5, 5.5, "points"), legend.position = "bottom")
-  gg =
-    gg + coord_cartesian(xlim = xlim, ylim = ylim)
+  if (pl) {
+    gg =
+      gg +
+      scale_color_manual("", values = legCol, breaks = names(legCol)) +
+      guides(colour = guide_legend(override.aes = list(linetype = lt, shape = marks, linewidth = lw.d * 0.5, size = 7))) +
+      theme_bw() +
+      theme(plot.background=element_blank(),
+            panel.border = element_rect(colour = "black", fill = NA, linewidth = 1),
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            axis.text = element_text(size = 12),
+            axis.title = element_text(size = 14),
+            plot.margin = margin(11, 11, 5.5, 5.5, "points"), legend.position = "bottom")
+    gg =
+      gg + coord_cartesian(xlim = xlim, ylim = ylim)
+  } else {
+    gg = NULL
+  }
   Results =
     structure(
       list(
