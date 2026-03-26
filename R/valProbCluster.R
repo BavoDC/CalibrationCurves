@@ -2,7 +2,7 @@
 #'
 #' This function evaluates the calibration performance of a model's predicted probabilities
 #' whilst accounting for clustering. The function supports multiple approaches
-#' (`"CGC"`, `"MAC2"`, `"MIXC"`) and returns the results as well as a `ggplot` object.
+#' (`"default"`, `"CGC"`, `"MAC2"`, `"MIXC"`) and returns the results as well as a `ggplot` object.
 #'
 #' @param data optional, a data frame containing the variables \code{p}, \code{y},
 #'   and \code{cluster}. If supplied, variable names should be given without
@@ -16,11 +16,14 @@
 #' @param approach character string specifying which calibration method to use.
 #'   Must be one of the following:
 #'   \itemize{
+#'     \item \code{"default"}: Combines MAC2 (splines) for the overall calibration curve,
+#'       CI and PI bands, with MIXC for the cluster-specific curves. This is the
+#'       recommended approach;
 #'     \item \code{"\link{CGC}"}: Clustered Grouped Calibration;
 #'     \item \code{"\link{MAC2}"}: Meta-Analytical Calibration Curve;
 #'     \item \code{"\link{MIXC}"}: Mixed-Effects Model Calibration.
 #'   }
-#'   Defaults to \code{"MIXC"}.
+#'   Defaults to \code{"default"}.
 #' @param xlab label for the x-axis of the plot (default is \code{"Predicted probability"}).
 #' @param ylab label for the y-axis of the plot (default is \code{"Observed proportion"}).
 #' @param grid_l integer. Number of points in the probability grid for plotting
@@ -43,15 +46,18 @@
 #' subfunction. Please check the additional documentation of
 #' \code{\link{CGC}}, \code{\link{MAC2}} and \code{\link{MIXC}} for detailed information on the arguments.
 #'
-#' @return An object of class \code{"valProbCluster"} containing:
+#' @return An object of class \code{"ClusteredCalibrationCurve"} containing:
 #' \itemize{
 #'   \item \code{call}: the matched call.
 #'   \item \code{approach}: the chosen approach.
 #'   \item \code{cl.level}: the confidence level used.
 #'   \item \code{grid}: probability grid used for plotting.
-#'   \item \code{ggplot}: a \code{ggplot} object if returned by the subfunction,
+#'   \item \code{ggPlot}: a \code{ggplot} object if \code{plot = TRUE},
 #'         otherwise \code{NULL}.
-#'   \item \code{results}: results from the chosen subfunction.
+#'   \item \code{results}: results from the chosen subfunction. For
+#'         \code{approach = "default"}, this is a list with two elements:
+#'         \code{overall} (MAC2 results with the overall curve data) and
+#'         \code{clusters} (MIXC results with cluster-specific data).
 #' }
 #'
 #' @examples
@@ -77,10 +83,10 @@
 #'
 #' @references Barreñada, L., De Cock Campo, B., Wynants, L., Van Calster, B. (2025).
 #' Clustered Flexible Calibration Plots for Binary Outcomes Using Random Effects Modeling.
-#' arXiv:2503.08389, available at https://arxiv.org/abs/2503.08389.
+#' Research Synthesis Methods. Published online 2025:1-22. doi:10.1017/rsm.2025.10046 
 #' @export
 valProbCluster <- function(data = NULL, p, y, cluster,
-                           plot = TRUE, approach = c("MIXC", "CGC", "MAC2"),
+                           plot = TRUE, approach = c("default", "MIXC", "CGC", "MAC2"),
                            cl.level = 0.95,
                            xlab = "Predicted probability",
                            ylab = "Observed proportion",
@@ -154,22 +160,93 @@ valProbCluster <- function(data = NULL, p, y, cluster,
   }
   # Collect extra args
   extraArgs = list(...)
+  cluster_curves = extraArgs$cluster_curves %||% FALSE
 
   # Call the right subfunction with do.call
-  results =
-    if (approach == "CGC") {
-      do.call(CGC, c(
-        list(p = p, y = y, cluster = cluster, plot = plot, cl.level = cl.level), extraArgs
-      ))
-    } else if (approach == "MAC2") {
-      do.call(MAC2, c(
-        list(p = p, y = y, cluster = cluster, plot = plot, grid = grid, cl.level = cl.level), extraArgs
-      ))
-    } else if (approach == "MIXC") {
-      do.call(MIXC, c(
-        list(p = p, y = y, cluster = cluster, plot = plot, CI = TRUE, grid = grid, cl.level = cl.level), extraArgs
-      ))
+  if (approach == "default") {
+    # Combined approach: MAC2 (splines) for overall curve + MIXC for cluster curves
+    mac2_results <- do.call(MAC2, c(
+      list(p = p, y = y, cluster = cluster, plot = FALSE,
+           grid = grid, cl.level = cl.level, method_choice = "splines"),
+      extraArgs
+    ))
+
+    mixc_results <- do.call(MIXC, c(
+      list(p = p, y = y, cluster = cluster, plot = FALSE,
+           CI = FALSE, grid = grid, cl.level = cl.level),
+      extraArgs
+    ))
+
+    # Build combined plot
+    plot_obj <- NULL
+    if (plot) {
+      ci_pi    <- ci_pi_labels(cl.level)
+      curve    <- mac2_results$plot_data
+      cl_data  <- mixc_results$cluster_data
+
+      plot_obj <- ggplot(data = curve) +
+        geom_abline(linetype = "dashed", alpha = 0.1) +
+        geom_ribbon(aes(
+          x = x, ymin = pmax(0, pmin(low_pre, 1)),
+          ymax = pmax(0, pmin(up_pre, 1)),
+          fill = unname(ci_pi["pi"]), alpha = unname(ci_pi["pi"])
+        )) +
+        geom_ribbon(aes(
+          x = x, ymin = pmax(0, pmin(lower, 1)),
+          ymax = pmax(0, pmin(upper, 1)),
+          fill = unname(ci_pi["ci"]), alpha = unname(ci_pi["ci"])
+        )) +
+        geom_line(aes(x = x, y = y),
+          color = "black", linewidth = 1, linetype = "dashed"
+        ) +
+        xlab("Estimated probability") +
+        ylab("Observed proportion") +
+        theme_classic(base_size = 11, base_family = "sans") +
+        scale_x_continuous(breaks = seq(0, 1, 0.1)) +
+        scale_y_continuous(breaks = seq(0, 1, 0.2)) +
+        scale_alpha_manual(values = c(0.5, 0.25), name = "Heterogeneity",
+                          breaks = c(unname(ci_pi["ci"]), unname(ci_pi["pi"]))) +
+        scale_fill_manual(values = c("#D4A017", "#F5C542"), name = "Heterogeneity",
+                         breaks = c(unname(ci_pi["ci"]), unname(ci_pi["pi"]))) +
+        coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
+        theme(
+          legend.key.size = unit(0.3, "cm"),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank()
+        )
+
+      if (cluster_curves) {
+        plot_obj <- plot_obj +
+          geom_line(
+            data = cl_data,
+            aes(x = pred_prob, y = obs_prob, group = cluster),
+            linewidth = 0.2, linetype = "solid", color = "black", show.legend = FALSE
+          )
+      }
     }
+
+    results <- list(
+      overall  = mac2_results,
+      clusters = mixc_results,
+      plot     = plot_obj
+    )
+
+  } else {
+    results <-
+      if (approach == "CGC") {
+        do.call(CGC, c(
+          list(p = p, y = y, cluster = cluster, plot = plot, cl.level = cl.level), extraArgs
+        ))
+      } else if (approach == "MAC2") {
+        do.call(MAC2, c(
+          list(p = p, y = y, cluster = cluster, plot = plot, grid = grid, cl.level = cl.level), extraArgs
+        ))
+      } else if (approach == "MIXC") {
+        do.call(MIXC, c(
+          list(p = p, y = y, cluster = cluster, plot = plot, CI = TRUE, grid = grid, cl.level = cl.level), extraArgs
+        ))
+      }
+  }
 
   # Wrap results in a structured list
   Results = structure(
@@ -177,11 +254,6 @@ valProbCluster <- function(data = NULL, p, y, cluster,
       call = callFn,
       approach = approach,
       cl.level = cl.level,
-      # submethod = switch(method,
-      #   "CGC"  = submethod_CGC,
-      #   "MAC2" = submethod_2MAC,
-      #   "MIXC" = "slope"
-      # ),
       grid = grid,
       ggPlot = if ("plot" %in% names(results)) results$plot else NULL,
       results = results
