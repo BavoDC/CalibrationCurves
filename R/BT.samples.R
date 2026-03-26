@@ -3,7 +3,7 @@ BT.samples <- function(y, p, to.pred){
 
   # REPEAT TO PREVENT BT SAMPLES WITH NA'S
   repeat {
-    BT.sample  = Df[sample(1:nrow(Df), replace = T), ]
+    BT.sample  = Df[sample(1:nrow(Df), replace = TRUE), ]
     loess.BT   = loess(y ~ p, BT.sample)
     pred.loess = predict(loess.BT, to.pred, type = "fitted")
     if (!any(is.na(pred.loess)))

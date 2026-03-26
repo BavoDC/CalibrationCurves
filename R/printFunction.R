@@ -7,6 +7,7 @@
 #'
 #' @seealso \code{\link{val.prob.ci.2}}
 #' @return The original \code{CalibrationCurve} object is returned.
+#' @export
 print.CalibrationCurve <- function(x, ...) {
   cat("Call:\n",
       paste(deparse(x$call), sep = "\n", collapse = "\n"),
@@ -35,6 +36,7 @@ print.CalibrationCurve <- function(x, ...) {
 #'
 #' @seealso \code{\link{valProbggplot}}
 #' @return The original \code{ggplotCalibrationCurve} object is returned.
+#' @export
 print.ggplotCalibrationCurve <- function(x, ...) {
   print(x$ggPlot)
   cat("Call:\n",
@@ -65,6 +67,7 @@ print.ggplotCalibrationCurve <- function(x, ...) {
 #'
 #' @seealso \code{\link{genCalCurve}}
 #' @return The original \code{GeneralizedCalibrationCurve} object is returned.
+#' @export
 print.GeneralizedCalibrationCurve <- function(x, ...) {
   cat("Call:\n",
       paste(deparse(x$call), sep = "\n", collapse = "\n"),
@@ -92,6 +95,7 @@ print.GeneralizedCalibrationCurve <- function(x, ...) {
 #'
 #' @seealso \code{\link{valProbSurvival}}
 #' @return The original \code{SurvivalCalibrationCurve} object is returned.
+#' @export
 print.SurvivalCalibrationCurve <- function(x, ...) {
   cat("Call:\n",
       paste(deparse(x$call), sep = "\n", collapse = "\n"),
@@ -133,6 +137,7 @@ print.SurvivalCalibrationCurve <- function(x, ...) {
 #'
 #' @seealso \code{\link{valProbggplot}}
 #' @return The original \code{ggplotCalibrationCurve} object is returned.
+#' @export
 print.ClusteredCalibrationCurve <- function(x, ...) {
   print(x$ggPlot)
   cat("Call:\n",

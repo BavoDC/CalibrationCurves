@@ -630,6 +630,35 @@ We interpret the plot as follows:
 
 MIX-C is a mixed-effects logistic calibration model using restricted cubic splines with random intercepts and slopes per cluster, designed to account for both fixed and random effects in calibration. It performs especially well for cluster-specific calibration curves, particularly when sample sizes per cluster are small, due to its shrinkage properties. A limitation is that its prediction intervals can be inconsistently too narrow or too wide, and like other methods, it tends to underestimate between-cluster heterogeneity. Overall, MIX-C is recommended for producing cluster-specific calibration plots, while other methods may be preferred for average-effect curves.
 
+## Default approach {#default}
+The default approach in `valProbCluster` combines the strengths of 2MA-C and MIX-C. It uses 2MA-C with splines for the overall (pooled) calibration curve, confidence intervals, and prediction intervals, while relying on MIX-C for the cluster-specific curves. This leverages the robust pooled calibration estimates from 2MA-C and the shrinkage properties of MIX-C for the cluster-specific curves, which is particularly beneficial when sample sizes per cluster are small.
+
+This approach is used when `approach = "default"` is specified, or simply when the `approach` argument is omitted altogether.
+
+### Illustration
+```{r default, warning = FALSE}
+res_default <- valProbCluster(
+  p = valClusterData$preds, y = valClusterData$y, cluster = valClusterData$center
+)
+res_default
+```
+
+To display the cluster-specific curves, set `cluster_curves = TRUE`.
+```{r default_cc, warning = FALSE}
+res_default_cc <- valProbCluster(
+  p = valClusterData$preds, y = valClusterData$y, cluster = valClusterData$center,
+  cluster_curves = TRUE
+)
+res_default_cc
+```
+
+We interpret the plot as follows:
+
+- **Black (dashed)**: Pooled calibration curve across clusters (estimated via 2MA-C with splines)
+- **Black (solid)**: Cluster-specific curves (estimated via MIX-C, shown when `cluster_curves = TRUE`)
+- **Shaded areas**:
+  - Dark gold = 95% Confidence Interval (uncertainty around the pooled curve)
+  - Light gold = 95% Prediction Interval (expected calibration curve in new clusters)
 
   
 

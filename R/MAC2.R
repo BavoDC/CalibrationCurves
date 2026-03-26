@@ -166,13 +166,19 @@ MAC2 <- function(data = NULL,
 
     # --- Splines method ---
     nkDecrease <- function(Argz) {
+      fallbackLinear <- function() {
+        warning(paste0("Spline model for cluster ", subcluster, " failed at 3 knots, falling back to linear logistic model."),
+                immediate. = TRUE)
+        lrm(data = risk_cluster, outcome ~ transf_preds)
+      }
       tryCatch(
         do.call("lrm", Argz),
         error = function(e) {
           nk = Argz$formula[[3]][[3]]
-          warning(paste0("The number of knots led to estimation problems, nk will be set to ", nk - 1), immediate. = TRUE)
+          if (nk <= 3) return(fallbackLinear())
+          warning(paste0("The number of knots led to estimation problems, nk will be set to ", nk - 1),
+                  immediate. = TRUE)
           nk = nk - 1
-          cat(paste("fitting with", nk, "knots"))
           Argz = list(
             formula = eval(substitute(outcome ~ rcs(transf_preds, k), list(k = nk))),
             data    = risk_cluster
@@ -181,9 +187,10 @@ MAC2 <- function(data = NULL,
         },
         warning = function(w) {
           nk = Argz$formula[[3]][[3]]
-          warning(paste0("The number of knots led to estimation problems, nk will be set to ", nk - 1), immediate. = TRUE)
+          if (nk <= 3) return(fallbackLinear())
+          warning(paste0("The number of knots led to estimation problems, nk will be set to ", nk - 1),
+                  immediate. = TRUE)
           nk = nk - 1
-          cat(paste("fitting with", nk, "knots"))
           Argz = list(
             formula = eval(substitute(outcome ~ rcs(transf_preds, k), list(k = nk))),
             data    = risk_cluster
@@ -191,13 +198,20 @@ MAC2 <- function(data = NULL,
           nkDecrease(Argz)
         })
     }
+
     knots_sub   = knots
     argzSplines = list(
       formula = eval(substitute(outcome ~ rcs(transf_preds, k), list(k = knots_sub))),
       data    = risk_cluster
     )
     splines_model = nkDecrease(argzSplines)
-    knots_sub     = splines_model$sformula[[3]][[3]]
+    # When nkDecrease fell back to linear lrm, sformula[[3]] is a symbol
+    # (not a call), so [[3]] would error. Guard with is.call().
+    knots_sub <- if (is.call(splines_model$sformula[[3]])) {
+      splines_model$sformula[[3]][[3]]
+    } else {
+      0L
+    }
 
     if (knots_sub > 3) {
       splines_model3 = lrm(data = risk_cluster, outcome ~ rcs(transf_preds, 3))
@@ -219,11 +233,22 @@ MAC2 <- function(data = NULL,
       }
     }
 
-    splines_data <- predict(splines_model,
+    splines_data <- try(predict(splines_model,
       newdata = data.frame(transf_preds = transform_function(grid)),
       type = "lp",
       se.fit = TRUE
-    )
+    ), silent = TRUE)
+
+    # Safety net: if predict on the splines model fails, refit as linear lrm
+    if (inherits(splines_data, "try-error")) {
+      splines_model <- lrm(data = risk_cluster, outcome ~ transf_preds)
+      splines_data <- predict(splines_model,
+        newdata = data.frame(transf_preds = transform_function(grid)),
+        type = "lp",
+        se.fit = TRUE
+      )
+      knots_sub <- 0
+    }
 
     splines_data <- data.frame(
       splines    = splines_data$linear.predictors,
@@ -276,7 +301,9 @@ MAC2 <- function(data = NULL,
       sm = sm,
       backtransf = TRUE,
       method.random.ci = hakn,
-      method.predict = method.predict
+      method.predict = method.predict,
+      level.ma = cl.level,
+      level.predict = cl.level
     )
 
     data_v_b <- data.frame(
@@ -294,17 +321,20 @@ MAC2 <- function(data = NULL,
   # --- Plotting ---
   plot_obj <- NULL
   if (plot) {
+    # Generate dynamic CI/PI labels based on cl.level
+    ci_pi <- ci_pi_labels(cl.level)
+    
     plot_obj <- ggplot(data = curve) +
       geom_abline(linetype = "dashed", alpha = 0.1) +
       geom_ribbon(aes(
         x = x, ymin = pmax(0, pmin(lower, 1)),
         ymax = pmax(0, pmin(upper, 1)),
-        fill = "CI 95%", alpha = "CI 95%"
+        fill = unname(ci_pi["ci"]), alpha = unname(ci_pi["ci"])
       )) +
       geom_ribbon(aes(
         x = x, ymin = pmax(0, pmin(low_pre, 1)),
         ymax = pmax(0, pmin(up_pre, 1)),
-        fill = "PI 95%", alpha = "PI 95%"
+        fill = unname(ci_pi["pi"]), alpha = unname(ci_pi["pi"])
       )) +
       geom_line(aes(x = x, y = y),
         color = "black",
@@ -312,11 +342,13 @@ MAC2 <- function(data = NULL,
       ) +
       xlab("Estimated probability") +
       ylab("Observed proportion") +
-      theme_classic(base_size = 8, base_family = "serif") +
+      theme_classic(base_size = 11, base_family = "sans") +
       scale_x_continuous(breaks = seq(0, 1, 0.1)) +
       scale_y_continuous(breaks = seq(0, 1, 0.2)) +
-      scale_alpha_manual(values = c(0.4, 0.2), name = "Heterogeneity") +
-      scale_fill_manual(values = c("red", "red"), name = "Heterogeneity") +
+      scale_alpha_manual(values = c(0.4, 0.2), name = "Heterogeneity",
+                        breaks = c(unname(ci_pi["ci"]), unname(ci_pi["pi"]))) +
+      scale_fill_manual(values = c("red", "red"), name = "Heterogeneity",
+                       breaks = c(unname(ci_pi["ci"]), unname(ci_pi["pi"]))) +
       coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
       theme(
         legend.key.size = unit(0.3, "cm"),

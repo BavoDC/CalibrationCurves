@@ -79,7 +79,7 @@
 genCalCurve <- function(y, yHat, family, plot = TRUE, Smooth = FALSE, GLMCal = TRUE, lwdIdeal = 2, colIdeal = "gray", ltyIdeal = 1,
                         lwdSmooth = 1, colSmooth = "blue", ltySmooth = 1, argzSmooth = alist(degree = 2),
                         lwdGLMCal = 1, colGLMCal = "red", ltyGLMCal = 1,
-                        AddStats = T, Digits = 3, cexStats = 1, lwdLeg = 1.5, Legend = TRUE, legendPos = "bottomright",
+                        AddStats = TRUE, Digits = 3, cexStats = 1, lwdLeg = 1.5, Legend = TRUE, legendPos = "bottomright",
                         xLim = NULL, yLim = NULL, posStats = NULL,
                         confLimitsSmooth = c("none", "bootstrap", "pointwise"), confLevel = 0.95,
                         Title = "Calibration plot",
@@ -113,9 +113,9 @@ genCalCurve <- function(y, yHat, family, plot = TRUE, Smooth = FALSE, GLMCal = T
       control = glm.control(maxit = 1e2)
     ),
     error = function(e)
-      T,
+      TRUE,
     warning = function(w)
-      T
+      TRUE
   )
   if(is.logical(ClInt)) {
     # https://stackoverflow.com/questions/8212063/glm-starting-values-not-accepted-log-link
@@ -125,9 +125,9 @@ genCalCurve <- function(y, yHat, family, plot = TRUE, Smooth = FALSE, GLMCal = T
     tryCatch(
       glm(y ~ Eta, family = family, control = glm.control(maxit = 1e2)),
       error = function(e)
-        T,
+        TRUE,
       warning = function(w)
-        T
+        TRUE
     )
   if(is.logical(ClSl)) {
     lmFit = lm(y ~ Eta)
@@ -136,9 +136,9 @@ genCalCurve <- function(y, yHat, family, plot = TRUE, Smooth = FALSE, GLMCal = T
   ClSl2 = tryCatch(
     glm(y ~ Eta - 1, family = family),
     error = function(e)
-      T,
+      TRUE,
     warning = function(w)
-      T
+      TRUE
   )
   if(is.logical(ClSl2)) {
     lmFit = lm(y ~ Eta - 1)
