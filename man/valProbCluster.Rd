@@ -10,7 +10,7 @@ valProbCluster(
   y,
   cluster,
   plot = TRUE,
-  approach = c("MIXC", "CGC", "MAC2"),
+  approach = c("default", "MIXC", "CGC", "MAC2"),
   cl.level = 0.95,
   xlab = "Predicted probability",
   ylab = "Observed proportion",
@@ -36,11 +36,14 @@ subfunction.}
 \item{approach}{character string specifying which calibration method to use.
 Must be one of the following:
 \itemize{
+  \item \code{"default"}: Combines MAC2 (splines) for the overall calibration curve,
+    CI and PI bands, with MIXC for the cluster-specific curves. This is the
+    recommended approach;
   \item \code{"\link{CGC}"}: Clustered Grouped Calibration;
   \item \code{"\link{MAC2}"}: Meta-Analytical Calibration Curve;
   \item \code{"\link{MIXC}"}: Mixed-Effects Model Calibration.
 }
-Defaults to \code{"MIXC"}.}
+Defaults to \code{"default"}.}
 
 \item{cl.level}{the confidence level for the calculation of the confidence intervals. Default is \code{0.95}.}
 
@@ -57,21 +60,24 @@ Defaults to \code{"MIXC"}.}
 (\code{\link{CGC}}, \code{\link{MAC2}} and \code{\link{MIXC}}).}
 }
 \value{
-An object of class \code{"valProbCluster"} containing:
+An object of class \code{"ClusteredCalibrationCurve"} containing:
 \itemize{
   \item \code{call}: the matched call.
   \item \code{approach}: the chosen approach.
   \item \code{cl.level}: the confidence level used.
   \item \code{grid}: probability grid used for plotting.
-  \item \code{ggplot}: a \code{ggplot} object if returned by the subfunction,
+  \item \code{ggPlot}: a \code{ggplot} object if \code{plot = TRUE},
         otherwise \code{NULL}.
-  \item \code{results}: results from the chosen subfunction.
+  \item \code{results}: results from the chosen subfunction. For
+        \code{approach = "default"}, this is a list with two elements:
+        \code{overall} (MAC2 results with the overall curve data) and
+        \code{clusters} (MIXC results with cluster-specific data).
 }
 }
 \description{
 This function evaluates the calibration performance of a model's predicted probabilities
 whilst accounting for clustering. The function supports multiple approaches
-(`"CGC"`, `"MAC2"`, `"MIXC"`) and returns the results as well as a `ggplot` object.
+(`"default"`, `"CGC"`, `"MAC2"`, `"MIXC"`) and returns the results as well as a `ggplot` object.
 }
 \details{
 The function internally calls one of the following subfunctions:
@@ -110,7 +116,7 @@ Results
 \references{
 Barreñada, L., De Cock Campo, B., Wynants, L., Van Calster, B. (2025).
 Clustered Flexible Calibration Plots for Binary Outcomes Using Random Effects Modeling.
-arXiv:2503.08389, available at https://arxiv.org/abs/2503.08389.
+Research Synthesis Methods. Published online 2025:1-22. doi:10.1017/rsm.2025.10046
 }
 \seealso{
 \code{\link{CGC}}, \code{\link{MAC2}} and \code{\link{MIXC}}
