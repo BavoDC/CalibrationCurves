@@ -37,7 +37,7 @@
     \item \strong{Recalibration} — \code{\link{recalibrate}} implements Platt scaling
       and isotonic regression for post-hoc recalibration of predicted probabilities,
       with before/after comparison plots.
-    \item \strong{Unified interface} — \code{\link{calibrate}} auto-detects the model
+    \item \strong{Unified interface} — \code{\link{calibrationCurve}} auto-detects the model
       class and dispatches to the appropriate calibration function.
   }
 
