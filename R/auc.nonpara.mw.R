@@ -253,6 +253,7 @@ auc.mw.boot <- function(x, y, alpha, nboot=1000, method){
   }
 }
 
+#' @export
 auc.nonpara.mw <- function(x, y, conf.level=0.95,
                            method=c("newcombe", "pepe", "delong", "jackknife", "bootstrapP", "bootstrapBCa"),
                            nboot){

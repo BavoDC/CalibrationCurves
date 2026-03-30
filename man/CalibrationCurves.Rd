@@ -26,6 +26,19 @@
     \item \strong{Survival outcomes} — \code{\link{valProbSurvival}} evaluates calibration
       for a fitted Cox proportional hazards model at a given time horizon, producing
       calibration curves and summary statistics for time-to-event predictions.
+    \item \strong{Competing-risks outcomes} — \code{\link{valProbCompRisks}} evaluates
+      calibration for cause-specific hazards (\code{CSC}) and Fine-Gray (\code{FGR})
+      competing-risks models, including O/E ratio, RCS-based calibration curves, and
+      pseudo-observation methods. See van Geloven et al. (2022).
+    \item \strong{Ordinal and multinomial outcomes} — \code{\link{valProbMulticat}}
+      assesses calibration for ordinal (\code{polr}) and nominal (\code{multinom})
+      prediction models with per-category calibration curves, Brier score and log-loss.
+      Based on Van Hoorde et al. (2014, 2015).
+    \item \strong{Recalibration} — \code{\link{recalibrate}} implements Platt scaling
+      and isotonic regression for post-hoc recalibration of predicted probabilities,
+      with before/after comparison plots.
+    \item \strong{Unified interface} — \code{\link{calibrate}} auto-detects the model
+      class and dispatches to the appropriate calibration function.
   }
 
   A vignette is available that provides a comprehensive overview of the theory and
@@ -78,14 +91,14 @@ calibration assessment of Cox proportional hazards model predictions at a specif
 horizon.
 
 In 2025, methods for \strong{clustered data} were introduced
-(\href{https://arxiv.org/abs/2503.08389}{Barreñada et al., 2025}), accessible through
+(\href{https://doi.org/10.1017/rsm.2025.10046}{Barreñada et al., 2025}), accessible through
 \code{\link{valProbCluster}}, which supports CGC, MAC2, and MIXC approaches.
 
 The most current version of this package can be found on
 \url{https://github.com/BavoDC/CalibrationCurves}.
 }
 \references{
-Barreñada, L., De Cock Campo, B., Wynants, L., Van Calster, B. (2025). Clustered Flexible Calibration Plots for Binary Outcomes Using Random Effects Modeling. arXiv:2503.08389, available at \url{https://arxiv.org/abs/2503.08389}.
+Barreñada, L., De Cock Campo, B., Wynants, L., Van Calster, B. (2025). Clustered Flexible Calibration Plots for Binary Outcomes Using Random Effects Modeling. \emph{Research Synthesis Methods}, 1--22. doi:10.1017/rsm.2025.10046
 
 De Cock Campo, B. (2023). Towards reliable predictive analytics: a generalized calibration framework. arXiv:2309.08559, available at \url{https://arxiv.org/abs/2309.08559}.
 
@@ -96,4 +109,8 @@ Van Calster, B., Nieboer, D., Vergouwe, Y., De Cock, B., Pencina M., Steyerberg 
 Van Hoorde, K., Van Huffel, S., Timmerman, D., Bourne, T., Van Calster, B. (2015). A spline-based tool to assess and visualize the calibration of multiclass risk predictions. \emph{Journal of Biomedical Informatics}, \bold{54}, pp. 283-93
 
 van Geloven, N., Giardiello, D., Bonneville, E.F., Teece, L., Ramspek, C.L., van Smeden, M. et al. (2022). Validation of prediction models in the presence of competing risks: a guide through modern methods. \emph{BMJ}, \bold{377:e069249}, doi:10.1136/bmj-2021-069249
+
+Van Hoorde, K., Vergouwe, Y., Timmerman, D., Van Huffel, S., Steyerberg, E.W., Van Calster, B. (2014). Simple polytomous logistic regression calibration for external validation of a multinomial clinical prediction model. \emph{Statistics in Medicine}, \bold{33(2)}, pp. 203-216.
+
+Van Hoorde, K., Van Huffel, S., Timmerman, D., Bourne, T., Van Calster, B. (2015). A continuous calibration belt for logistic calibration assessment. \emph{Statistics in Medicine}, \bold{34(10)}, pp. 1598-1617.
 }

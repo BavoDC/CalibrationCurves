@@ -3,18 +3,19 @@
 #' @importFrom graphics abline arrows clip legend lines locator par plot points
 #'   polygon segments text persp
 #' @importFrom methods existsFunction
-#' @importFrom stats approx confint loess na.omit pchisq plogis predict
+#' @importFrom stats approx confint confint.default loess na.omit pchisq plogis predict
 #'   quantile supsmu pnorm qnorm qt binomial coef lm glm fitted glm.control
 #'   vcov setNames update loess.control model.matrix optimize qlogis sd var
+#'   isoreg stepfun formula family as.formula reformulate approxfun gaussian
 #' @importFrom utils getFromNamespace sessionInfo globalVariables
 
 ## External package imports ----
 #' @import rms
 #' @import ggplot2
 #' @importFrom Hmisc cut2 groupn label rcspline.eval
-#' @importFrom survival basehaz coxph coxph.control concordance survfit
+#' @importFrom survival basehaz coxph coxph.control concordance survfit Surv
 #' @importFrom pec ipcw
-#' @importFrom riskRegression predictRisk Score
+#' @importFrom riskRegression predictRisk Score CSC FGR
 #' @importFrom meta metaprop metagen
 #' @importFrom metafor escalc rma.mv
 #' @importFrom zoo na.approx
@@ -22,4 +23,7 @@
 #' @importFrom merTools predictInterval
 #' @importFrom dplyr filter mutate group_by ungroup ntile summarise n
 #' @importFrom magrittr %>%
+#' @importFrom splines ns
+#' @importFrom geepack geese
 NULL
+

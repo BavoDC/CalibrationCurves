@@ -1,7 +1,7 @@
 Package: CalibrationCurves
 Type: Package
 Title: Calibration Performance
-Version: 3.1.0
+Version: 4.0.0
 Authors@R: c(person(given = "Bavo", family = "De Cock", role = c("aut", "cre"),
 		     email = "bavo.decock@kuleuven.be"),
 		    person(given = "Lasai", family = "Barrenada", role = "aut"),

@@ -51,6 +51,7 @@
 #' }
 #'
 #'
+#' @export
 MAC2 <- function(data = NULL,
                  p,
                  y,
@@ -342,7 +343,7 @@ MAC2 <- function(data = NULL,
       ) +
       xlab("Estimated probability") +
       ylab("Observed proportion") +
-      theme_classic(base_size = 11, base_family = "sans") +
+      theme_classic(base_size = 8, base_family = "serif") +
       scale_x_continuous(breaks = seq(0, 1, 0.1)) +
       scale_y_continuous(breaks = seq(0, 1, 0.2)) +
       scale_alpha_manual(values = c(0.4, 0.2), name = "Heterogeneity",

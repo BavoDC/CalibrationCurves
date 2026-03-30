@@ -528,7 +528,7 @@ We assume that $\nu_{gj} \sim \mathcal{N}(0, {}_{\hat{\pi}} \tau_g^2)$ and $\eps
 <!--  **Kenward-Roger**, -->
 <!--  **Bootstrap Approach**, or  -->
 <!--  **Standard Normal Quantile**. -->
-<!-- Detailed methodological overview can be found in the published [article](https://doi.org/10.48550/arXiv.2503.08389). -->
+<!-- Detailed methodological overview can be found in the published [article](https://doi.org/10.1017/rsm.2025.10046). -->
 
 
 
@@ -605,7 +605,7 @@ In this method:
 3. We calculate the linear predictor in each sample.
 4. We predict the upper and lower limits of the prediction interval.
 
-Detailed methodological overview can be found in the published [article](https://doi.org/10.48550/arXiv.2503.08389).
+Detailed methodological overview can be found in the published [article](https://doi.org/10.1017/rsm.2025.10046).
 
 ### Illustration
 Using the code as shown below, we can estimate the calibration curve using the MIX-C method.
@@ -788,6 +788,100 @@ set.seed(1)
 yTest = testdata$y
 pHat[sample(1:length(pHat), 5, FALSE)] = sample(0:1, 5, TRUE)
 x = val.prob.ci.2(pHat, yTest, allowPerfectPredictions = TRUE)
+```
+
+# Competing-risks calibration
+
+When the outcome involves multiple competing events (e.g. disease-specific death vs. other-cause death), standard survival calibration is insufficient.  The `valProbCompRisks()` function assesses calibration for competing-risks prediction models fitted with `CSC()` (cause-specific hazards) or `FGR()` (Fine-Gray subdistribution hazards) from the **riskRegression** package.
+
+The methodology closely follows @CompRisks2022.  Briefly:
+
+1. Predicted risks at the specified time horizon are obtained via `predictRisk()`.
+2. An O/E ratio is computed using the Aalen-Johansen estimator as the "observed" cumulative incidence.
+3. A calibration curve is estimated via a Fine-Gray model with restricted cubic splines (RCS) on the complementary log-log scale.
+4. When `pseudo = TRUE`, pseudo-observations (from `riskRegression::Score`) are smoothed with loess and used for calibration intercept/slope estimation via GEE.
+
+```{r comprisks-example, eval = FALSE}
+library(riskRegression)
+library(survival)
+# (Assumes cscFit is a CSC model and testCompData is the validation data)
+calComp <- valProbCompRisks(
+  cscFit,
+  valdata     = testCompData,
+  cause       = 1,
+  timeHorizon = 5,
+  plotCal     = "ggplot"
+)
+calComp
+```
+
+# Ordinal and multinomial calibration
+
+For prediction models with ordered or nominal categorical outcomes, `valProbMulticat()` assesses calibration following Van Hoorde et al. (2014, 2015) and @VanCalster2019.
+
+- **Ordinal** (`polr`): per-category calibration curves on cumulative probabilities.
+- **Multinomial** (`multinom`): one-vs-rest calibration curves per category.
+
+Both approaches return proper scoring rules (Brier score, log-loss) and per-category statistics (ICI, E50, E90, Emax).
+
+```{r multicat-example, eval = FALSE}
+library(MASS)
+library(nnet)
+
+# Ordinal example
+data("Pima.tr", package = "MASS")
+data("Pima.te", package = "MASS")
+oFit <- polr(type ~ ., data = Pima.tr, Hess = TRUE)
+calOrd <- valProbMulticat(oFit, Pima.te, plotCal = "ggplot")
+calOrd
+
+# Multinomial example
+mFit <- multinom(Species ~ ., data = iris[1:100, ], trace = FALSE)
+calMn <- valProbMulticat(mFit, iris[101:150, ], plotCal = "ggplot")
+calMn
+```
+
+# Recalibration
+
+Even a well-discriminating model may be miscalibrated when applied to a new population.  The `recalibrate()` function provides two post-hoc recalibration methods:
+
+- **Platt scaling**: fits a logistic regression of the outcome on the logit of the predicted probabilities, yielding a linear recalibration of the log-odds scale (@Platt1999).
+- **Isotonic regression**: fits a monotone step-function mapping using the pool-adjacent-violators algorithm (@FawcettNiculescu2007).
+
+The function returns recalibrated predictions together with before/after comparisons of Brier score, log-loss, calibration slope and intercept.  It also produces two diagnostic plots: a before/after calibration curve comparison and a transformation plot.
+
+```{r recalibrate-example, eval = FALSE}
+# Using the binary logistic example from above
+pHat <- predict(glmFit, newdata = testdata, type = "response")
+yTest <- testdata$y
+
+# Platt scaling
+recalPlatt <- recalibrate(pHat, yTest, method = "platt")
+recalPlatt
+
+# Isotonic regression
+recalIso <- recalibrate(pHat, yTest, method = "isotonic")
+recalIso
+```
+
+# Unified `calibrate()` interface
+
+To simplify the workflow, the `calibrate()` function automatically detects the model class and dispatches to the appropriate calibration function:
+
+| Model class | Dispatches to |
+|-------------|---------------|
+| `glm` (binomial) | `valProbggplot` |
+| `glm` (other family) | `genCalCurve` |
+| `coxph` | `valProbSurvival` |
+| `CSC` / `FGR` | `valProbCompRisks` |
+| `polr` / `multinom` | `valProbMulticat` |
+
+```{r calibrate-example, eval = FALSE}
+# Binary logistic model — automatically calls valProbggplot
+calibrate(glmFit, newdata = testdata, y = "y")
+
+# Cox model — automatically calls valProbSurvival
+calibrate(sFit, newdata = testDataSurvival, timeHorizon = 5)
 ```
 
 # References

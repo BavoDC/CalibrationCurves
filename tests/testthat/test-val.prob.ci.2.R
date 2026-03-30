@@ -24,7 +24,7 @@ test_that("val.prob.ci.2 stats vector has correct names and types", {
   expected_names <- c("Dxy", "C (ROC)", "R2", "D", "D:Chi-sq", "D:p",
                       "U", "U:Chi-sq", "U:p", "Q", "Brier",
                       "Intercept", "Slope", "Emax", "Brier scaled",
-                      "Eavg", "ECI")
+                      "Log-loss", "Eavg", "ECI")
   expect_named(res$stats, expected_names)
   expect_type(res$stats, "double")
 })

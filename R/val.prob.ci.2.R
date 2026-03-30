@@ -29,7 +29,7 @@
 #'  calibration intercept, \code{"Slope"} for the calibration slope, and \code{"ECI"} for the estimated calibration index
 #'  (Van Hoorde et al, 2015). The full list of possible statistics is taken from \code{\link[rms]{val.prob}}
 #'  and augmented with the estimated calibration index: \code{"Dxy", "C (ROC)", "R2", "D", "D:Chi-sq", "D:p", "U", "U:Chi-sq",
-#'   "U:p", "Q", "Brier", "Intercept", "Slope", "Emax", "Brier scaled", "Eavg", "ECI"}. These statistics are always returned by the function.
+#'   "U:p", "Q", "Brier", "Intercept", "Slope", "Emax", "Brier scaled", "Log-loss", "Eavg", "ECI"}. These statistics are always returned by the function.
 #' @param xlim,ylim numeric vectors of length 2, giving the x and y coordinates ranges (see \code{\link{plot.window}})
 #' @param cex,cex.leg controls the font size of the statistics (\code{cex}) or plot legend (\code{cex.leg}). Default is 0.75
 #' @param roundstats specifies the number of decimals to which the statistics are rounded when shown in the plot. Default is 2.
@@ -648,6 +648,8 @@ val.prob.ci.2 <- function(p, y, logit, group,
   # ES 15dec08 add Brier scaled
   Bmax  <- mean(y) * (1 - mean(y)) ^ 2 + (1 - mean(y)) * mean(y) ^ 2
   Bscaled <- 1 - B / Bmax
+  # Log-loss (negative mean log-likelihood)
+  LogLoss <- -mean(y * log(pmax(p, 1e-15)) + (1 - y) * log(pmax(1 - p, 1e-15)))
   stats <- c(Dxy,
              C,
              R2,
@@ -662,7 +664,8 @@ val.prob.ci.2 <- function(p, y, logit, group,
              f2$coef[1],
              f$coef[2],
              emax,
-             Bscaled)
+             Bscaled,
+             LogLoss)
   names(stats) <- c(
     "Dxy",
     "C (ROC)",
@@ -678,7 +681,8 @@ val.prob.ci.2 <- function(p, y, logit, group,
     "Intercept",
     "Slope",
     "Emax",
-    "Brier scaled"
+    "Brier scaled",
+    "Log-loss"
   )
   if (smooth == "loess")
     stats <- c(stats, c(Eavg = eavg), c(ECI = ECI))

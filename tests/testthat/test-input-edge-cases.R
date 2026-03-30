@@ -19,7 +19,7 @@ test_that("small sample (n = 50) works", {
 
   res <- val.prob.ci.2(p, y, pl = FALSE)
   expect_s3_class(res, "CalibrationCurve")
-  expect_length(res$stats, 17)
+  expect_length(res$stats, 18)
 })
 
 test_that("NAs in weights produce a warning and are handled", {

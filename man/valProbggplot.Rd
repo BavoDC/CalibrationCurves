@@ -161,7 +161,7 @@ the curve legends.}
  calibration intercept, \code{"Slope"} for the calibration slope, and \code{"ECI"} for the estimated calibration index
  (Van Hoorde et al, 2015). The full list of possible statistics is taken from \code{\link[rms]{val.prob}}
  and augmented with the estimated calibration index: \code{"Dxy", "C (ROC)", "R2", "D", "D:Chi-sq", "D:p", "U", "U:Chi-sq",
-  "U:p", "Q", "Brier", "Intercept", "Slope", "Emax", "Brier scaled", "Eavg", "ECI"}. These statistics are always returned by the function.}
+  "U:p", "Q", "Brier", "Intercept", "Slope", "Emax", "Brier scaled", "Log-loss", "Eavg", "ECI"}. These statistics are always returned by the function.}
 
 \item{cl.level}{if \code{dostats=TRUE}, the confidence level for the calculation of the confidence intervals of the calibration intercept,
 calibration slope and c-statistic. Default is \code{0.95}.}

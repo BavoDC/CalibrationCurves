@@ -57,11 +57,11 @@ bibentry(bibtype = "Article",
   person(given = "Laure", family = "Wynants"),
   person(given = "Ben", family = "Van Calster")
   ),
-  journal = "arXiv",
+  journal = "Research Synthesis Methods",
   year = "2025",
-  pages = "2503.08389",
-  url = "https://arxiv.org/abs/2503.08389",
+  pages = "1--22",
+  doi = "10.1017/rsm.2025.10046",
   textVersion = paste("Barreñada, L., De Cock Campo, B., Wynants, L., Van Calster, B. (2025).",
   "Clustered Flexible Calibration Plots for Binary Outcomes Using Random Effects Modeling.",
-  "arXiv:2503.08389, available at https://arxiv.org/abs/2503.08389.")
+  "Research Synthesis Methods. Published online 2025:1-22. doi:10.1017/rsm.2025.10046")
   )

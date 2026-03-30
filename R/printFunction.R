@@ -157,3 +157,105 @@ print.ClusteredCalibrationCurve <- function(x, ...) {
   #     warning(paste0(w, "\n"), immediate. = TRUE)
   # invisible(x)
 }
+
+#' Print function for a CompRisksCalibrationCurve object
+#'
+#' @param x an object of class \code{CompRisksCalibrationCurve}, resulting
+#'   from \code{\link{valProbCompRisks}}.
+#' @param ... arguments passed to \code{\link{print}}
+#' @seealso \code{\link{valProbCompRisks}}
+#' @return The original object, invisibly.
+#' @export
+print.CompRisksCalibrationCurve <- function(x, ...) {
+  cat("Call:\n",
+      paste(deparse(x$call), sep = "\n", collapse = "\n"),
+      "\n\n", sep = "")
+  cat(sprintf("Competing-risks calibration (cause %s, time horizon %s)\n\n",
+              x$cause, x$timeHorizon))
+  if (!is.null(x$stats$Calibration$InTheLarge)) {
+    cat("Calibration in the large (O/E ratio):\n")
+    print(x$stats$Calibration$InTheLarge, ...)
+    cat("\n")
+  }
+  if (!is.null(x$stats$Calibration$Slope)) {
+    cat("Calibration slope:\n")
+    print(x$stats$Calibration$Slope, ...)
+    cat("\n")
+  }
+  if (!is.null(x$stats$Calibration$Statistics)) {
+    cat("Calibration statistics:\n")
+    print(x$stats$Calibration$Statistics, ...)
+    cat("\n")
+  }
+  if (!is.null(x$stats$AUC)) {
+    cat("AUC:\n")
+    print(x$stats$AUC, ...)
+    cat("\n")
+  }
+  if (!is.null(x$stats$BrierScore)) {
+    cat("Brier score:\n")
+    print(x$stats$BrierScore, ...)
+    cat("\n")
+  }
+  invisible(x)
+}
+
+#' Print function for a MulticlassCalibrationCurve object
+#'
+#' @param x an object of class \code{MulticlassCalibrationCurve}, resulting
+#'   from \code{\link{valProbMulticat}}.
+#' @param ... arguments passed to \code{\link{print}}
+#' @seealso \code{\link{valProbMulticat}}
+#' @return The original object, invisibly.
+#' @export
+print.MulticlassCalibrationCurve <- function(x, ...) {
+  cat("Call:\n",
+      paste(deparse(x$call), sep = "\n", collapse = "\n"),
+      "\n\n", sep = "")
+  cat(sprintf("Multiclass calibration (%s outcome)\n\n", x$type))
+  cat("Proper scoring rules:\n")
+  cat(sprintf("  Brier score (overall): %.4f\n", x$stats$BrierScore["Overall"]))
+  cat(sprintf("  Log-loss:              %.4f\n", x$stats$LogLoss))
+  cat("\nCalibration slopes (one-vs-rest):\n")
+  print(x$Calibration$Slopes, ...)
+  cat("\nCalibration intercepts (one-vs-rest):\n")
+  print(x$Calibration$Intercepts, ...)
+  if (!is.null(x$stats$MSEC)) {
+    cat("\nCalibration statistics per category (ICI, E50, E90, Emax):\n")
+    for (nm in names(x$stats$MSEC)) {
+      cat(sprintf("  %s: ", nm))
+      print(x$stats$MSEC[[nm]], ...)
+    }
+  }
+  invisible(x)
+}
+
+#' Print function for a RecalibratedPredictions object
+#'
+#' @param x an object of class \code{RecalibratedPredictions}, resulting
+#'   from \code{\link{recalibrate}}.
+#' @param ... arguments passed to \code{\link{print}}
+#' @seealso \code{\link{recalibrate}}
+#' @return The original object, invisibly.
+#' @export
+print.RecalibratedPredictions <- function(x, ...) {
+  cat("Call:\n",
+      paste(deparse(x$call), sep = "\n", collapse = "\n"),
+      "\n\n", sep = "")
+  cat(sprintf("Recalibration method: %s\n\n", x$method))
+  tab <- rbind(
+    "Brier score"  = c(x$before$Brier,     x$after$Brier),
+    "Log-loss"     = c(x$before$LogLoss,    x$after$LogLoss),
+    "Cal. slope"   = c(x$before$Slope,      x$after$Slope),
+    "Cal. intercept" = c(x$before$Intercept, x$after$Intercept)
+  )
+  colnames(tab) <- c("Before", "After")
+  print(round(tab, 4), ...)
+  if (x$method == "platt") {
+    cat("\nPlatt scaling transform: intercept =",
+        round(x$transform["intercept"], 4),
+        ", slope =", round(x$transform["slope"], 4), "\n")
+  }
+  invisible(x)
+}
+
