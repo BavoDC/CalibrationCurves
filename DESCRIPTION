@@ -1,4 +1,4 @@
-﻿Package: CalibrationCurves
+Package: CalibrationCurves
 Type: Package
 Title: Calibration Performance
 Version: 4.0.0
@@ -12,7 +12,7 @@ Authors@R: c(person(given = "Bavo", family = "De Cock", role = c("aut", "cre"),
 Description: Plots calibration curves and computes statistics for assessing
     calibration performance of binary, survival, competing-risks, ordinal and
     multinomial prediction models. Includes tools for modern recalibration
-    (Platt scaling, isotonic regression) and a unified 'calibrate()' interface.
+    (Platt scaling, isotonic regression) and a unified calibrate() interface.
     See Barrenada et al. (2025) <doi:10.1017/rsm.2025.10046>, De Cock Campo
     (2023) <doi:10.48550/arXiv.2309.08559> and Van Calster et al. (2016)
     <doi:10.1016/j.jclinepi.2015.12.005>.
@@ -29,3 +29,4 @@ RoxygenNote: 7.3.3
 Encoding: UTF-8
 VignetteBuilder: knitr
 URL: https://bavodc.github.io/websiteCalibrationCurves/
+
