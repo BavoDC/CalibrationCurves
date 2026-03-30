@@ -11,7 +11,7 @@ valProbCompRisks(
   weights = NULL,
   alpha = 0.05,
   timeHorizon = 5,
-  nk = 5,
+  nk = 3,
   pseudo = FALSE,
   bandwidth = 0.1,
   plotCal = c("none", "base", "ggplot"),
@@ -59,7 +59,14 @@ subdistribution hazards).}
 
 \item{timeHorizon}{the time point at which the predictions have to be evaluated}
 
-\item{nk}{the number of knots, for the restricted cubic splines fit}
+\item{nk}{integer, number of **internal** knots for the natural cubic spline
+used in the FGR calibration model on the complementary log-log scale.
+\code{nk} internal knots produce \code{nk + 1} natural-spline basis functions
+(as in \code{\link[splines]{ns}(x, df = nk + 1)}).
+Austin et al. advise using between 3 (more smoothing) and 5 (less smoothing)
+internal knots; the default is \code{nk = 3} which is robust for typical
+validation set sizes.  If the requested number of knots leads to numerical
+problems, \code{nk} is automatically reduced until the model converges.}
 
 \item{pseudo}{logical.  If \code{TRUE}, an additional calibration curve based
 on pseudo-observations (loess-smoothed) is computed and plotted.  Requires the
@@ -169,22 +176,18 @@ Two calibration curve approaches are provided:
 \dontrun{
 library(CalibrationCurves)
 library(riskRegression)
-library(survival)
-data(trainDataSurvival)
-data(testDataSurvival)
 
-# Fit a cause-specific hazards model (requires multi-state outcome)
-# Here we simulate a simple two-cause scenario for illustration
-set.seed(42)
-n <- nrow(trainDataSurvival)
-status2 <- sample(0:2, n, replace = TRUE, prob = c(0.3, 0.5, 0.2))
-trainDataSurvival$status2 <- status2
-testDataSurvival$status2 <- sample(0:2, nrow(testDataSurvival), replace = TRUE,
-                                   prob = c(0.3, 0.5, 0.2))
+# Rotterdam breast cancer data: rdata = development, vdata = validation
+data(rdata)
+data(vdata)
 
-cscFit <- CSC(Hist(ryear, status2) ~ csize + cnode + grade3,
-              data = trainDataSurvival)
-calComp <- valProbCompRisks(cscFit, testDataSurvival, cause = 1,
+# Fit a cause-specific hazards model on the development cohort
+# cause 1 = breast-cancer recurrence/death; cause 2 = competing death
+cscFit <- CSC(Hist(time, status_num) ~ age + size + ncat + hr_status,
+              data = rdata)
+
+# Assess calibration on the external validation cohort at 5 years
+calComp <- valProbCompRisks(cscFit, vdata, cause = 1,
                             timeHorizon = 5, plotCal = "ggplot")
 calComp
 }

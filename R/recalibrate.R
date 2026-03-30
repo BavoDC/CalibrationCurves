@@ -212,20 +212,6 @@ recalibrate <- function(p,
   after <- .cal_stats(p_recal, y)
   curve_after <- .cal_curve(p_recal, y)
 
-  if (verbose) {
-    cat("\n--- Recalibration summary ---\n")
-    cat(sprintf("Method: %s\n", method))
-    cat(sprintf("Brier score  before / after: %.4f / %.4f\n",
-                before$Brier, after$Brier))
-    cat(sprintf("Log-loss     before / after: %.4f / %.4f\n",
-                before$LogLoss, after$LogLoss))
-    cat(sprintf("Cal. slope   before / after: %.4f / %.4f\n",
-                before$Slope, after$Slope))
-    cat(sprintf("Cal. intercept before / after: %.4f / %.4f\n",
-                before$Intercept, after$Intercept))
-    cat("-----------------------------\n\n")
-  }
-
   # --------------------------------------------------------------------------
   # Plots
   # --------------------------------------------------------------------------

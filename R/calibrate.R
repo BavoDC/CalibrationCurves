@@ -45,7 +45,7 @@
 #' # The following detects that 'glmFit' is a binary logistic model and
 #' # calls valProbggplot automatically.
 #' \dontrun{
-#' calibrate(glmFit, newdata = testdata, y = "y")
+#' calibrationCurve(glmFit, newdata = testdata, y = "y")
 #' }
 #'
 #' \dontrun{
@@ -55,10 +55,10 @@
 #' sFit <- coxph(Surv(ryear, rfs) ~ csize + cnode + grade3,
 #'               data = trainDataSurvival, x = TRUE, y = TRUE)
 #' # Automatically calls valProbSurvival
-#' calibrate(sFit, newdata = testDataSurvival, timeHorizon = 5)
+#' calibrationCurve(sFit, newdata = testDataSurvival, timeHorizon = 5)
 #' }
 #' @export
-calibrate <- function(fit,
+calibrationCurve <- function(fit,
                       newdata     = NULL,
                       y           = NULL,
                       timeHorizon = 5,

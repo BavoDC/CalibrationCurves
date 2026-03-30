@@ -11,6 +11,14 @@
 #'   (cause-specific hazards) or \code{\link[riskRegression]{FGR}} (Fine-Gray
 #'   subdistribution hazards).
 #' @param cause integer or character, the cause of interest (default \code{1}).
+#' @param nk integer, number of **internal** knots for the natural cubic spline
+#'   used in the FGR calibration model on the complementary log-log scale.
+#'   \code{nk} internal knots produce \code{nk + 1} natural-spline basis functions
+#'   (as in \code{\link[splines]{ns}(x, df = nk + 1)}).
+#'   Austin et al. advise using between 3 (more smoothing) and 5 (less smoothing)
+#'   internal knots; the default is \code{nk = 3} which is robust for typical
+#'   validation set sizes.  If the requested number of knots leads to numerical
+#'   problems, \code{nk} is automatically reduced until the model converges.
 #' @param pseudo logical.  If \code{TRUE}, an additional calibration curve based
 #'   on pseudo-observations (loess-smoothed) is computed and plotted.  Requires the
 #'   \pkg{geepack} package for intercept/slope estimation. Default is \code{FALSE}.
@@ -56,27 +64,24 @@
 #' \dontrun{
 #' library(CalibrationCurves)
 #' library(riskRegression)
-#' library(survival)
-#' data(trainDataSurvival)
-#' data(testDataSurvival)
 #'
-#' # Fit a cause-specific hazards model (requires multi-state outcome)
-#' # Here we simulate a simple two-cause scenario for illustration
-#' set.seed(42)
-#' n <- nrow(trainDataSurvival)
-#' status2 <- sample(0:2, n, replace = TRUE, prob = c(0.3, 0.5, 0.2))
-#' trainDataSurvival$status2 <- status2
-#' testDataSurvival$status2 <- sample(0:2, nrow(testDataSurvival), replace = TRUE,
-#'                                    prob = c(0.3, 0.5, 0.2))
+#' # Rotterdam breast cancer data: rdata = development, vdata = validation
+#' data(rdata)
+#' data(vdata)
 #'
-#' cscFit <- CSC(Hist(ryear, status2) ~ csize + cnode + grade3,
-#'               data = trainDataSurvival)
-#' calComp <- valProbCompRisks(cscFit, testDataSurvival, cause = 1,
+#' # Fit a cause-specific hazards model on the development cohort
+#' # cause 1 = breast-cancer recurrence/death; cause 2 = competing death
+#' cscFit <- CSC(Hist(time, status_num) ~ age + size + ncat + hr_status,
+#'               data = rdata)
+#'
+#' # Assess calibration on the external validation cohort at 5 years
+#' calComp <- valProbCompRisks(cscFit, vdata, cause = 1,
 #'                             timeHorizon = 5, plotCal = "ggplot")
 #' calComp
 #' }
 #' @importFrom stats gaussian
 #' @importFrom geepack geese
+#' @importFrom prodlim Hist jackknife prodlim
 #' @export
 valProbCompRisks <- function(fit,
                              valdata,
@@ -84,7 +89,7 @@ valProbCompRisks <- function(fit,
                              weights     = NULL,
                              alpha       = 0.05,
                              timeHorizon = 5,
-                             nk          = 5,
+                             nk          = 3,
                              pseudo      = FALSE,
                              bandwidth   = 0.10,
                              plotCal     = c("none", "base", "ggplot"),
@@ -131,11 +136,19 @@ valProbCompRisks <- function(fit,
   # --------------------------------------------------------------------------
   # Discrimination: AUC and C-index via Score()
   # --------------------------------------------------------------------------
-  timeVar   <- all.vars(fit$formula)[1]
-  statusVar <- all.vars(fit$formula)[2]
+  # Extract formula robustly: newer riskRegression versions may not store
+  # fit$formula directly; fall back to formula() S3 dispatch or the call.
+  fitFormula <- tryCatch(formula(fit), error = function(e) NULL)
+  if (is.null(fitFormula)) fitFormula <- fit$formula
+  if (is.null(fitFormula) && !is.null(fit$call))
+    fitFormula <- tryCatch(fit$call$formula, error = function(e) NULL)
+  vars      <- all.vars(fitFormula)
+  timeVar   <- vars[1L]
+  statusVar <- vars[2L]
 
   adjFormula <- stats::as.formula(
-    paste0("Hist(", timeVar, ", ", statusVar, ") ~ 1")
+    paste0("Hist(", timeVar, ", ", statusVar, ") ~ 1"),
+    env = asNamespace("prodlim")
   )
 
   score_res <- tryCatch(
@@ -159,31 +172,23 @@ valProbCompRisks <- function(fit,
   }
 
   # --------------------------------------------------------------------------
-  # Calibration in the large: O/E via Aalen-Johansen
+  # Calibration in the large: O/E via Aalen-Johansen (multi-state safe)
   # --------------------------------------------------------------------------
-  survObj    <- summary(
-    survfit(
-      stats::as.formula(paste0("Surv(", timeVar, ", ", statusVar, ") ~ 1")),
-      data = valdata
-    ),
-    times = timeHorizon
+  aj_formula <- stats::as.formula(
+    paste0("Hist(", timeVar, ", ", statusVar, ") ~ 1"),
+    env = asNamespace("prodlim")
   )
-  # extract cumulative incidence for the cause of interest
-  if (!is.null(survObj$pstate)) {
-    aj_obs <- survObj$pstate[, cause + 1]
-    aj_se  <- survObj$std.err[, cause + 1]
-  } else {
-    # simple two-state survival (treat as 1-surv)
-    aj_obs <- 1 - survObj$surv
-    aj_se  <- survObj$std.err
-  }
+  aj_fit  <- prodlim::prodlim(aj_formula, data = valdata)
+  aj_sum  <- summary(aj_fit, times = timeHorizon, cause = cause)
+  aj_obs  <- aj_sum$table[, "CI"]
+  aj_se   <- aj_sum$table[, "se.CI"]
 
   exp_t  <- mean(valdata$pred, na.rm = TRUE)
   OE_t   <- aj_obs / exp_t
   z      <- qnorm(1 - alpha / 2)
   stats$Calibration$InTheLarge <- c(
-    "OE"    = OE_t,
-    "2.5 %" = exp(log(OE_t) - z * aj_se / aj_obs),
+    "OE"     = OE_t,
+    "2.5 %"  = exp(log(OE_t) - z * aj_se / aj_obs),
     "97.5 %" = exp(log(OE_t) + z * aj_se / aj_obs)
   )
 
@@ -192,22 +197,35 @@ valProbCompRisks <- function(fit,
   # --------------------------------------------------------------------------
   valdata$cll_pred <- log(-log(1 - pmax(pmin(valdata$pred, 1 - 1e-8), 1e-8)))
 
-  rcs_mat           <- splines::ns(valdata$cll_pred, df = nk + 1)
-  colnames(rcs_mat) <- paste0("cll_basis_", seq_len(ncol(rcs_mat)))
-  valdata_rcs       <- cbind.data.frame(valdata, rcs_mat)
+  fitFGRwithKnots <- function(current_nk) {
+    rcs_mat           <- splines::ns(valdata$cll_pred, df = current_nk + 1L)
+    colnames(rcs_mat) <- paste0("cll_basis_", seq_len(ncol(rcs_mat)))
+    valdata_rcs       <- cbind.data.frame(valdata, rcs_mat)
+    rcs_formula <- stats::reformulate(
+      termlabels = colnames(rcs_mat),
+      response   = paste0("Hist(", timeVar, ", ", statusVar, ")"),
+      env        = asNamespace("prodlim")
+    )
+    result <- tryCatch(
+      list(fit = FGR(formula = rcs_formula, cause = cause, data = valdata_rcs),
+           data = valdata_rcs),
+      error = function(e) {
+        if (current_nk > 2) {
+          warning(paste0("RCS calibration via FGR failed with nk = ", current_nk,
+                         ", retrying with nk = ", current_nk - 1L), immediate. = TRUE)
+          fitFGRwithKnots(current_nk - 1L)
+        } else {
+          warning("RCS calibration via FGR failed: ", conditionMessage(e))
+          NULL
+        }
+      }
+    )
+    result
+  }
 
-  rcs_formula <- stats::reformulate(
-    termlabels = colnames(rcs_mat),
-    response   = paste0("Hist(", timeVar, ", ", statusVar, ")")
-  )
-
-  calib_fgr <- tryCatch(
-    FGR(formula = rcs_formula, cause = cause, data = valdata_rcs),
-    error = function(e) {
-      warning("RCS calibration via FGR failed: ", conditionMessage(e))
-      NULL
-    }
-  )
+  fgr_result  <- fitFGRwithKnots(nk)
+  calib_fgr   <- if (!is.null(fgr_result)) fgr_result$fit  else NULL
+  valdata_rcs <- if (!is.null(fgr_result)) fgr_result$data else NULL
 
   dat_rcs <- NULL
   if (!is.null(calib_fgr)) {
@@ -228,9 +246,22 @@ valProbCompRisks <- function(fit,
   # --------------------------------------------------------------------------
   dat_pseudo <- NULL
   if (pseudo) {
-    if (!is.null(score_res) && !is.null(score_res$Calibration)) {
-      pseudo_df           <- as.data.frame(score_res$Calibration$plotframe)
-      pseudo_df$cll_pred  <- log(-log(1 - pmax(pmin(pseudo_df$risk, 1 - 1e-8), 1e-8)))
+    pseudo_vals <- tryCatch({
+      pseudo_formula <- stats::as.formula(
+        paste0("Hist(", timeVar, ", ", statusVar, ") ~ 1"),
+        env = asNamespace("prodlim")
+      )
+      prodlim::jackknife(prodlim::prodlim(pseudo_formula, data = valdata),
+                         times = timeHorizon, cause = cause)
+    }, error = function(e) NULL)
+
+    if (!is.null(pseudo_vals)) {
+      pseudo_df <- data.frame(
+        pseudovalue          = as.numeric(pseudo_vals),
+        risk                 = valdata$pred,
+        riskRegression_ID    = seq_len(nrow(valdata))
+      )
+      pseudo_df$cll_pred <- log(-log(1 - pmax(pmin(pseudo_df$risk, 1 - 1e-8), 1e-8)))
 
       fit_cal_int <- tryCatch(
         geepack::geese(

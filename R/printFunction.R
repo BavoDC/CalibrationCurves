@@ -100,30 +100,49 @@ print.SurvivalCalibrationCurve <- function(x, ...) {
   cat("Call:\n",
       paste(deparse(x$call), sep = "\n", collapse = "\n"),
       "\n\n", sep = "")
-  cat(
-    paste(
-      "A ",
-      (1 - x$alpha) * 100,
-      "% confidence interval is given for the statistics. \n\n",
-      sep = ""
-    )
-  )
+  cat(sprintf("A %s%% confidence interval is given for the statistics.\n\n",
+              (1 - x$alpha) * 100))
+
   cat("Calibration performance:\n")
   cat("------------------------\n\n")
-  cat("In the large\n\n")
-  print(x$stats$Calibration$InTheLarge, ...)
-  cat("\nSlope\n\n")
-  print(x$stats$Calibration$Slope, ...)
-  cat("\nAdditional statistics\n\n")
-  print(x$stats$Calibration$Statistics, ...)
-  print(x$stats$Calibration$BrierScore, ...)
+  if (!is.null(x$stats$Calibration$InTheLarge)) {
+    cat("  Calibration in the large (O/E ratio):\n")
+    print(x$stats$Calibration$InTheLarge, ...)
+    cat("\n")
+  }
+  if (!is.null(x$stats$Calibration$Slope)) {
+    cat("  Calibration slope:\n")
+    print(x$stats$Calibration$Slope, ...)
+    cat("\n")
+  }
+  if (!is.null(x$stats$Calibration$Statistics)) {
+    cat("  Calibration statistics (ICI, E50, E90, Emax):\n")
+    print(x$stats$Calibration$Statistics, ...)
+    cat("\n")
+  }
+  if (!is.null(x$stats$Calibration$BrierScore)) {
+    bs        <- x$stats$Calibration$BrierScore
+    model_row <- bs[!tolower(as.character(bs$model)) %in% c("null model", "null", "reference"), , drop = FALSE]
+    if (nrow(model_row) > 0 && "Brier" %in% names(model_row)) {
+      cat(sprintf("  Brier score: %.4f", model_row$Brier[1]))
+      if ("IPA" %in% names(model_row) && !is.na(model_row$IPA[1]))
+        cat(sprintf("    IPA (scaled Brier): %.4f", model_row$IPA[1]))
+      cat("\n\n")
+    }
+  }
 
-  cat("\n\nDiscrimination performance:\n")
-  cat("-------------------------------\n\n")
-  cat("Concordance statistic\n\n")
-  print(x$stats$Concordance, ...)
-  cat("\n\nTime-dependent AUC\n\n")
-  print(x$stats$TimeDependentAUC)
+  cat("Discrimination performance:\n")
+  cat("---------------------------\n\n")
+  if (!is.null(x$stats$Concordance)) {
+    cat("  Concordance statistic:\n")
+    print(x$stats$Concordance, ...)
+    cat("\n")
+  }
+  if (!is.null(x$stats$TimeDependentAUC)) {
+    cat("  Time-dependent AUC:\n")
+    print(x$stats$TimeDependentAUC, ...)
+    cat("\n")
+  }
   invisible(x)
 }
 
@@ -170,31 +189,49 @@ print.CompRisksCalibrationCurve <- function(x, ...) {
   cat("Call:\n",
       paste(deparse(x$call), sep = "\n", collapse = "\n"),
       "\n\n", sep = "")
-  cat(sprintf("Competing-risks calibration (cause %s, time horizon %s)\n\n",
+  cat(sprintf("Competing-risks calibration (cause %s, time horizon %s)\n",
               x$cause, x$timeHorizon))
+  cat(sprintf("A %s%% confidence interval is given for the statistics.\n\n",
+              (1 - x$alpha) * 100))
+
+  cat("Calibration performance:\n")
+  cat("------------------------\n\n")
   if (!is.null(x$stats$Calibration$InTheLarge)) {
-    cat("Calibration in the large (O/E ratio):\n")
+    cat("  Calibration in the large (O/E ratio):\n")
     print(x$stats$Calibration$InTheLarge, ...)
     cat("\n")
   }
   if (!is.null(x$stats$Calibration$Slope)) {
-    cat("Calibration slope:\n")
+    cat("  Calibration slope:\n")
     print(x$stats$Calibration$Slope, ...)
     cat("\n")
   }
+  if (!is.null(x$stats$Calibration$Intercept)) {
+    cat("  Calibration intercept:\n")
+    print(x$stats$Calibration$Intercept, ...)
+    cat("\n")
+  }
   if (!is.null(x$stats$Calibration$Statistics)) {
-    cat("Calibration statistics:\n")
+    cat("  Calibration statistics (ICI, E50, E90, Emax):\n")
     print(x$stats$Calibration$Statistics, ...)
     cat("\n")
   }
-  if (!is.null(x$stats$AUC)) {
-    cat("AUC:\n")
-    print(x$stats$AUC, ...)
-    cat("\n")
-  }
   if (!is.null(x$stats$BrierScore)) {
-    cat("Brier score:\n")
-    print(x$stats$BrierScore, ...)
+    bs        <- x$stats$BrierScore
+    model_row <- bs[!tolower(as.character(bs$model)) %in% c("null model", "null", "reference"), , drop = FALSE]
+    if (nrow(model_row) > 0 && "Brier" %in% names(model_row)) {
+      cat(sprintf("  Brier score: %.4f", model_row$Brier[1]))
+      if ("IPA" %in% names(model_row) && !is.na(model_row$IPA[1]))
+        cat(sprintf("    IPA (scaled Brier): %.4f", model_row$IPA[1]))
+      cat("\n\n")
+    }
+  }
+
+  cat("Discrimination performance:\n")
+  cat("---------------------------\n\n")
+  if (!is.null(x$stats$AUC)) {
+    cat("  AUC:\n")
+    print(x$stats$AUC, ...)
     cat("\n")
   }
   invisible(x)
@@ -212,21 +249,34 @@ print.MulticlassCalibrationCurve <- function(x, ...) {
   cat("Call:\n",
       paste(deparse(x$call), sep = "\n", collapse = "\n"),
       "\n\n", sep = "")
-  cat(sprintf("Multiclass calibration (%s outcome)\n\n", x$type))
-  cat("Proper scoring rules:\n")
-  cat(sprintf("  Brier score (overall): %.4f\n", x$stats$BrierScore["Overall"]))
-  cat(sprintf("  Log-loss:              %.4f\n", x$stats$LogLoss))
-  cat("\nCalibration slopes (one-vs-rest):\n")
-  print(x$Calibration$Slopes, ...)
-  cat("\nCalibration intercepts (one-vs-rest):\n")
-  print(x$Calibration$Intercepts, ...)
+  cat(sprintf("Multiclass calibration (%s outcome)\n", x$type))
+  cat(sprintf("A %s%% confidence interval is given for the statistics.\n\n",
+              x$cl.level * 100))
+
+  cat("Calibration performance:\n")
+  cat("------------------------\n\n")
+  if (!is.null(x$Calibration$Slopes)) {
+    cat("  Calibration slopes (one-vs-rest):\n")
+    print(x$Calibration$Slopes, ...)
+    cat("\n")
+  }
+  if (!is.null(x$Calibration$Intercepts)) {
+    cat("  Calibration intercepts (one-vs-rest):\n")
+    print(x$Calibration$Intercepts, ...)
+    cat("\n")
+  }
   if (!is.null(x$stats$MSEC)) {
-    cat("\nCalibration statistics per category (ICI, E50, E90, Emax):\n")
+    cat("  Calibration statistics per category (ICI, E50, E90, Emax):\n")
     for (nm in names(x$stats$MSEC)) {
-      cat(sprintf("  %s: ", nm))
+      cat(sprintf("    %s: ", nm))
       print(x$stats$MSEC[[nm]], ...)
     }
+    cat("\n")
   }
+  if (!is.null(x$stats$BrierScore))
+    cat(sprintf("  Brier score (overall): %.4f\n", x$stats$BrierScore["Overall"]))
+  if (!is.null(x$stats$LogLoss))
+    cat(sprintf("  Log-loss:              %.4f\n", x$stats$LogLoss))
   invisible(x)
 }
 
@@ -243,11 +293,13 @@ print.RecalibratedPredictions <- function(x, ...) {
       paste(deparse(x$call), sep = "\n", collapse = "\n"),
       "\n\n", sep = "")
   cat(sprintf("Recalibration method: %s\n\n", x$method))
+  cat("Calibration performance:\n")
+  cat("------------------------\n\n")
   tab <- rbind(
-    "Brier score"  = c(x$before$Brier,     x$after$Brier),
-    "Log-loss"     = c(x$before$LogLoss,    x$after$LogLoss),
-    "Cal. slope"   = c(x$before$Slope,      x$after$Slope),
-    "Cal. intercept" = c(x$before$Intercept, x$after$Intercept)
+    "Brier score"      = c(x$before$Brier,      x$after$Brier),
+    "Log-loss"         = c(x$before$LogLoss,     x$after$LogLoss),
+    "Cal. slope"       = c(x$before$Slope,       x$after$Slope),
+    "Cal. intercept"   = c(x$before$Intercept,   x$after$Intercept)
   )
   colnames(tab) <- c("Before", "After")
   print(round(tab, 4), ...)
