@@ -21,7 +21,7 @@ LazyData: TRUE
 Depends: R (>= 3.5.0), rms (>= 7.0-0), ggplot2
 Imports: grDevices, graphics, methods, stats, utils, survival, Hmisc, pec,
     riskRegression, meta, metafor, zoo, lme4, merTools, dplyr, magrittr,
-    splines, geepack
+    splines, geepack, prodlim
 Suggests: knitr, rmarkdown, bookdown, rstudioapi, mgcv, MASS, nnet, Matrix,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
