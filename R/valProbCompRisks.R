@@ -359,14 +359,25 @@ valProbCompRisks <- function(fit,
                              breaks = bin_breaks, include.lowest = TRUE))
   spike_bins    <- bin_breaks[-1L]         # right edge of each bin
   spike_fv      <- spike_freqs[spike_freqs > 0]
-  spike_pos     <- spike_bins[spike_freqs > 0]
+  spike_pos     <- unname(spike_bins[spike_freqs > 0])
   if (length(spike_fv) > 1L) {
-    spike_rescaled <- spike_bounds[1L] +
-      (spike_bounds[2L] - spike_bounds[1L]) *
-      (spike_fv - min(spike_fv)) / (max(spike_fv) - min(spike_fv))
+    spike_rescaled <- unname(
+      spike_bounds[1L] +
+        (spike_bounds[2L] - spike_bounds[1L]) *
+        (spike_fv - min(spike_fv)) / (max(spike_fv) - min(spike_fv))
+    )
   } else {
     spike_rescaled <- rep(spike_bounds[2L], length(spike_fv))
   }
+
+  spike_df <- if (length(spike_pos) > 0L) {
+    data.frame(
+      x    = spike_pos,
+      xend = spike_pos,
+      y    = spike_bounds[1L],
+      yend = spike_rescaled
+    )
+  } else NULL
 
   # --------------------------------------------------------------------------
   # Plotting
@@ -397,9 +408,9 @@ valProbCompRisks <- function(fit,
       ll <- list(x = ll[1], y = ll[2])
     legend(ll, names(legCol), col = legCol,
            lty = lt, lwd = lw.d, bty = "n", cex = 0.85)
-    if (length(spike_pos) > 0L) {
-      segments(spike_pos, spike_bounds[1L], spike_pos, spike_rescaled)
-      lines(c(spike_pos[1L] - 0.01, spike_pos[length(spike_pos)] + 0.01),
+    if (!is.null(spike_df)) {
+      segments(spike_df$x, spike_df$y, spike_df$xend, spike_df$yend)
+      lines(c(min(spike_df$x) - 0.01, max(spike_df$x) + 0.01),
             c(spike_bounds[1L], spike_bounds[1L]))
     }
 
@@ -434,17 +445,13 @@ valProbCompRisks <- function(fit,
       lt     <- c(lt, lty.pseudo); lw.d <- c(lw.d, lwd.pseudo); marks <- c(marks, NA)
     }
 
+    if (!is.null(spike_df))
+      gg <- gg + geom_segment(
+        data = spike_df,
+        aes(x = x, y = y, xend = xend, yend = yend),
+        inherit.aes = FALSE)
+
     gg <- gg +
-      { if (length(spike_pos) > 0L)
-          geom_segment(
-            data = data.frame(
-              x    = spike_pos,
-              xend = spike_pos,
-              y    = rep(spike_bounds[1L], length(spike_pos)),
-              yend = spike_rescaled),
-            aes(x = x, y = y, xend = xend, yend = yend))
-        else
-          NULL } +
       scale_color_manual("", values = legCol, breaks = names(legCol)) +
       guides(colour = guide_legend(
         override.aes = list(linetype = lt, shape = marks,

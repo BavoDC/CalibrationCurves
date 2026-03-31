@@ -186,48 +186,49 @@ print.ClusteredCalibrationCurve <- function(x, ...) {
 #' @return The original object, invisibly.
 #' @export
 print.CompRisksCalibrationCurve <- function(x, ...) {
+  cl   <- (1 - x$alpha) * 100
+  fmt3 <- function(v) sprintf("%.4f  [%s%% CI: %.4f - %.4f]", v[1L], cl, v[2L], v[3L])
+
   cat("Call:\n",
       paste(deparse(x$call), sep = "\n", collapse = "\n"),
       "\n\n", sep = "")
   cat(sprintf("Competing-risks calibration (cause %s, time horizon %s)\n",
               x$cause, x$timeHorizon))
-  cat(sprintf("A %s%% confidence interval is given for the statistics.\n\n",
-              (1 - x$alpha) * 100))
+  cat(sprintf("A %s%% confidence interval is given for the statistics.\n\n", cl))
 
   cat("Calibration performance:\n")
   cat("------------------------\n\n")
-  if (!is.null(x$stats$Calibration$InTheLarge)) {
-    cat("  Calibration in the large (O/E ratio):\n")
-    print(x$stats$Calibration$InTheLarge, ...)
-    cat("\n")
-  }
-  if (!is.null(x$stats$Calibration$Slope)) {
-    cat("  Calibration slope:\n")
-    print(x$stats$Calibration$Slope, ...)
-    cat("\n")
-  }
-  if (!is.null(x$stats$Calibration$Intercept)) {
-    cat("  Calibration intercept:\n")
-    print(x$stats$Calibration$Intercept, ...)
-    cat("\n")
-  }
+
+  if (!is.null(x$stats$Calibration$InTheLarge))
+    cat(sprintf("  Calibration in the large (O/E ratio):  %s\n",
+                fmt3(x$stats$Calibration$InTheLarge)))
+  if (!is.null(x$stats$Calibration$Intercept))
+    cat(sprintf("  Calibration intercept:                 %s\n",
+                fmt3(x$stats$Calibration$Intercept)))
+  if (!is.null(x$stats$Calibration$Slope))
+    cat(sprintf("  Calibration slope:                     %s\n",
+                fmt3(x$stats$Calibration$Slope)))
+
   if (!is.null(x$stats$Calibration$Statistics)) {
-    cat("  Calibration statistics (ICI, E50, E90, Emax):\n")
-    print(x$stats$Calibration$Statistics, ...)
-    cat("\n")
+    s <- x$stats$Calibration$Statistics
+    cat(sprintf("\n  Calibration statistics:\n"))
+    cat(sprintf("    ICI  = %.4f\n    E50  = %.4f\n    E90  = %.4f\n    Emax = %.4f\n",
+                s["ICI"], s["E50"], s["E90"], s["Emax"]))
   }
+
   if (!is.null(x$stats$BrierScore)) {
     bs        <- x$stats$BrierScore
-    model_row <- bs[!tolower(as.character(bs$model)) %in% c("null model", "null", "reference"), , drop = FALSE]
-    if (nrow(model_row) > 0 && "Brier" %in% names(model_row)) {
-      cat(sprintf("  Brier score: %.4f", model_row$Brier[1]))
-      if ("IPA" %in% names(model_row) && !is.na(model_row$IPA[1]))
-        cat(sprintf("    IPA (scaled Brier): %.4f", model_row$IPA[1]))
-      cat("\n\n")
+    model_row <- bs[!tolower(as.character(bs$model)) %in%
+                      c("null model", "null", "reference"), , drop = FALSE]
+    if (nrow(model_row) > 0L && "Brier" %in% names(model_row)) {
+      cat(sprintf("\n  Brier score: %.4f", model_row$Brier[1L]))
+      if ("IPA" %in% names(model_row) && !is.na(model_row$IPA[1L]))
+        cat(sprintf("    IPA (scaled Brier): %.4f", model_row$IPA[1L]))
+      cat("\n")
     }
   }
 
-  cat("Discrimination performance:\n")
+  cat("\nDiscrimination performance:\n")
   cat("---------------------------\n\n")
   if (!is.null(x$stats$AUC)) {
     cat("  AUC:\n")
