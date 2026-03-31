@@ -81,7 +81,8 @@
 #' }
 #' @importFrom stats gaussian
 #' @importFrom geepack geese
-#' @importFrom prodlim Hist jackknife prodlim
+#' @importFrom prodlim Hist
+#' @importFrom survival survfit Surv
 #' @export
 valProbCompRisks <- function(fit,
                              valdata,
@@ -154,14 +155,16 @@ valProbCompRisks <- function(fit,
   score_res <- tryCatch(
     Score(
       list("model" = fit),
-      formula    = adjFormula,
-      cens.model = "km",
-      data       = valdata,
-      conf.int   = TRUE,
-      times      = timeHorizon,
-      metrics    = c("auc", "brier"),
-      summary    = "ipa",
-      cause      = cause
+      formula     = adjFormula,
+      cens.model  = "km",
+      cens.method = c("ipcw", "pseudo"),
+      data        = valdata,
+      conf.int    = TRUE,
+      times       = timeHorizon,
+      metrics     = c("auc", "brier"),
+      summary     = "ipa",
+      cause       = cause,
+      plots       = "calibration"
     ),
     error = function(e) NULL
   )
@@ -172,25 +175,34 @@ valProbCompRisks <- function(fit,
   }
 
   # --------------------------------------------------------------------------
-  # Calibration in the large: O/E via Aalen-Johansen (multi-state safe)
+  # Calibration in the large: O/E via Aalen-Johansen (survfit multi-state)
+  # Matches the reference approach: survfit with factor status, pstate column
   # --------------------------------------------------------------------------
-  aj_formula <- stats::as.formula(
-    paste0("Hist(", timeVar, ", ", statusVar, ") ~ 1"),
-    env = asNamespace("prodlim")
-  )
-  aj_fit  <- prodlim::prodlim(aj_formula, data = valdata)
-  aj_sum  <- summary(aj_fit, times = timeHorizon, cause = cause)
-  aj_obs  <- aj_sum$table[, "CI"]
-  aj_se   <- aj_sum$table[, "se.CI"]
+  z <- qnorm(1 - alpha / 2)
 
-  exp_t  <- mean(valdata$pred, na.rm = TRUE)
-  OE_t   <- aj_obs / exp_t
-  z      <- qnorm(1 - alpha / 2)
-  stats$Calibration$InTheLarge <- c(
-    "OE"     = OE_t,
-    "2.5 %"  = exp(log(OE_t) - z * aj_se / aj_obs),
-    "97.5 %" = exp(log(OE_t) + z * aj_se / aj_obs)
+  aj_sfit <- tryCatch(
+    summary(
+      survival::survfit(
+        survival::Surv(valdata[[timeVar]], factor(valdata[[statusVar]])) ~ 1
+      ),
+      times = timeHorizon
+    ),
+    error = function(e) NULL
   )
+
+  if (!is.null(aj_sfit) &&
+      !is.null(aj_sfit$pstate) &&
+      ncol(aj_sfit$pstate) >= cause + 1L) {
+    aj_obs <- aj_sfit$pstate[1L, cause + 1L]
+    aj_se  <- aj_sfit$std.err[1L, cause + 1L]
+    exp_t  <- mean(valdata$pred, na.rm = TRUE)
+    OE_t   <- aj_obs / exp_t
+    stats$Calibration$InTheLarge <- c(
+      "OE"     = OE_t,
+      "2.5 %"  = exp(log(OE_t) - z * aj_se / aj_obs),
+      "97.5 %" = exp(log(OE_t) + z * aj_se / aj_obs)
+    )
+  }
 
   # --------------------------------------------------------------------------
   # Calibration curve: RCS on cloglog scale via FGR
@@ -243,72 +255,83 @@ valProbCompRisks <- function(fit,
 
   # --------------------------------------------------------------------------
   # Calibration intercept and slope via GEE on pseudo-observations
+  # Always computed from Score()$Calibration$plotframe (Giardiello reference
+  # approach, section 2.1.4). The `pseudo` flag controls only the LOESS curve.
   # --------------------------------------------------------------------------
   dat_pseudo <- NULL
+
+  pseudos <- tryCatch({
+    if (!is.null(score_res) && !is.null(score_res$Calibration$plotframe))
+      data.frame(score_res$Calibration$plotframe)
+    else
+      NULL
+  }, error = function(e) NULL)
+
+  if (!is.null(pseudos) && nrow(pseudos) > 0) {
+    pseudos        <- pseudos[order(pseudos$risk), ]
+    pseudos$cll_pred <- log(-log(1 - pmax(pmin(pseudos$risk, 1 - 1e-8), 1e-8)))
+
+    fit_cal_int_main <- tryCatch(
+      geepack::geese(
+        pseudovalue ~ offset(cll_pred),
+        data      = pseudos,
+        id        = pseudos$riskRegression_ID,
+        scale.fix = TRUE,
+        family    = gaussian(),
+        mean.link = "cloglog",
+        corstr    = "independence",
+        jack      = TRUE
+      ),
+      error = function(e) NULL
+    )
+    fit_cal_slope_main <- tryCatch(
+      geepack::geese(
+        pseudovalue ~ offset(cll_pred) + cll_pred,
+        data      = pseudos,
+        id        = pseudos$riskRegression_ID,
+        scale.fix = TRUE,
+        family    = gaussian(),
+        mean.link = "cloglog",
+        corstr    = "independence",
+        jack      = TRUE
+      ),
+      error = function(e) NULL
+    )
+    if (!is.null(fit_cal_slope_main)) {
+      sm      <- summary(fit_cal_slope_main)$mean
+      est_raw <- sm["cll_pred", "estimate"]
+      san_se  <- sm["cll_pred", "san.se"]
+      stats$Calibration$Slope <- c(
+        "calibration slope" = 1 + est_raw,
+        "2.5 %"  = 1 + (est_raw - z * san_se),
+        "97.5 %" = 1 + (est_raw + z * san_se)
+      )
+    }
+    if (!is.null(fit_cal_int_main)) {
+      sm_int  <- summary(fit_cal_int_main)$mean
+      est_int <- sm_int[1L, "estimate"]
+      san_int <- sm_int[1L, "san.se"]
+      stats$Calibration$Intercept <- c(
+        "calibration intercept" = est_int,
+        "2.5 %"  = est_int - z * san_int,
+        "97.5 %" = est_int + z * san_int
+      )
+    }
+  }
+
   if (pseudo) {
-    pseudo_vals <- tryCatch({
-      pseudo_formula <- stats::as.formula(
-        paste0("Hist(", timeVar, ", ", statusVar, ") ~ 1"),
-        env = asNamespace("prodlim")
+    pseudo_df <- if (!is.null(pseudos)) {
+      data.frame(
+        pseudovalue       = pseudos$pseudovalue,
+        risk              = pseudos$risk,
+        riskRegression_ID = pseudos$riskRegression_ID,
+        cll_pred          = pseudos$cll_pred
       )
-      prodlim::jackknife(prodlim::prodlim(pseudo_formula, data = valdata),
-                         times = timeHorizon, cause = cause)
-    }, error = function(e) NULL)
+    } else {
+      NULL
+    }
 
-    if (!is.null(pseudo_vals)) {
-      pseudo_df <- data.frame(
-        pseudovalue          = as.numeric(pseudo_vals),
-        risk                 = valdata$pred,
-        riskRegression_ID    = seq_len(nrow(valdata))
-      )
-      pseudo_df$cll_pred <- log(-log(1 - pmax(pmin(pseudo_df$risk, 1 - 1e-8), 1e-8)))
-
-      fit_cal_int <- tryCatch(
-        geepack::geese(
-          pseudovalue ~ offset(cll_pred),
-          data      = pseudo_df,
-          id        = pseudo_df$riskRegression_ID,
-          scale.fix = TRUE,
-          family    = gaussian(),
-          mean.link = "cloglog",
-          corstr    = "independence",
-          jack      = TRUE
-        ),
-        error = function(e) NULL
-      )
-      fit_cal_slope <- tryCatch(
-        geepack::geese(
-          pseudovalue ~ offset(cll_pred) + cll_pred,
-          data      = pseudo_df,
-          id        = pseudo_df$riskRegression_ID,
-          scale.fix = TRUE,
-          family    = gaussian(),
-          mean.link = "cloglog",
-          corstr    = "independence",
-          jack      = TRUE
-        ),
-        error = function(e) NULL
-      )
-      if (!is.null(fit_cal_slope)) {
-        sm      <- summary(fit_cal_slope)$mean
-        san_se  <- sm["cll_pred", "san.se"]
-        est_raw <- sm["cll_pred", "estimate"]
-        stats$Calibration$Slope <- c(
-          "calibration slope" = 1 + est_raw,
-          "2.5 %"  = 1 + (est_raw - z * san_se),
-          "97.5 %" = 1 + (est_raw + z * san_se)
-        )
-      }
-      if (!is.null(fit_cal_int)) {
-        sm_int  <- summary(fit_cal_int)$mean
-        est_int <- sm_int[1, "estimate"]
-        san_int <- sm_int[1, "san.se"]
-        stats$Calibration$Intercept <- c(
-          "calibration intercept" = est_int,
-          "2.5 %"  = est_int - z * san_int,
-          "97.5 %" = est_int + z * san_int
-        )
-      }
+    if (!is.null(pseudo_df)) {
 
       # Smooth pseudo-obs with loess for the curve
       sm_loess <- predict(
@@ -327,18 +350,23 @@ valProbCompRisks <- function(fit,
   }
 
   # --------------------------------------------------------------------------
-  # Spike histogram data
+  # Spike histogram data (Giardiello reference approach: single rescaled
+  # spike set for all predicted risks, placed below y = 0)
   # --------------------------------------------------------------------------
-  x     <- valdata$pred
-  bins  <- seq(0, min(1, max(xlim)), length = 101)
-  x     <- x[x >= 0 & x <= 1]
-  f0    <- table(cut(x[valdata[[statusVar]] == 0], bins))
-  f1    <- table(cut(x[valdata[[statusVar]] != 0], bins))
-  j0    <- f0 > 0; j1 <- f1 > 0
-  bins0 <- (bins[-101])[j0]; bins1 <- (bins[-101])[j1]
-  f0    <- f0[j0];            f1    <- f1[j1]
-  maxf  <- max(f0, f1)
-  f0    <- (0.1 * f0) / maxf; f1 <- (0.1 * f1) / maxf
+  spike_bounds  <- c(ylim[1] + 0.02, 0)   # e.g. c(-0.13, 0) for default ylim
+  bin_breaks    <- seq(0, max(xlim), length.out = 101)
+  spike_freqs   <- table(cut(valdata$pred,
+                             breaks = bin_breaks, include.lowest = TRUE))
+  spike_bins    <- bin_breaks[-1L]         # right edge of each bin
+  spike_fv      <- spike_freqs[spike_freqs > 0]
+  spike_pos     <- spike_bins[spike_freqs > 0]
+  if (length(spike_fv) > 1L) {
+    spike_rescaled <- spike_bounds[1L] +
+      (spike_bounds[2L] - spike_bounds[1L]) *
+      (spike_fv - min(spike_fv)) / (max(spike_fv) - min(spike_fv))
+  } else {
+    spike_rescaled <- rep(spike_bounds[2L], length(spike_fv))
+  }
 
   # --------------------------------------------------------------------------
   # Plotting
@@ -369,14 +397,11 @@ valProbCompRisks <- function(fit,
       ll <- list(x = ll[1], y = ll[2])
     legend(ll, names(legCol), col = legCol,
            lty = lt, lwd = lw.d, bty = "n", cex = 0.85)
-    segments(bins1, line.bins, bins1, length.seg * f1 + line.bins)
-    segments(bins0, line.bins, bins0, length.seg * -f0 + line.bins)
-    lines(c(min(bins0, bins1) - 0.01, max(bins0, bins1) + 0.01),
-          c(line.bins, line.bins))
-    text(max(bins0, bins1) + dist.label, line.bins + dist.label2,
-         d1lab, cex = size.d01 * 0.25)
-    text(max(bins0, bins1) + dist.label, line.bins - dist.label2,
-         d0lab, cex = size.d01 * 0.25)
+    if (length(spike_pos) > 0L) {
+      segments(spike_pos, spike_bounds[1L], spike_pos, spike_rescaled)
+      lines(c(spike_pos[1L] - 0.01, spike_pos[length(spike_pos)] + 0.01),
+            c(spike_bounds[1L], spike_bounds[1L]))
+    }
 
   } else if (plotCal == "ggplot") {
     gg <- ggplot(data.frame()) +
@@ -410,25 +435,16 @@ valProbCompRisks <- function(fit,
     }
 
     gg <- gg +
-      geom_segment(
-        data = data.frame(x = bins1, xend = bins1,
-                          y = rep(line.bins, length(bins1)),
-                          yend = length.seg * f1 + line.bins),
-        aes(x = x, y = y, xend = xend, yend = yend)) +
-      geom_segment(
-        data = data.frame(x = bins0, xend = bins0,
-                          y = rep(line.bins, length(bins0)),
-                          yend = length.seg * -f0 + line.bins),
-        aes(x = x, y = y, xend = xend, yend = yend)) +
-      geom_line(
-        data = data.frame(
-          x = c(min(bins0, bins1) - 0.01, max(bins0, bins1) + 0.01),
-          y = c(line.bins, line.bins)),
-        aes(x = x, y = y)) +
-      annotate("text", x = max(bins0, bins1) + dist.label,
-               y = line.bins + dist.label2, label = d1lab, size = size.d01) +
-      annotate("text", x = max(bins0, bins1) + dist.label,
-               y = line.bins - dist.label2, label = d0lab, size = size.d01) +
+      { if (length(spike_pos) > 0L)
+          geom_segment(
+            data = data.frame(
+              x    = spike_pos,
+              xend = spike_pos,
+              y    = rep(spike_bounds[1L], length(spike_pos)),
+              yend = spike_rescaled),
+            aes(x = x, y = y, xend = xend, yend = yend))
+        else
+          NULL } +
       scale_color_manual("", values = legCol, breaks = names(legCol)) +
       guides(colour = guide_legend(
         override.aes = list(linetype = lt, shape = marks,
